@@ -9,6 +9,6 @@ public class QuitMessage implements ClientMessage {
 
     @Override
     public int kind() {
-        return Quit;
+        return QUIT;
     }
 }

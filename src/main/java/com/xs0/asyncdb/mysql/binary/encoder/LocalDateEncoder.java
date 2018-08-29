@@ -5,8 +5,13 @@ import io.netty.buffer.ByteBuf;
 
 import java.time.LocalDate;
 
-
 public class LocalDateEncoder implements BinaryEncoder {
+    private static final LocalDateEncoder instance = new LocalDateEncoder();
+
+    public static LocalDateEncoder instance() {
+        return instance;
+    }
+
     @Override
     public void encode(Object value, ByteBuf buffer) {
         LocalDate date = (LocalDate) value;

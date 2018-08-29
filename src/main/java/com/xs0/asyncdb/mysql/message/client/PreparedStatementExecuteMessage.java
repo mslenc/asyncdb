@@ -20,6 +20,6 @@ public class PreparedStatementExecuteMessage implements ClientMessage {
 
     @Override
     public int kind() {
-        return PreparedStatementExecute;
+        return PREPARED_STATEMENT_EXECUTE;
     }
 }

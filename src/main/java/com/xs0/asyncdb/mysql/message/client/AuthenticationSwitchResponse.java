@@ -13,6 +13,6 @@ public class AuthenticationSwitchResponse implements ClientMessage {
 
     @Override
     public int kind() {
-        return AuthSwitchResponse;
+        return AUTH_SWITCH_RESPONSE;
     }
 }

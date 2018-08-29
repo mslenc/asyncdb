@@ -8,6 +8,12 @@ import java.time.ZoneOffset;
 import java.util.Calendar;
 
 public class CalendarEncoder implements BinaryEncoder {
+    private static final CalendarEncoder instance = new CalendarEncoder();
+
+    public static CalendarEncoder instance() {
+        return instance;
+    }
+
     @Override
     public void encode(Object value, ByteBuf buffer) {
         Calendar calendar = (Calendar) value;

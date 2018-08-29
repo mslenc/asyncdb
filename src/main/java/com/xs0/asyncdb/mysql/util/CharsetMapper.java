@@ -11,7 +11,7 @@ import java.util.Map;
 import static java.util.Collections.emptyMap;
 
 public class CharsetMapper {
-    public static final int Binary = 63;
+    public static final int BINARY = 63;
 
     private static CharsetMapper instance = new CharsetMapper();
     public static CharsetMapper instance() {

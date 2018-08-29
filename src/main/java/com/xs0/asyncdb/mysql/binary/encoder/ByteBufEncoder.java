@@ -5,6 +5,12 @@ import com.xs0.asyncdb.mysql.column.ColumnType;
 import io.netty.buffer.ByteBuf;
 
 public class ByteBufEncoder implements BinaryEncoder {
+    private static final ByteBufEncoder instance = new ByteBufEncoder();
+
+    public static ByteBufEncoder instance() {
+        return instance;
+    }
+
     @Override
     public void encode(Object value, ByteBuf buffer) {
         ByteBuf bytes = (ByteBuf) value;

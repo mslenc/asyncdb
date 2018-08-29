@@ -1,6 +1,9 @@
 package com.xs0.asyncdb.mysql.column;
 
+import java.util.HashMap;
+
 public enum ColumnType {
+    // see https://github.com/mysql/mysql-connector-j/blob/9cc87a48e75c2d2e87c1a293b2862ce651cb256e/src/com/mysql/jdbc/MysqlDefs.java
     FIELD_TYPE_BIT(16, "bit"),
     FIELD_TYPE_BLOB(252, "blob"),
     FIELD_TYPE_DATE(10, "date"),
@@ -12,6 +15,7 @@ public enum ColumnType {
     FIELD_TYPE_FLOAT(4, "float"),
     FIELD_TYPE_GEOMETRY(255, "geometry"),
     FIELD_TYPE_INT24(9, "int24"),
+    FIELD_TYPE_JSON(245, "json"),
     FIELD_TYPE_LONG(3, "integer"),
     FIELD_TYPE_LONG_BLOB(251, "long_blob"),
     FIELD_TYPE_LONGLONG(8, "long"),
@@ -33,7 +37,7 @@ public enum ColumnType {
     private final int number;
     private final String mapping;
 
-    private ColumnType(int number, String mapping) {
+    ColumnType(int number, String mapping) {
         this.number = number;
         this.mapping = mapping;
     }
@@ -44,5 +48,16 @@ public enum ColumnType {
 
     public String getMapping() {
         return mapping;
+    }
+
+    private static HashMap<Integer, ColumnType> index = new HashMap<>();
+    static {
+        for (ColumnType type : values()) {
+            index.put(type.number, type);
+        }
+    }
+
+    public static ColumnType getByNumber(int number) {
+        return index.get(number);
     }
 }

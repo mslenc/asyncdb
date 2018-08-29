@@ -2,8 +2,9 @@ package com.xs0.asyncdb.mysql.binary;
 
 import com.xs0.asyncdb.mysql.ex.UnknownLengthException;
 import io.netty.buffer.ByteBuf;
-import sun.security.util.Length;
+import io.netty.buffer.Unpooled;
 
+import java.nio.ByteOrder;
 import java.nio.charset.Charset;
 
 public class ByteBufUtils {
@@ -76,5 +77,89 @@ public class ByteBufUtils {
         byte[] bytes = string.getBytes(charset);
         writeLength(bytes.length, buffer);
         buffer.writeBytes(bytes);
+    }
+
+    public static String readCString(ByteBuf b, Charset charset) {
+        b.markReaderIndex();
+
+        int count = b.bytesBefore((byte)0);
+        String result = b.toString(b.readerIndex(), count, charset);
+        b.readerIndex(b.readerIndex() + count + 1);
+
+        return result;
+    }
+
+    public static String readUntilEOF(ByteBuf b, Charset charset) {
+        if (b.readableBytes() == 0) {
+            return "";
+        }
+
+        b.markReaderIndex();
+
+        int readByte = -1;
+        int count = 0;
+        int offset = 1;
+
+        while (readByte != 0) {
+            if (b.readableBytes() > 0) {
+                readByte = b.readByte();
+                count += 1;
+            } else {
+                readByte = 0;
+                offset = 0;
+            }
+        }
+
+        b.resetReaderIndex();
+
+        String result = b.toString(b.readerIndex(), count - offset, charset);
+
+        b.readerIndex(b.readerIndex() + count);
+
+        return result;
+    }
+
+    public static ByteBuf newPacketBuffer() {
+        return newPacketBuffer(1024);
+    }
+
+    public static ByteBuf newPacketBuffer(int sizeEstimate) {
+        ByteBuf buffer = newMysqlBuffer(sizeEstimate);
+        buffer.writeInt(0);
+        return buffer;
+    }
+
+    public static ByteBuf newMysqlBuffer() {
+        return newMysqlBuffer(1024);
+    }
+
+    public static ByteBuf newMysqlBuffer(int sizeEstimate) {
+        return Unpooled.buffer(sizeEstimate).order(ByteOrder.LITTLE_ENDIAN);
+    }
+
+    public static void writeCString(ByteBuf b, String content, Charset charset) {
+        b.writeCharSequence(content, charset);
+        b.writeByte(0);
+    }
+
+    public static void writePacketLength(ByteBuf buffer) {
+        writePacketLength(buffer, 1);
+    }
+
+    public static void writePacketLength(ByteBuf buffer, int sequence) {
+        int length = buffer.writerIndex() - 4;
+        buffer.markWriterIndex();
+        buffer.writerIndex(0);
+
+        write3BytesInt( buffer, length );
+        buffer.writeByte(sequence);
+
+        buffer.resetWriterIndex();
+    }
+
+    public static void write3BytesInt(ByteBuf b, int value) {
+        b.writeByte(value);
+        b.writeByte(value >>> 8);
+        b.writeByte(value >>> 16);
     }
 }

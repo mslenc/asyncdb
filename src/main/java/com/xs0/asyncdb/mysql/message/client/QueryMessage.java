@@ -9,6 +9,6 @@ public class QueryMessage implements ClientMessage {
 
     @Override
     public int kind() {
-        return Query;
+        return QUERY;
     }
 }

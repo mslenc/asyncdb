@@ -7,7 +7,7 @@ import java.nio.charset.Charset;
 
 import static com.xs0.asyncdb.mysql.binary.ByteBufUtils.readLengthEncodedString;
 
-class BigDecimalDecoder implements BinaryDecoder {
+public class BigDecimalDecoder implements BinaryDecoder {
     private final Charset charset;
 
     public BigDecimalDecoder(Charset charset) {

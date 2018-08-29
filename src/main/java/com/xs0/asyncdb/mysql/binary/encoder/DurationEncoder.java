@@ -6,6 +6,12 @@ import io.netty.buffer.ByteBuf;
 import java.time.Duration;
 
 public class DurationEncoder implements BinaryEncoder {
+    private static final DurationEncoder instance = new DurationEncoder();
+
+    public static DurationEncoder instance() {
+        return instance;
+    }
+
     @Override
     public void encode(Object value, ByteBuf buffer) {
         Duration duration = (Duration) value;

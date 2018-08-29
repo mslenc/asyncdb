@@ -9,7 +9,7 @@ import java.nio.charset.Charset;
 public class StringEncoder implements BinaryEncoder {
     private final Charset charset;
 
-    StringEncoder(Charset charset) {
+    public StringEncoder(Charset charset) {
         this.charset = charset;
     }
 

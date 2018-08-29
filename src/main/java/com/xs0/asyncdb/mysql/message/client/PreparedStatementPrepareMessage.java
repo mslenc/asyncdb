@@ -9,6 +9,6 @@ public class PreparedStatementPrepareMessage implements ClientMessage {
 
     @Override
     public int kind() {
-        return PreparedStatementPrepare;
+        return PREPARED_STATEMENT_PREPARE;
     }
 }

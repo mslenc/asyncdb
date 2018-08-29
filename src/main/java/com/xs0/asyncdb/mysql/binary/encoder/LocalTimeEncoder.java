@@ -6,6 +6,12 @@ import io.netty.buffer.ByteBuf;
 import java.time.LocalTime;
 
 public class LocalTimeEncoder implements BinaryEncoder {
+    private static final LocalTimeEncoder instance = new LocalTimeEncoder();
+
+    public static LocalTimeEncoder instance() {
+        return instance;
+    }
+
     @Override
     public void encode(Object value, ByteBuf buffer) {
         LocalTime time = (LocalTime) value;

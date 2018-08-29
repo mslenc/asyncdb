@@ -7,6 +7,12 @@ import java.time.ZoneId;
 import java.util.Date;
 
 public class JavaDateEncoder implements BinaryEncoder {
+    private static final JavaDateEncoder instance = new JavaDateEncoder();
+
+    public static JavaDateEncoder instance() {
+        return instance;
+    }
+
     @Override
     public void encode(Object value, ByteBuf buffer) {
         Date date = (Date) value;
