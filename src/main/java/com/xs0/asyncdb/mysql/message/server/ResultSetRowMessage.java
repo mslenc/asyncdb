@@ -22,7 +22,7 @@ public class ResultSetRowMessage implements ServerMessage, List<ByteBuf>, Clonea
 
     @Override
     public int kind() {
-        return Row;
+        return ROW;
     }
 
     @Override

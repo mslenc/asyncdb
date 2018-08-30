@@ -11,6 +11,6 @@ public class BinaryRowMessage implements ServerMessage {
 
     @Override
     public int kind() {
-        return BinaryRow;
+        return BINARY_ROW;
     }
 }

@@ -10,6 +10,8 @@ import com.xs0.asyncdb.mysql.util.CharsetMapper;
 
 import java.nio.charset.Charset;
 
+import static com.xs0.asyncdb.mysql.column.ColumnType.*;
+
 public class DecoderRegistry {
     private final BigDecimalDecoder bigDecimalDecoder;
     private final StringDecoder stringDecoder;
@@ -20,11 +22,7 @@ public class DecoderRegistry {
     }
 
     public BinaryDecoder binaryDecoderFor(int columnType, int charsetCode) {
-        ColumnType colType = ColumnType.getByNumber(columnType);
-        if (colType == null)
-            throw new IllegalStateException("Unknown columnType " + columnType);
-
-        switch (colType) {
+        switch (columnType) {
             case FIELD_TYPE_VARCHAR:
             case FIELD_TYPE_ENUM:
             case FIELD_TYPE_SET: // TODO: verify if this is actually appropriate for SET
@@ -93,16 +91,12 @@ public class DecoderRegistry {
                 return ByteArrayDecoder.instance();
 
             default:
-                throw new IllegalStateException("Missing decoder for columnType " + colType);
+                throw new IllegalStateException("Missing decoder for columnType " + columnType);
         }
     }
 
     public ColumnDecoder textDecoderFor(int columnType, int charsetCode) {
-        ColumnType colType = ColumnType.getByNumber(columnType);
-        if (colType == null)
-            throw new IllegalStateException("Unknown columnType " + columnType);
-
-        switch (colType) {
+        switch (columnType) {
             case FIELD_TYPE_DATE:
                 return DateEncoderDecoder.instance();
 

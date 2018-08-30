@@ -51,7 +51,7 @@ public class PreparedStatementExecuteEncoder implements MessageEncoder {
 
             if (value == null) {
                 nullBits[index / 8] |= 1 << (index & 7);
-                parameterTypesBuffer.writeShort(FIELD_TYPE_NULL.getNumber());
+                parameterTypesBuffer.writeShort(FIELD_TYPE_NULL);
             } else {
                 encodeValue(parameterTypesBuffer, parameterValuesBuffer, value, valuesToInclude.contains(index));
             }
@@ -67,7 +67,7 @@ public class PreparedStatementExecuteEncoder implements MessageEncoder {
 
     private void encodeValue(ByteBuf parameterTypesBuffer, ByteBuf parameterValuesBuffer, Object value, Boolean includeValue) {
         BinaryEncoder encoder = rowEncoder.encoderFor(value);
-        parameterTypesBuffer.writeShort(encoder.encodesTo().getNumber());
+        parameterTypesBuffer.writeShort(encoder.encodesTo());
         if (includeValue)
             encoder.encode(value, parameterValuesBuffer);
     }

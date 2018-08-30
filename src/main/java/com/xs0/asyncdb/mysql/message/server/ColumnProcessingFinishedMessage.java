@@ -9,6 +9,6 @@ public class ColumnProcessingFinishedMessage implements ServerMessage {
 
     @Override
     public int kind() {
-        return ColumnDefinitionFinished;
+        return COLUMN_DEFINITION_FINISHED;
     }
 }

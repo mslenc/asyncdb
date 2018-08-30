@@ -21,6 +21,6 @@ public class HandshakeMessage implements ServerMessage {
 
     @Override
     public int kind() {
-        return ServerProtocolVersion;
+        return SERVER_PROTOCOL_VERSION;
     }
 }

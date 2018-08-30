@@ -17,6 +17,6 @@ public class OkMessage implements ServerMessage {
 
     @Override
     public int kind() {
-        return Ok;
+        return OK;
     }
 }

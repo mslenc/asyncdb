@@ -13,6 +13,6 @@ public class ErrorMessage implements ServerMessage {
 
     @Override
     public int kind() {
-        return Error;
+        return ERROR;
     }
 }

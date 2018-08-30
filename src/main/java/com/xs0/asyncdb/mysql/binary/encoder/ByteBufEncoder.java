@@ -20,7 +20,7 @@ public class ByteBufEncoder implements BinaryEncoder {
     }
 
     @Override
-    public ColumnType encodesTo() {
+    public int encodesTo() {
         return ColumnType.FIELD_TYPE_BLOB;
     }
 }

@@ -15,6 +15,6 @@ public class PreparedStatementPrepareResponse implements ServerMessage {
 
     @Override
     public int kind() {
-        return PreparedStatementPrepareResponse;
+        return PREPARED_STATEMENT_PREPARE_RESPONSE;
     }
 }

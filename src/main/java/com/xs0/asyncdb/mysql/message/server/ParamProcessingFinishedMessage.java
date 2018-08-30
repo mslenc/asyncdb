@@ -9,6 +9,6 @@ public class ParamProcessingFinishedMessage implements ServerMessage {
 
     @Override
     public int kind() {
-        return ParamProcessingFinished;
+        return PARAM_PROCESSING_FINISHED;
     }
 }

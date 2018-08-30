@@ -12,14 +12,16 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-public class MySQLConnection extends TimeoutScheduler implements MySQLHandlerDelegate, Connection {
+public abstract class MySQLConnection extends TimeoutScheduler implements MySQLHandlerDelegate, Connection {
     private static AtomicLong counter = new AtomicLong();
     private static Version microsecondsVersion = new Version(5, 6, 0);
     private static Logger log = LoggerFactory.getLogger(MySQLConnection.class);
 
     public MySQLConnection(Configuration configuration,
                            CharsetMapper charsetMapper,
-                           EventLoopGroup group,
-                           )
+                           EventLoopGroup group
+                           ) {
+
+    }
 
 }

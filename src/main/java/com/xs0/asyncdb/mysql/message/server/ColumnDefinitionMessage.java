@@ -37,7 +37,7 @@ public class ColumnDefinitionMessage implements ServerMessage, ColumnData {
 
     @Override
     public int kind() {
-        return ColumnDefinition;
+        return COLUMN_DEFINITION;
     }
 
     @Override
