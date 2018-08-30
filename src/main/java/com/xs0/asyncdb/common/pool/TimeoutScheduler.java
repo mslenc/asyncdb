@@ -1,10 +1,10 @@
 package com.xs0.asyncdb.common.pool;
 
 import io.netty.channel.EventLoopGroup;
-import io.netty.util.concurrent.Promise;
 import io.netty.util.concurrent.ScheduledFuture;
 
 import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -38,18 +38,20 @@ public abstract class TimeoutScheduler {
         return eventLoopGroup().schedule(block, duration.toMillis(), TimeUnit.MILLISECONDS);
     }
 
-    public ScheduledFuture<?> addTimeout(Promise<?> promise, Duration duration) {
+    public ScheduledFuture<?> addTimeout(CompletableFuture<?> promise, Duration duration) {
         if (duration == null)
             return null;
 
         ScheduledFuture<?> scheduledFuture = schedule(duration, () -> {
-            if (promise.tryFailure(new TimeoutException("Operation timed out after it took too long to return (" + duration + ")"))) {
+            if (promise.completeExceptionally(new TimeoutException("Operation timed out after it took too long to return (" + duration + ")"))) {
                 isTimeoutedBool.set(true);
                 onTimeout();
             }
         });
 
-        promise.addListener(future -> scheduledFuture.cancel(false));
+        promise.thenRun(() -> {
+            scheduledFuture.cancel(false);
+        });
 
         return scheduledFuture;
     }

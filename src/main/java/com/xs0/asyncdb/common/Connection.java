@@ -14,49 +14,43 @@ public interface Connection {
 
     CompletableFuture<QueryResult> sendPreparedStatement(String query, List<Object> values);
 
+    ExecutionContext executionContext();
+
     default <T> CompletableFuture<T> inTransaction(TransactionExecutor<T> transactionExecutor) {
         CompletableFuture<T> future = new CompletableFuture<>();
 
-        sendQuery("BEGIN").handle((result, error) -> {
-            if (error != null) {
-                future.completeExceptionally(error);
-                return null;
+        sendQuery("BEGIN").whenCompleteAsync((beginResult, beginError) -> {
+            if (beginError != null) {
+                future.completeExceptionally(beginError);
+                return;
             }
 
             CompletableFuture<T> innerFuture;
             try {
                 innerFuture = transactionExecutor.executeTransaction(this);
             } catch (Exception e) {
-                sendQuery("ROLLBACK").handle((ignoredResult, ignoredError) -> {
+                sendQuery("ROLLBACK").thenRun(() -> {
                     future.completeExceptionally(e);
-                    return null;
                 });
-                return null;
+                return;
             }
 
-            innerFuture.handle((finalResult, finalError) -> {
-                if (finalError != null) {
-                    sendQuery("ROLLBACK").handle((ignoredResult, ignoredError) -> {
-                        future.completeExceptionally(finalError);
-                        return null;
+            innerFuture.whenComplete((txResult, txError) -> {
+                if (txError != null) {
+                    sendQuery("ROLLBACK").thenRun(() -> {
+                        future.completeExceptionally(txError);
                     });
                 } else {
-                    sendQuery("COMMIT").handle((commitResult, commitError) -> {
+                    sendQuery("COMMIT").whenComplete((commitResult, commitError) -> {
                         if (commitError != null) {
                             future.completeExceptionally(commitError);
                         } else {
-                            future.complete(finalResult);
+                            future.complete(txResult);
                         }
-
-                        return null;
                     });
                 }
-
-                return null;
             });
-
-            return null;
-        });
+        }, executionContext());
 
         return future;
     }

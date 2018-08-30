@@ -6,16 +6,16 @@ import com.xs0.asyncdb.mysql.message.server.PreparedStatementPrepareResponse;
 import java.util.ArrayList;
 
 public class PreparedStatementHolder {
-    private final String statement;
-    private final PreparedStatementPrepareResponse message;
+    final String statement;
+    final PreparedStatementPrepareResponse message;
 
     public PreparedStatementHolder(String statement, PreparedStatementPrepareResponse message) {
         this.statement = statement;
         this.message = message;
     }
 
-    private final ArrayList<ColumnDefinitionMessage> columns = new ArrayList<>();
-    private final ArrayList<ColumnDefinitionMessage> parameters = new ArrayList<>();
+    final ArrayList<ColumnDefinitionMessage> columns = new ArrayList<>();
+    final ArrayList<ColumnDefinitionMessage> parameters = new ArrayList<>();
 
     public byte[] statementId() {
         return message.statementId;
