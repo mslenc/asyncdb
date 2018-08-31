@@ -7,20 +7,24 @@ import java.nio.charset.Charset;
 
 import static com.xs0.asyncdb.mysql.binary.ByteBufUtils.readFixedString;
 import static com.xs0.asyncdb.mysql.binary.ByteBufUtils.readUntilEOF;
+import static com.xs0.asyncdb.mysql.util.MySQLIO.CLIENT_PROTOCOL_41;
 
-public class ErrorDecoder implements MessageDecoder {
-    private final Charset charset;
+public class ErrorDecoder {
+    // https://dev.mysql.com/doc/internals/en/packet-ERR_Packet.html
 
-    public ErrorDecoder(Charset charset) {
-        this.charset = charset;
-    }
+    public static ErrorMessage decodeAfterHeader(ByteBuf buffer, Charset charset, int capabilities) {
+        int errorCode = buffer.readUnsignedShortLE();
 
-    @Override
-    public ErrorMessage decode(ByteBuf buffer) {
-        return new ErrorMessage(
-            buffer.readShort(),
-            readFixedString(buffer, 6, charset),
-            readUntilEOF(buffer, charset)
-        );
+        String sqlState;
+        if ((capabilities & CLIENT_PROTOCOL_41) != 0) {
+            buffer.readByte(); // skip '#'
+            sqlState = readFixedString(buffer, 5, charset);
+        } else {
+            sqlState = null;
+        }
+
+        String errorMessage = readUntilEOF(buffer, charset);
+
+        return new ErrorMessage(errorCode, sqlState, errorMessage);
     }
 }

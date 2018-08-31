@@ -11,6 +11,6 @@ public class ShortDecoder implements BinaryDecoder {
 
     @Override
     public Short decode(ByteBuf buffer) {
-        return buffer.readShort();
+        return buffer.readShortLE();
     }
 }

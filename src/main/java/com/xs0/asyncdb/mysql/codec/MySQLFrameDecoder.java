@@ -1,3 +1,4 @@
+/*
 package com.xs0.asyncdb.mysql.codec;
 
 import com.xs0.asyncdb.common.exceptions.BufferNotFullyConsumedException;
@@ -28,12 +29,11 @@ public class MySQLFrameDecoder extends ByteToMessageDecoder {
     private final AtomicInteger messagesCount;
     private final ErrorDecoder errorDecoder;
     private final OkDecoder okDecoder;
-    private final ColumnDefinitionDecoder columnDecoder;
     private final ResultSetRowDecoder rowDecoder;
     private final PreparedStatementPrepareResponseDecoder preparedStatementPrepareDecoder;
     private final AuthenticationSwitchRequestDecoder authenticationSwitchDecoder;
 
-    public MySQLFrameDecoder(Charset charset, String connectionId) {
+    public MySQLFrameDecoder(Charset charset, String connectionId, DecoderRegistry decoderRegistry) {
         this.charset = charset;
         this.connectionId = connectionId;
 
@@ -41,7 +41,6 @@ public class MySQLFrameDecoder extends ByteToMessageDecoder {
         messagesCount = new AtomicInteger();
         errorDecoder = new ErrorDecoder(charset);
         okDecoder = new OkDecoder(charset);
-        columnDecoder = new ColumnDefinitionDecoder(charset, new DecoderRegistry(charset));
         rowDecoder = new ResultSetRowDecoder(charset);
         preparedStatementPrepareDecoder = PreparedStatementPrepareResponseDecoder.instance();
         authenticationSwitchDecoder = new AuthenticationSwitchRequestDecoder(charset);
@@ -63,7 +62,10 @@ public class MySQLFrameDecoder extends ByteToMessageDecoder {
 
     private boolean hasReadColumnsCount = false;
 
+    @Override
     public void decode(ChannelHandlerContext ctx, ByteBuf buffer, List<Object> out) {
+        System.err.println("decode called with " + buffer);
+
         if (buffer.readableBytes() > 4) {
             buffer.markReaderIndex();
             int size = read3ByteInt(buffer);
@@ -287,3 +289,4 @@ public class MySQLFrameDecoder extends ByteToMessageDecoder {
         this.hasReadColumnsCount = false;
     }
 }
+*/

@@ -14,12 +14,12 @@ public class ColumnDefinitionMessage implements ServerMessage, ColumnData {
     public final int characterSet;
     public final long columnLength;
     public final int columnType;
-    public final short flags;
+    public final int flags;
     public final byte decimals;
     public final BinaryDecoder binaryDecoder;
     public final ColumnDecoder textDecoder;
 
-    public ColumnDefinitionMessage(String catalog, String schema, String table, String originalTable, String name, String originalName, int characterSet, long columnLength, int columnType, short flags, byte decimals, BinaryDecoder binaryDecoder, ColumnDecoder textDecoder) {
+    public ColumnDefinitionMessage(String catalog, String schema, String table, String originalTable, String name, String originalName, int characterSet, long columnLength, int columnType, int flags, byte decimals, BinaryDecoder binaryDecoder, ColumnDecoder textDecoder) {
         this.catalog = catalog;
         this.schema = schema;
         this.table = table;

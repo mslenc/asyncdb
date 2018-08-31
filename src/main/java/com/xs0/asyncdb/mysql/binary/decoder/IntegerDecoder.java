@@ -11,6 +11,6 @@ public class IntegerDecoder implements BinaryDecoder {
 
     @Override
     public Integer decode(ByteBuf buffer) {
-        return buffer.readInt();
+        return buffer.readIntLE();
     }
 }

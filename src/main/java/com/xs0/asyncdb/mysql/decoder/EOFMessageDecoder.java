@@ -1,21 +1,16 @@
 package com.xs0.asyncdb.mysql.decoder;
 
 import com.xs0.asyncdb.mysql.message.server.EOFMessage;
-import com.xs0.asyncdb.mysql.message.server.ServerMessage;
 import io.netty.buffer.ByteBuf;
 
-public class EOFMessageDecoder implements MessageDecoder {
-    private static final EOFMessageDecoder instance = new EOFMessageDecoder();
+public class EOFMessageDecoder {
 
-    public static EOFMessageDecoder instance() {
-        return instance;
-    }
+    public static EOFMessage decodeAfterHeader(ByteBuf buffer) {
+        // https://dev.mysql.com/doc/internals/en/packet-EOF_Packet.html
 
-    @Override
-    public EOFMessage decode(ByteBuf buffer) {
-        return new EOFMessage(
-            buffer.readUnsignedShort(),
-            buffer.readUnsignedShort()
-        );
+        int numWarnings = buffer.readUnsignedShortLE();
+        int statusFlags = buffer.readUnsignedShortLE();
+
+        return new EOFMessage(numWarnings, statusFlags);
     }
 }

@@ -24,7 +24,7 @@ public class TimeDecoder implements BinaryDecoder {
                 boolean negative = buffer.readUnsignedByte() == 1;
 
                 Duration result = Duration.ZERO;
-                result = result.plus(Duration.ofDays(buffer.readUnsignedInt()));
+                result = result.plus(Duration.ofDays(buffer.readUnsignedIntLE()));
                 result = result.plus(Duration.ofHours(buffer.readUnsignedByte()));
                 result = result.plus(Duration.ofMinutes(buffer.readUnsignedByte()));
                 result = result.plus(Duration.ofSeconds(buffer.readUnsignedByte()));
@@ -36,11 +36,11 @@ public class TimeDecoder implements BinaryDecoder {
                 boolean negative = buffer.readUnsignedByte() == 1;
 
                 Duration result = Duration.ZERO;
-                result = result.plus(Duration.ofDays(buffer.readUnsignedInt()));
+                result = result.plus(Duration.ofDays(buffer.readUnsignedIntLE()));
                 result = result.plus(Duration.ofHours(buffer.readUnsignedByte()));
                 result = result.plus(Duration.ofMinutes(buffer.readUnsignedByte()));
                 result = result.plus(Duration.ofSeconds(buffer.readUnsignedByte()));
-                result = result.plus(Duration.ofNanos(1000L * buffer.readUnsignedInt())); // mysql has micros, we have nanos
+                result = result.plus(Duration.ofNanos(1000L * buffer.readUnsignedIntLE())); // mysql has micros, we have nanos
 
                 return negative ? result.negated() : result;
             }

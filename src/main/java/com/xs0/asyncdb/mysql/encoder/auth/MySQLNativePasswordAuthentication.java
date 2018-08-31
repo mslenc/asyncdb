@@ -4,17 +4,10 @@ import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-public class MySQLNativePasswordAuthentication implements AuthenticationMethod {
-    private static final MySQLNativePasswordAuthentication instance = new MySQLNativePasswordAuthentication();
-
-    public static MySQLNativePasswordAuthentication getInstance() {
-        return instance;
-    }
-
+public class MySQLNativePasswordAuthentication {
     private static final byte[] emptyArray = { };
 
-    @Override
-    public byte[] generateAuthentication(Charset charset, String passwordOpt, byte[] seed) {
+    public static byte[] generateAuthentication(Charset charset, String passwordOpt, byte[] seed) {
         if (passwordOpt != null) {
             return scramble411(charset, passwordOpt, seed);
         } else {
@@ -22,7 +15,7 @@ public class MySQLNativePasswordAuthentication implements AuthenticationMethod {
         }
     }
 
-    private byte[] scramble411(Charset charset, String password, byte[] seed) {
+    private static byte[] scramble411(Charset charset, String password, byte[] seed) {
         MessageDigest messageDigest;
         try {
             messageDigest = MessageDigest.getInstance("SHA-1");

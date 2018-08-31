@@ -2,24 +2,17 @@ package com.xs0.asyncdb.mysql.encoder.auth;
 
 import java.nio.charset.Charset;
 
-public class MySQLOldPasswordAuthentication implements AuthenticationMethod {
-    private static final MySQLOldPasswordAuthentication instance = new MySQLOldPasswordAuthentication();
-
-    public static MySQLOldPasswordAuthentication getInstance() {
-        return instance;
-    }
-
+public class MySQLOldPasswordAuthentication {
     private static final byte[] emptyArray = { };
 
-    @Override
-    public byte[] generateAuthentication(Charset charset, String passwordOpt, byte[] seed) {
+    public static byte[] generateAuthentication(Charset charset, String passwordOpt, byte[] seed) {
         if (passwordOpt == null || passwordOpt.isEmpty())
             return emptyArray;
 
         return newCrypt(charset, passwordOpt, new String(seed, charset));
     }
 
-    byte[] newCrypt(Charset charset, String password, String seed) {
+    private static byte[] newCrypt(Charset charset, String password, String seed) {
         byte b = 0;
         double d = 0;
 
@@ -58,7 +51,7 @@ public class MySQLOldPasswordAuthentication implements AuthenticationMethod {
         return result;
     }
 
-    private long[] newHash(String password) {
+    private static long[] newHash(String password) {
         long nr = 1345345333L;
         long add = 7L;
         long nr2 = 0x12345671L;

@@ -4,13 +4,12 @@ import com.xs0.asyncdb.common.column.*;
 import com.xs0.asyncdb.mysql.binary.decoder.*;
 import com.xs0.asyncdb.mysql.binary.decoder.ByteDecoder;
 import com.xs0.asyncdb.mysql.column.ByteArrayColumnDecoder;
-import com.xs0.asyncdb.mysql.column.ColumnType;
 import com.xs0.asyncdb.mysql.column.DurationDecoder;
-import com.xs0.asyncdb.mysql.util.CharsetMapper;
 
 import java.nio.charset.Charset;
 
 import static com.xs0.asyncdb.mysql.column.ColumnType.*;
+import static com.xs0.asyncdb.mysql.util.CharsetMapper.CHARSET_BINARY;
 
 public class DecoderRegistry {
     private final BigDecimalDecoder bigDecimalDecoder;
@@ -34,7 +33,7 @@ public class DecoderRegistry {
             case FIELD_TYPE_TINY_BLOB:
             case FIELD_TYPE_VAR_STRING:
             case FIELD_TYPE_STRING:
-                if (charsetCode == CharsetMapper.BINARY) {
+                if (charsetCode == CHARSET_BINARY) {
                     return ByteArrayDecoder.instance();
                 } else {
                     return this.stringDecoder;
@@ -63,14 +62,12 @@ public class DecoderRegistry {
             case FIELD_TYPE_FLOAT:
                 return FloatDecoder.instance();
 
-            case FIELD_TYPE_NUMERIC:
             case FIELD_TYPE_DECIMAL:
             case FIELD_TYPE_NEW_DECIMAL:
                 return this.bigDecimalDecoder;
 
             case FIELD_TYPE_DATETIME:
             case FIELD_TYPE_TIMESTAMP:
-            case FIELD_TYPE_NEWDATE: // TODO: verify if this is actually appropriate for NEWDATE
                 return TimestampDecoder.instance();
 
             case FIELD_TYPE_DATE:
@@ -106,7 +103,6 @@ public class DecoderRegistry {
 
             case FIELD_TYPE_DECIMAL:
             case FIELD_TYPE_NEW_DECIMAL:
-            case FIELD_TYPE_NUMERIC:
                 return BigDecimalEncoderDecoder.instance();
 
             case FIELD_TYPE_DOUBLE:
@@ -121,9 +117,6 @@ public class DecoderRegistry {
 
             case FIELD_TYPE_LONGLONG:
                 return LongEncoderDecoder.instance();
-
-            case FIELD_TYPE_NEWDATE:
-                return DateEncoderDecoder.instance();
 
             case FIELD_TYPE_SHORT:
                 return ShortEncoderDecoder.instance();
@@ -147,7 +140,7 @@ public class DecoderRegistry {
             case FIELD_TYPE_BLOB:
             case FIELD_TYPE_VAR_STRING:
             case FIELD_TYPE_STRING: {
-                if (charsetCode == CharsetMapper.BINARY) {
+                if (charsetCode == CHARSET_BINARY) {
                     return ByteArrayColumnDecoder.instance();
                 } else {
                     return StringEncoderDecoder.instance();

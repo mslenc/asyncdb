@@ -12,46 +12,28 @@ public interface Connection {
 
     CompletableFuture<QueryResult> sendQuery(String query);
 
-    CompletableFuture<QueryResult> sendPreparedStatement(String query, List<Object> values);
+    CompletableFuture<PreparedStatement> prepareStatement(String query);
 
-    ExecutionContext executionContext();
+    default CompletableFuture<QueryResult> sendQuery(String query, List<Object> values) {
+        CompletableFuture<QueryResult> promise = new CompletableFuture<>();
 
-    default <T> CompletableFuture<T> inTransaction(TransactionExecutor<T> transactionExecutor) {
-        CompletableFuture<T> future = new CompletableFuture<>();
-
-        sendQuery("BEGIN").whenCompleteAsync((beginResult, beginError) -> {
-            if (beginError != null) {
-                future.completeExceptionally(beginError);
+        prepareStatement(query).whenComplete((preparedStatement, prepareError) -> {
+            if (prepareError != null) {
+                promise.completeExceptionally(prepareError);
                 return;
             }
 
-            CompletableFuture<T> innerFuture;
-            try {
-                innerFuture = transactionExecutor.executeTransaction(this);
-            } catch (Exception e) {
-                sendQuery("ROLLBACK").thenRun(() -> {
-                    future.completeExceptionally(e);
+            preparedStatement.execute(values).whenComplete((executeResult, executeError) -> {
+                preparedStatement.close().thenRun(() -> {
+                    if (executeError != null) {
+                        promise.completeExceptionally(executeError);
+                    } else {
+                        promise.complete(executeResult);
+                    }
                 });
-                return;
-            }
-
-            innerFuture.whenComplete((txResult, txError) -> {
-                if (txError != null) {
-                    sendQuery("ROLLBACK").thenRun(() -> {
-                        future.completeExceptionally(txError);
-                    });
-                } else {
-                    sendQuery("COMMIT").whenComplete((commitResult, commitError) -> {
-                        if (commitError != null) {
-                            future.completeExceptionally(commitError);
-                        } else {
-                            future.complete(txResult);
-                        }
-                    });
-                }
             });
-        }, executionContext());
+        });
 
-        return future;
+        return promise;
     }
 }

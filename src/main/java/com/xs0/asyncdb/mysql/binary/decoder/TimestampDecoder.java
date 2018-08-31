@@ -22,21 +22,21 @@ public class TimestampDecoder implements BinaryDecoder {
 
             case 4:
                 return LocalDateTime.of(
-                    buffer.readUnsignedShort(), buffer.readUnsignedByte(), buffer.readUnsignedByte(),
+                    buffer.readUnsignedShortLE(), buffer.readUnsignedByte(), buffer.readUnsignedByte(),
                     0, 0, 0, 0
                 );
 
             case 7:
                 return LocalDateTime.of(
-                    buffer.readUnsignedShort(), buffer.readUnsignedByte(), buffer.readUnsignedByte(),
+                    buffer.readUnsignedShortLE(), buffer.readUnsignedByte(), buffer.readUnsignedByte(),
                     buffer.readUnsignedByte(), buffer.readUnsignedByte(),buffer.readUnsignedByte(), 0
                 );
 
             case 11:
                 return LocalDateTime.of(
-                        buffer.readUnsignedShort(), buffer.readUnsignedByte(), buffer.readUnsignedByte(),
+                        buffer.readUnsignedShortLE(), buffer.readUnsignedByte(), buffer.readUnsignedByte(),
                         buffer.readUnsignedByte(), buffer.readUnsignedByte(),buffer.readUnsignedByte(),
-                        (int)(buffer.readUnsignedInt() * 1000L)); // mysql is micros, LocalDateTime is nanos
+                        (int)(buffer.readUnsignedIntLE() * 1000L)); // mysql is micros, LocalDateTime is nanos
 
             default:
                 throw new DecodingException("Unexpected length for a timestamp (" + size + ")");

@@ -2,7 +2,6 @@ package com.xs0.asyncdb.mysql;
 
 import com.xs0.asyncdb.common.QueryResult;
 import com.xs0.asyncdb.common.ResultSet;
-import sun.plugin2.message.Message;
 
 public class MySQLQueryResult implements QueryResult {
     private final long rowsAffected;

@@ -1,6 +1,7 @@
 package com.xs0.asyncdb.mysql.message.client;
 
 import com.xs0.asyncdb.mysql.message.server.ColumnDefinitionMessage;
+import io.netty.buffer.ByteBuf;
 
 import java.util.List;
 import java.util.Set;
@@ -19,6 +20,15 @@ public class PreparedStatementExecuteMessage implements ClientMessage {
     }
 
     @Override
+    public void encodeInto(ByteBuf packet) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public int packetSequenceNumber() {
+        return 0;
+    }
+
     public int kind() {
         return PREPARED_STATEMENT_EXECUTE;
     }

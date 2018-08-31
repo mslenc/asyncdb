@@ -1,85 +1,100 @@
 package com.xs0.asyncdb.mysql.codec;
 
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import com.xs0.asyncdb.common.Configuration;
-import com.xs0.asyncdb.common.ExecutionContext;
-import com.xs0.asyncdb.common.exceptions.DatabaseException;
-import com.xs0.asyncdb.common.general.MutableResultSet;
-import com.xs0.asyncdb.mysql.binary.BinaryRowDecoder;
+import com.xs0.asyncdb.common.QueryResult;
+import com.xs0.asyncdb.common.util.FutureUtils;
+import com.xs0.asyncdb.mysql.MySQLConnection;
+import com.xs0.asyncdb.mysql.codec.commands.ExecuteQueryCommand;
+import com.xs0.asyncdb.mysql.codec.commands.MySQLCommand;
+import com.xs0.asyncdb.mysql.codec.statemachine.InitialHandshakeStateMachine;
+import com.xs0.asyncdb.mysql.codec.statemachine.MySQLStateMachine;
 import com.xs0.asyncdb.mysql.message.client.*;
 import com.xs0.asyncdb.mysql.message.server.*;
-import com.xs0.asyncdb.mysql.util.CharsetMapper;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.CodecException;
+import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class MySQLConnectionHandler extends SimpleChannelInboundHandler<Object> {
-    private final Configuration configuration;
-    private final MySQLHandlerDelegate handlerDelegate;
+    private static final int STATE_HANDSHAKING = 0;
+    private static final int STATE_RUNNING_STATE_MACHINE = 1;
+    private static final int STATE_IDLE = 2;
+    private static final int STATE_CLOSED = 3;
+
+
+
+    public final Configuration configuration;
+    private final MySQLConnection handlerDelegate;
     private final EventLoopGroup group;
-    private final ExecutionContext executionContext;
-    private final String connectionId;
 
     private final Logger log;
     private final Bootstrap bootstrap;
-    private final CompletableFuture<MySQLConnectionHandler> connectionPromise;
-    private final MySQLFrameDecoder decoder;
-    private final MySQLOneToOneEncoder encoder;
 
     private final SendLongDataEncoder sendLongDataEncoder = SendLongDataEncoder.instance();
-    private final ArrayList<ColumnDefinitionMessage> currentParameters = new ArrayList<>();
-    private final ArrayList<ColumnDefinitionMessage> currentColumns = new ArrayList<>();
-    private final HashMap<String, PreparedStatementHolder> parsedStatements = new HashMap<>();
-    private final BinaryRowDecoder binaryRowDecoder = BinaryRowDecoder.instance();
+    public final DecoderRegistry decoderRegistry;
 
-    private PreparedStatementHolder currentPreparedStatementHolder = null;
-    private PreparedStatement currentPreparedStatement = null;
-    private MutableResultSet<ColumnDefinitionMessage> currentQuery = null;
     private ChannelHandlerContext currentContext = null;
 
+    private HandshakeMessage serverInfo;
+
+    private int state;
+    private MySQLStateMachine currentStateMachine;
+    private CompletableFuture<?> currentPromise;
+    private boolean connectCalled;
+    private boolean connectFinished;
+    private final ArrayDeque<MySQLCommand> commandQueue = new ArrayDeque<>();
+
     public MySQLConnectionHandler(Configuration configuration,
-                                  CharsetMapper charsetMapper,
-                                  MySQLHandlerDelegate handlerDelegate,
+                                  MySQLConnection handlerDelegate,
                                   EventLoopGroup group,
-                                  ExecutionContext executionContext,
                                   String connectionId) {
 
         this.configuration = configuration;
         this.handlerDelegate = handlerDelegate;
         this.group = group;
-        this.executionContext = executionContext;
-        this.connectionId = connectionId;
 
         this.log = LoggerFactory.getLogger("[connection-handler]" + connectionId);
         this.bootstrap = new Bootstrap().group(this.group);
-        this.connectionPromise = new CompletableFuture<>();
-        this.decoder = new MySQLFrameDecoder(configuration.charset, connectionId);
-        this.encoder = new MySQLOneToOneEncoder(configuration.charset, charsetMapper);
+        this.decoderRegistry = new DecoderRegistry(configuration.charset);
     }
 
     public CompletableFuture<MySQLConnectionHandler> connect() {
+        if (state == STATE_CLOSED)
+            return FutureUtils.failedFuture(new IllegalStateException("This connection has already been closed"));
+
+        if (connectFinished)
+            return CompletableFuture.completedFuture(this);
+
+        if (connectCalled)
+            return (CompletableFuture<MySQLConnectionHandler>) currentPromise;
+
+        connectCalled = true;
+        CompletableFuture<MySQLConnectionHandler> promise = new CompletableFuture<>();
+        this.currentPromise = promise;
+        this.currentStateMachine = new InitialHandshakeStateMachine();
+        this.state = STATE_RUNNING_STATE_MACHINE;
+
+        currentStateMachine.init(this);
+
         this.bootstrap.channel(NioSocketChannel.class);
 
         this.bootstrap.handler(new ChannelInitializer<Channel>() {
             @Override
             protected void initChannel(Channel channel) {
                 channel.pipeline().addLast(
-                    decoder,
-                    encoder,
+                    new LengthFieldBasedFrameDecoder(ByteOrder.LITTLE_ENDIAN, 0xFFFFFF + 4, 0, 3, 1, 4, true),
+                    MySQLOneToOneEncoder.instance(),
                     sendLongDataEncoder,
                     MySQLConnectionHandler.this
                 );
@@ -87,105 +102,99 @@ public class MySQLConnectionHandler extends SimpleChannelInboundHandler<Object> 
         });
 
         this.bootstrap.option(ChannelOption.SO_KEEPALIVE, true);
-        this.bootstrap.option(ChannelOption.ALLOCATOR, LittleEndianByteBufAllocator.instance());
 
         ChannelFuture connectFuture = this.bootstrap.connect(new InetSocketAddress(configuration.host, configuration.port));
         connectFuture.addListener(f -> {
             if (f.isSuccess()) {
                 // nothing?
             } else {
-                connectionPromise.completeExceptionally(f.cause());
+                promise.completeExceptionally(f.cause());
             }
         });
 
-        return this.connectionPromise;
+        return promise;
     }
 
     @Override
     public void channelRead0(ChannelHandlerContext ctx, Object message) {
-        if (message instanceof ServerMessage) {
-            ServerMessage m = (ServerMessage) message;
-            switch (m.kind()) {
-                case ServerMessage.SERVER_PROTOCOL_VERSION: {
-                    handlerDelegate.onHandshake((HandshakeMessage) m);
-                    break;
-                }
-
-                case ServerMessage.OK: {
-                    this.clearQueryState();
-                    handlerDelegate.onOk((OkMessage) m);
-                    break;
-                }
-
-                case ServerMessage.ERROR: {
-                    this.clearQueryState();
-                    handlerDelegate.onError((ErrorMessage) m);
-                    break;
-                }
-
-                case ServerMessage.EOF: {
-                    this.handleEOF(m);
-                    break;
-                }
-
-                case ServerMessage.COLUMN_DEFINITION: {
-                    ColumnDefinitionMessage colDef = (ColumnDefinitionMessage)m;
-
-                    if (currentPreparedStatementHolder != null && this.currentPreparedStatementHolder.needsAny()) {
-                        this.currentPreparedStatementHolder.add(colDef);
-                    }
-
-                    this.currentColumns.add(colDef);
-
-                    break;
-                }
-
-                case ServerMessage.COLUMN_DEFINITION_FINISHED: {
-                    this.onColumnDefinitionFinished();
-                    break;
-                }
-
-                case ServerMessage.PREPARED_STATEMENT_PREPARE_RESPONSE: {
-                    this.onPreparedStatementPrepareResponse((PreparedStatementPrepareResponse)m);
-                    break;
-                }
-
-                case ServerMessage.ROW: {
-                    ResultSetRowMessage rowMsg = (ResultSetRowMessage) m;
-
-                    Object[] items = new Object[rowMsg.size()];
-
-                    int x = 0;
-                    while (x < rowMsg.size()) {
-                        if (rowMsg.get(x) == null) {
-                            items[x] = null;
-                        } else {
-                            ColumnDefinitionMessage colDef = this.currentQuery.columnTypes.get(x);
-                            colDef.textDecoder.decode(colDef, rowMsg.get(x), configuration.charset);
-                        }
-                        x++;
-                    }
-
-                    this.currentQuery.addRow(items);
-                    break;
-                }
-
-                case ServerMessage.BINARY_ROW: {
-                    BinaryRowMessage rowMsg = (BinaryRowMessage) m;
-                    this.currentQuery.addRow(this.binaryRowDecoder.decode(rowMsg.buffer, this.currentColumns));
-                    break;
-                }
-
-                case ServerMessage.PARAM_PROCESSING_FINISHED: {
-                    break;
-                }
-
-                case ServerMessage.PARAM_AND_COLUMN_PROCESSING_FINISHED: {
-                    this.onColumnDefinitionFinished();
-                    break;
-                }
-            }
+        ByteBuf packet;
+        if (message instanceof ByteBuf) {
+            packet = (ByteBuf) message;
+        } else {
+            return;
         }
+
+        MySQLStateMachine.Result result;
+
+        if (currentStateMachine != null) {
+            try {
+                result = currentStateMachine.processPacket(packet);
+                if (result == null) {
+                    result = MySQLStateMachine.Result.protocolErrorAbortEverything("State machine returned no result");
+                }
+            } catch (Exception e) {
+                result = MySQLStateMachine.Result.protocolErrorAbortEverything(e); // who knows what state it is in now..
+            }
+        } else {
+            result = MySQLStateMachine.Result.protocolErrorAbortEverything(new IllegalStateException("A message received with no state machine active"));
+        }
+
+        handleStateMachineResult(result);
+    }
+
+    private void handleStateMachineResult(MySQLStateMachine.Result result) {
+        switch (result.resultType) {
+            case EXPECTING_MORE_PACKETS:
+                // nothing to handle here :)
+                break;
+
+            case STATE_MACHINE_FINISHED:
+                if (state == STATE_HANDSHAKING) {
+                    connectFinished = true;
+                    ((CompletableFuture<MySQLConnectionHandler>)currentPromise).complete(this);
+                }
+
+                MySQLCommand next = commandQueue.pollFirst();
+                if (next == null) {
+                    state = STATE_IDLE;
+                    currentStateMachine = null;
+                    currentPromise = null;
+                } else {
+                    state = STATE_RUNNING_STATE_MACHINE;
+                    currentStateMachine = next.createStateMachine();
+                    currentPromise = next.getPromise();
+
+                    MySQLStateMachine.Result initResult;
+                    try {
+                        initResult = currentStateMachine.init(this);
+                    } catch (Exception e) {
+                        initResult = MySQLStateMachine.Result.protocolErrorAbortEverything(e);
+                    }
+
+                    handleStateMachineResult(initResult);
+                }
+                break;
+
+            case PROTOCOL_ERROR_ABORT_ABORT_ABORT:
+                state = STATE_CLOSED;
+
+                currentPromise.completeExceptionally(result.error);
+                currentPromise = null;
+                currentStateMachine = null;
+
+                for (MySQLCommand command : commandQueue)
+                    command.getPromise().completeExceptionally(result.error);
+
+                disconnect();
+                break;
+        }
+    }
+
+    void enqueueCommand(MySQLCommand command) {
+        commandQueue.addLast(command);
+
+        if (state == STATE_IDLE)
+            handleStateMachineResult(MySQLStateMachine.Result.stateMachineFinished());
     }
 
     @Override
@@ -209,11 +218,9 @@ public class MySQLConnectionHandler extends SimpleChannelInboundHandler<Object> 
     }
 
     private void handleException(Throwable cause) {
-        if (!this.connectionPromise.isDone()) {
-            this.connectionPromise.completeExceptionally(cause);
-        }
+        handleStateMachineResult(MySQLStateMachine.Result.protocolErrorAbortEverything(cause));
 
-        handlerDelegate.exceptionCaught(cause);
+//        handlerDelegate.exceptionCaught(cause);
     }
 
     @Override
@@ -221,47 +228,8 @@ public class MySQLConnectionHandler extends SimpleChannelInboundHandler<Object> 
         this.currentContext = ctx;
     }
 
-    public ChannelFuture write(QueryMessage message)  {
-        this.decoder.queryProcessStarted();
-        return writeAndHandleError(message);
-    }
-
-    public ChannelFuture sendPreparedStatement(String query, List<Object> values) {
-        this.currentColumns.clear();
-        this.currentParameters.clear();
-
-        this.currentPreparedStatement = new PreparedStatement(query, values);
-
-        PreparedStatementHolder existing = this.parsedStatements.get(query);
-        if (existing != null) {
-            return executePreparedStatement(existing.statementId(), existing.columns.size(), values, existing.parameters);
-        } else {
-            decoder.preparedStatementPrepareStarted();
-            return writeAndHandleError(new PreparedStatementPrepareMessage(query));
-        }
-    }
-
-    public ChannelFuture write(HandshakeResponseMessage message) {
-        decoder.hasDoneHandshake = true;
-        return writeAndHandleError(message);
-    }
-
-    public ChannelFuture write(AuthenticationSwitchResponse message) {
-        return writeAndHandleError(message);
-    }
-
-    public ChannelFuture write(QuitMessage message) {
-        return writeAndHandleError(message);
-    }
-
     public ChannelFuture disconnect() {
         return this.currentContext.close();
-    }
-
-    public void clearQueryState() {
-        this.currentColumns.clear();
-        this.currentParameters.clear();
-        this.currentQuery = null;
     }
 
     public boolean isConnected() {
@@ -272,6 +240,7 @@ public class MySQLConnectionHandler extends SimpleChannelInboundHandler<Object> 
         }
     }
 
+    /*
     ChannelFuture executePreparedStatement(byte[] statementId, int columnsCount, List<Object> values, List<ColumnDefinitionMessage> parameters) {
         decoder.preparedStatementExecuteStarted(columnsCount, parameters.size());
         this.currentColumns.clear();
@@ -434,8 +403,51 @@ public class MySQLConnectionHandler extends SimpleChannelInboundHandler<Object> 
             handlerDelegate.switchAuthentication(authenticationSwitch);
         }
     }
+    */
 
     void schedule(Runnable block, Duration duration) {
         this.currentContext.channel().eventLoop().schedule(block, duration.toMillis(), TimeUnit.MILLISECONDS);
+    }
+
+    public void sendMessage(ClientMessage message) {
+        switch (this.state) {
+            case STATE_HANDSHAKING:
+            case STATE_RUNNING_STATE_MACHINE:
+                this.currentContext.write(message);
+                break;
+
+            case STATE_IDLE:
+                throw new IllegalStateException("Sending a message on an idle channel");
+
+            case STATE_CLOSED:
+                throw new IllegalStateException("Sending a message on a closed channel");
+        }
+    }
+
+
+    public void setServerInfo(HandshakeMessage serverInfo) {
+        this.serverInfo = serverInfo;
+    }
+
+    public HandshakeMessage serverInfo() {
+        return serverInfo;
+    }
+
+    CompletableFuture<QueryResult> executePreparedStatement(PreparedStatementInfo psInfo, List<Object> values) {
+        throw new UnsupportedOperationException("TODO");
+    }
+
+    void closePreparedStatement(PreparedStatementInfo psInfo, CompletableFuture<Void> closingPromise) {
+        throw new UnsupportedOperationException("TODO");
+    }
+
+    public com.xs0.asyncdb.common.PreparedStatement rememberPreparedStatement(PreparedStatementInfo info) {
+        throw new UnsupportedOperationException("TODO");
+    }
+
+    public CompletableFuture<QueryResult> sendQuery(String query) {
+        CompletableFuture<QueryResult> promise = new CompletableFuture<>();
+        enqueueCommand(new ExecuteQueryCommand(query, promise));
+        return promise;
     }
 }

@@ -7,7 +7,7 @@ import java.util.ArrayList;
 
 public class PreparedStatementHolder {
     final String statement;
-    final PreparedStatementPrepareResponse message;
+    public final PreparedStatementPrepareResponse message;
 
     public PreparedStatementHolder(String statement, PreparedStatementPrepareResponse message) {
         this.statement = statement;

@@ -1,93 +1,79 @@
 package com.xs0.asyncdb.mysql.decoder;
 
-import com.xs0.asyncdb.mysql.encoder.auth.AuthenticationMethod;
+import com.xs0.asyncdb.common.exceptions.ProtocolException;
 import com.xs0.asyncdb.mysql.message.server.HandshakeMessage;
-import com.xs0.asyncdb.mysql.message.server.ServerMessage;
 import io.netty.buffer.ByteBuf;
+import kotlin.text.Charsets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.xs0.asyncdb.mysql.binary.ByteBufUtils.readCString;
-import static com.xs0.asyncdb.mysql.binary.ByteBufUtils.readUntilEOF;
+import static com.xs0.asyncdb.mysql.binary.ByteBufUtils.readFixedBytes;
+import static com.xs0.asyncdb.mysql.binary.ByteBufUtils.readUntilEOFOrZero;
 import static com.xs0.asyncdb.mysql.util.MySQLIO.CLIENT_PLUGIN_AUTH;
 import static com.xs0.asyncdb.mysql.util.MySQLIO.CLIENT_SECURE_CONNECTION;
 import static java.nio.charset.StandardCharsets.US_ASCII;
 
-public class HandshakeV10Decoder implements MessageDecoder {
-    private static final HandshakeV10Decoder instance = new HandshakeV10Decoder();
-
-    public static HandshakeV10Decoder instance() {
-        return instance;
-    }
+public class HandshakeV10Decoder {
+    // https://dev.mysql.com/doc/internals/en/connection-phase-packets.html#packet-Protocol::Handshake
 
     private static final Logger log = LoggerFactory.getLogger(HandshakeV10Decoder.class);
-    private static final int seedSize = 8;
-    private static final int seedComplementSize = 12;
-    private static final int padding = 10;
 
-    @Override
-    public ServerMessage decode(ByteBuf buffer) {
-        String serverVersion = readCString(buffer, US_ASCII);
-        long connectionId = buffer.readUnsignedInt();
+    public static HandshakeMessage decodeAfterHeader(ByteBuf packet) {
+        String serverVersion = readCString(packet, US_ASCII);
+        if (serverVersion == null)
+            throw new ProtocolException("Failed to read server version");
 
-        byte[] seed = new byte[seedSize + seedComplementSize];
-        buffer.readBytes(seed, 0, seedSize);
+        long connectionId = packet.readUnsignedIntLE();
 
-        buffer.readByte(); // filler
+        byte[] authPluginData = readFixedBytes(packet, 8);
+        if (authPluginData == null)
+            throw new ProtocolException("Incomplete auth-plugin-data-part-1");
 
-        int serverCapabilityFlags = buffer.readUnsignedShort();
+        packet.skipBytes(1); // filler
 
-        /* New protocol with 16 bytes to describe server characteristics */
+        int capabilityFlags = packet.readUnsignedShortLE();
 
-        // read character set (1 byte)
-        int characterSet = buffer.readUnsignedByte();
+        String authPluginName = null;
 
-        // read status flags (2 bytes)
-        int statusFlags = buffer.readUnsignedShort();
+        int charsetId = -1;
+        int statusFlags = 0;
 
-        // read capability flags (upper 2 bytes)
-        serverCapabilityFlags |= buffer.readUnsignedShort() << 16;
+        if (packet.readableBytes() > 0) {
+            charsetId = packet.readUnsignedByte();
+            statusFlags = packet.readUnsignedShortLE();
+            capabilityFlags |= packet.readUnsignedShortLE() << 16;
 
-        int authPluginDataLength = 0;
-        String authenticationMethod = AuthenticationMethod.NATIVE;
-
-        if ((serverCapabilityFlags & CLIENT_PLUGIN_AUTH) != 0) {
-            // read length of auth-plugin-data (1 byte)
-            authPluginDataLength = buffer.readUnsignedByte();
-        } else {
-            // read filler ([00])
-            buffer.readByte();
-        }
-
-        // next 10 bytes are reserved (all [00])
-        buffer.skipBytes(padding);
-
-        log.debug("Auth plugin data length was {}", authPluginDataLength);
-
-        if ((serverCapabilityFlags & CLIENT_SECURE_CONNECTION) != 0) {
-            int complement;
-            if (authPluginDataLength > 0) {
-                complement = authPluginDataLength - 1 - seedSize;
+            int lengthOfAuthPluginData = 0;
+            if ((capabilityFlags & CLIENT_PLUGIN_AUTH) != 0) {
+                lengthOfAuthPluginData = packet.readUnsignedByte();
             } else {
-                complement = seedComplementSize;
+                packet.skipBytes(1);
             }
 
-            buffer.readBytes(seed, seedSize, complement);
-            buffer.readByte();
-        }
+            packet.skipBytes(10); // reserved
 
-        if ((serverCapabilityFlags & CLIENT_PLUGIN_AUTH) != 0) {
-            authenticationMethod = readUntilEOF(buffer, US_ASCII);
+            if ((capabilityFlags & CLIENT_SECURE_CONNECTION) != 0) {
+                int extraBytes = Math.max(13, lengthOfAuthPluginData - 8);
+                byte[] fullAuthPluginData = new byte[lengthOfAuthPluginData];
+                System.arraycopy(authPluginData, 0, fullAuthPluginData, 0, 8);
+                packet.readBytes(fullAuthPluginData, 8, extraBytes);
+                authPluginData = fullAuthPluginData;
+            }
+
+            if ((capabilityFlags & CLIENT_PLUGIN_AUTH) != 0) {
+                authPluginName = readUntilEOFOrZero(packet, Charsets.ISO_8859_1);
+            }
         }
 
         HandshakeMessage message = new HandshakeMessage(
             serverVersion,
             connectionId,
-            seed,
-            serverCapabilityFlags,
-            characterSet,
+            authPluginData,
+            capabilityFlags,
+            charsetId,
             statusFlags,
-            authenticationMethod
+            authPluginName
         );
 
         log.debug("handshake message was {}", message);

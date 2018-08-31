@@ -49,9 +49,7 @@ public abstract class TimeoutScheduler {
             }
         });
 
-        promise.thenRun(() -> {
-            scheduledFuture.cancel(false);
-        });
+        promise.thenRun(() -> scheduledFuture.cancel(false));
 
         return scheduledFuture;
     }

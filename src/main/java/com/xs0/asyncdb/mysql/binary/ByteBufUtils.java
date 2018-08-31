@@ -1,6 +1,7 @@
 package com.xs0.asyncdb.mysql.binary;
 
 import com.xs0.asyncdb.mysql.ex.UnknownLengthException;
+import com.xs0.asyncdb.mysql.util.MySQLIO;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
@@ -8,7 +9,7 @@ import java.nio.ByteOrder;
 import java.nio.charset.Charset;
 
 public class ByteBufUtils {
-    public static final int MYSQL_NULL = 0xfb;
+
 
     public static String readLengthEncodedString(ByteBuf buffer, Charset charset) {
         int length = (int) readBinaryLength(buffer);
@@ -22,20 +23,25 @@ public class ByteBufUtils {
     }
 
     public static long readBinaryLength(ByteBuf buffer) {
-        int firstByte = buffer.readUnsignedByte();
+        return readBinaryLength(buffer.readUnsignedByte(), buffer);
+    }
 
+    public static long readBinaryLength(int firstByte, ByteBuf buffer) {
         if (firstByte <= 250) {
             return firstByte;
         } else {
             switch (firstByte) {
-                case MYSQL_NULL:
+                case MySQLIO.PACKET_HEADER_GET_MORE_CLIENT_DATA:
                     return -1;
+                case MySQLIO.PACKET_HEADER_ERR:
+                    return -2;
+
                 case 252:
-                    return buffer.readUnsignedShort();
+                    return buffer.readUnsignedShortLE();
                 case 253:
                     return read3ByteInt(buffer);
                 case 254:
-                    return buffer.readLong();
+                    return buffer.readLongLE();
                 default:
                     throw new UnknownLengthException(firstByte);
             }
@@ -62,14 +68,14 @@ public class ByteBufUtils {
         } else
         if (length < 65536L) {
             buffer.writeByte(252);
-            buffer.writeShort((int)length);
+            buffer.writeShortLE((int)length);
         } else
         if (length < 16777216L) {
             buffer.writeByte(253);
             write3ByteInt((int)length, buffer);
         } else {
             buffer.writeByte(254);
-            buffer.writeLong(length);
+            buffer.writeLongLE(length);
         }
     }
 
@@ -80,9 +86,10 @@ public class ByteBufUtils {
     }
 
     public static String readCString(ByteBuf b, Charset charset) {
-        b.markReaderIndex();
-
         int count = b.bytesBefore((byte)0);
+        if (count < 0)
+            return null;
+
         String result = b.toString(b.readerIndex(), count, charset);
         b.readerIndex(b.readerIndex() + count + 1);
 
@@ -90,32 +97,23 @@ public class ByteBufUtils {
     }
 
     public static String readUntilEOF(ByteBuf b, Charset charset) {
-        if (b.readableBytes() == 0) {
-            return "";
-        }
+        String result = b.toString(charset);
+        b.readerIndex(b.readerIndex() + b.readableBytes());
+        return result;
+    }
 
-        b.markReaderIndex();
+    public static String readUntilEOFOrZero(ByteBuf b, Charset charset) {
+        // This is specifically for authentication method in initial handshake, see
+        // https://bugs.mysql.com/bug.php?id=59453
 
-        int readByte = -1;
-        int count = 0;
-        int offset = 1;
+        int length = b.bytesBefore((byte)0);
+        if (length < 0) // no zero found, so ..
+            return readUntilEOF(b, charset);
 
-        while (readByte != 0) {
-            if (b.readableBytes() > 0) {
-                readByte = b.readByte();
-                count += 1;
-            } else {
-                readByte = 0;
-                offset = 0;
-            }
-        }
+        int readerIndex = b.readerIndex();
 
-        b.resetReaderIndex();
-
-        String result = b.toString(b.readerIndex(), count - offset, charset);
-
-        b.readerIndex(b.readerIndex() + count);
-
+        String result = b.toString(readerIndex, length, charset);
+        b.readerIndex(readerIndex + length + 1); // 1 is for NUL at the end
         return result;
     }
 
@@ -161,5 +159,14 @@ public class ByteBufUtils {
         b.writeByte(value);
         b.writeByte(value >>> 8);
         b.writeByte(value >>> 16);
+    }
+
+    public static byte[] readFixedBytes(ByteBuf buffer, int length) {
+        if (buffer.readableBytes() < length)
+            return null;
+
+        byte[] result = new byte[length];
+        buffer.readBytes(result);
+        return result;
     }
 }

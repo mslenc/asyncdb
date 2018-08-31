@@ -65,7 +65,7 @@ public class PreparedStatementExecuteEncoder implements MessageEncoder {
         return Unpooled.wrappedBuffer(bitMapBuffer, parameterTypesBuffer, parameterValuesBuffer);
     }
 
-    private void encodeValue(ByteBuf parameterTypesBuffer, ByteBuf parameterValuesBuffer, Object value, Boolean includeValue) {
+    private void encodeValue(ByteBuf parameterTypesBuffer, ByteBuf parameterValuesBuffer, Object value, boolean includeValue) {
         BinaryEncoder encoder = rowEncoder.encoderFor(value);
         parameterTypesBuffer.writeShort(encoder.encodesTo());
         if (includeValue)
