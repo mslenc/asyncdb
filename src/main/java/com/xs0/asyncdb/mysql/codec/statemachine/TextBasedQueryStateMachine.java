@@ -4,7 +4,6 @@ import com.xs0.asyncdb.common.QueryResult;
 import com.xs0.asyncdb.common.general.MutableResultSet;
 import com.xs0.asyncdb.mysql.MySQLQueryResult;
 import com.xs0.asyncdb.mysql.binary.ByteBufUtils;
-import com.xs0.asyncdb.mysql.codec.MySQLConnectionHandler;
 import com.xs0.asyncdb.mysql.decoder.*;
 import com.xs0.asyncdb.mysql.ex.MySQLException;
 import com.xs0.asyncdb.mysql.message.client.QueryMessage;
@@ -15,9 +14,7 @@ import io.netty.buffer.ByteBuf;
 import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
 
-import static com.xs0.asyncdb.mysql.util.MySQLIO.PACKET_HEADER_EOF;
-import static com.xs0.asyncdb.mysql.util.MySQLIO.PACKET_HEADER_ERR;
-import static com.xs0.asyncdb.mysql.util.MySQLIO.consumePacketHeader;
+import static com.xs0.asyncdb.mysql.util.MySQLIO.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class TextBasedQueryStateMachine implements MySQLStateMachine {
@@ -27,7 +24,6 @@ public class TextBasedQueryStateMachine implements MySQLStateMachine {
 
     private final String query;
     private final CompletableFuture<QueryResult> promise;
-    private MySQLConnectionHandler conn;
     private int state = STATE_AWAITING_FIELD_COUNT;
     private int expectedFieldCount;
     private final ArrayList<ColumnDefinitionMessage> columnDefs = new ArrayList<>();
@@ -39,41 +35,39 @@ public class TextBasedQueryStateMachine implements MySQLStateMachine {
     }
 
     @Override
-    public Result init(MySQLConnectionHandler conn) {
+    public Result start(Support conn) {
         if (promise.isDone())
             return Result.stateMachineFinished();
 
-        this.conn = conn;
         conn.sendMessage(new QueryMessage(query));
         return Result.expectingMorePackets();
     }
 
     @Override
-    public Result processPacket(ByteBuf packet) {
+    public Result processPacket(ByteBuf packet, Support support) {
         // https://dev.mysql.com/doc/internals/en/com-query-response.html#packet-COM_QUERY_Response
 
         switch (state) {
             case STATE_AWAITING_FIELD_COUNT:
-                return processPacket_AWAITING_FIELD_COUNT(packet);
+                return processPacket_AWAITING_FIELD_COUNT(packet, support);
 
             case STATE_READING_FIELDS:
-                return processPacket_READING_FIELDS(packet);
+                return processPacket_READING_FIELDS(packet, support);
 
             case STATE_READING_ROWS:
-                return processPacket_READING_ROWS(packet);
+                return processPacket_READING_ROWS(packet, support);
 
             default:
                 return Result.protocolErrorAbortEverything("Unexpected state (" + state + ")");
         }
     }
 
-    private Result processPacket_AWAITING_FIELD_COUNT(ByteBuf packet) {
-        if (packet.readableBytes() < 1)
-            return Result.unknownHeaderByte(-1, "text query (awaiting field count)");
+    private Result processPacket_AWAITING_FIELD_COUNT(ByteBuf packet, Support support) {
+        int header = consumePacketHeader(packet);
+        switch (header) {
+            case MySQLIO.NO_PACKET_HEADER:
+                return Result.unknownHeaderByte(-1, "text query (awaiting field count)");
 
-        int firstByte = packet.readUnsignedByte();
-
-        switch (firstByte) {
             case MySQLIO.PACKET_HEADER_OK: // (no columns)
                 OkMessage ok = OkDecoder.decodeAfterHeader(packet, UTF_8);
                 // TODO: check status flags? see https://dev.mysql.com/doc/internals/en/status-flags.html
@@ -81,7 +75,7 @@ public class TextBasedQueryStateMachine implements MySQLStateMachine {
                 return Result.stateMachineFinished();
 
             case MySQLIO.PACKET_HEADER_ERR:
-                ErrorMessage error = ErrorDecoder.decodeAfterHeader(packet, UTF_8, conn.serverInfo().serverCapabilities);
+                ErrorMessage error = support.decodeErrorAfterHeader(packet);
                 promise.completeExceptionally(new MySQLException(error));
                 return Result.stateMachineFinished();
 
@@ -89,7 +83,7 @@ public class TextBasedQueryStateMachine implements MySQLStateMachine {
                 return Result.protocolErrorAbortEverything("Server asked for client data, which is not supported");
 
             default:
-                long expectedFieldCount = ByteBufUtils.readBinaryLength(firstByte, packet);
+                long expectedFieldCount = ByteBufUtils.readBinaryLength(header, packet);
                 if (expectedFieldCount < 1 || expectedFieldCount > Integer.MAX_VALUE)
                     return Result.protocolErrorAbortEverything("Received an invalid column count (" + expectedFieldCount + ")");
 
@@ -99,10 +93,10 @@ public class TextBasedQueryStateMachine implements MySQLStateMachine {
         }
     }
 
-    private Result processPacket_READING_FIELDS(ByteBuf packet) {
+    private Result processPacket_READING_FIELDS(ByteBuf packet, Support support) {
         // first, we expect N column definitions
         if (columnDefs.size() < expectedFieldCount) {
-            ColumnDefinitionMessage columnDef = ColumnDefinitionDecoder.decode(packet, UTF_8, conn.decoderRegistry);
+            ColumnDefinitionMessage columnDef = ColumnDefinitionDecoder.decode(packet, UTF_8, support.decoderRegistry());
             columnDefs.add(columnDef);
             return Result.expectingMorePackets();
         }
@@ -122,23 +116,21 @@ public class TextBasedQueryStateMachine implements MySQLStateMachine {
         }
     }
 
-    private Result processPacket_READING_ROWS(ByteBuf packet) {
+    private Result processPacket_READING_ROWS(ByteBuf packet, Support support) {
         if (!packet.isReadable())
             return Result.unknownHeaderByte(-1, "text query (reading rows)");
 
-        int firstByte = packet.getUnsignedByte(packet.readerIndex());
-        if (firstByte == MySQLIO.PACKET_HEADER_EOF) {
+        if (isEOFPacket(packet)) {
             // we're done :)
-            packet.readByte();
-            EOFMessage eof = EOFMessageDecoder.decodeAfterHeader(packet);
+            EOFMessage eof = EOFMessageDecoder.decode(packet);
             promise.complete(new MySQLQueryResult(0, null, -1, eof.flags, eof.warningCount, resultSet));
             return Result.stateMachineFinished();
         }
 
-        if (firstByte == PACKET_HEADER_ERR) {
+        if (isERRPacket(packet)) {
             // we're done :(
-            packet.readByte();
-            ErrorMessage err = ErrorDecoder.decodeAfterHeader(packet, UTF_8, conn.serverInfo().serverCapabilities);
+            packet.readByte(); // (skip the header byte)
+            ErrorMessage err = support.decodeErrorAfterHeader(packet);
             promise.completeExceptionally(new MySQLException(err));
             return Result.stateMachineFinished();
         }

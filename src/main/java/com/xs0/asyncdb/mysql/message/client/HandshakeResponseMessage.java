@@ -1,5 +1,6 @@
 package com.xs0.asyncdb.mysql.message.client;
 
+import com.xs0.asyncdb.mysql.binary.ByteBufUtils;
 import com.xs0.asyncdb.mysql.util.CharsetMapper;
 import io.netty.buffer.ByteBuf;
 
@@ -10,15 +11,15 @@ import static com.xs0.asyncdb.mysql.util.MySQLIO.*;
 import static com.xs0.asyncdb.mysql.util.MySQLIO.CLIENT_SECURE_CONNECTION;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-public class HandshakeResponseMessage implements ClientMessage {
+public class HandshakeResponseMessage extends ClientMessage {
     private int capabilityFlags = CLIENT_PROTOCOL_41 |
                                   CLIENT_TRANSACTIONS |
                                   // TODO - support multiple result sets per query, see https://dev.mysql.com/doc/internals/en/multi-resultset.html
-                                  // CLIENT_MULTI_RESULTS |
+                                  CLIENT_MULTI_RESULTS |
                                   CLIENT_SECURE_CONNECTION;
 
-    private int charsetId = CharsetMapper.CHARSET_UTF8MB4_BIN;
-    private int maxPacketSize = 0xFFFFFF;
+    private final static int charsetId = CharsetMapper.CHARSET_UTF8MB4_BIN;
+    private final static int maxPacketSize = 0xFFFFFF;
 
     private String username;
 
@@ -52,33 +53,32 @@ public class HandshakeResponseMessage implements ClientMessage {
     }
 
     @Override
-    public void encodeInto(ByteBuf packet) {
+    public ByteBuf getPacketContents() {
+        ByteBuf contents = ByteBufUtils.newMysqlBuffer();
+
         // https://dev.mysql.com/doc/internals/en/connection-phase-packets.html#packet-Protocol::HandshakeResponse
 
-        packet.writeIntLE(capabilityFlags);
-        packet.writeIntLE(maxPacketSize);
-        packet.writeByte(charsetId);
-        packet.writeZero(23);
-        writeCString(packet, username, UTF_8);
+        contents.writeIntLE(capabilityFlags);
+        contents.writeIntLE(maxPacketSize);
+        contents.writeByte(charsetId);
+        contents.writeZero(23);
+        writeCString(contents, username, UTF_8);
 
         if (authData != null) {
-            packet.writeByte(authData.length);
-            packet.writeBytes(authData);
+            contents.writeByte(authData.length);
+            contents.writeBytes(authData);
         } else {
-            packet.writeByte(0);
+            contents.writeByte(0);
         }
 
         if (database != null) {
-            writeCString(packet, database, UTF_8);
+            writeCString(contents, database, UTF_8);
         }
 
         if (authMethod != null) {
-            writeCString(packet, authMethod, UTF_8);
+            writeCString(contents, authMethod, UTF_8);
         }
-    }
 
-    @Override
-    public int packetSequenceNumber() {
-        return 1;
+        return contents;
     }
 }

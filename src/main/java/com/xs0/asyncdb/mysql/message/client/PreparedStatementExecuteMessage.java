@@ -1,35 +1,34 @@
 package com.xs0.asyncdb.mysql.message.client;
 
-import com.xs0.asyncdb.mysql.message.server.ColumnDefinitionMessage;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 
-import java.util.List;
-import java.util.Set;
+import static com.xs0.asyncdb.mysql.binary.ByteBufUtils.newMysqlBuffer;
+import static com.xs0.asyncdb.mysql.util.MySQLIO.PACKET_HEADER_STMT_EXECUTE;
 
-public class PreparedStatementExecuteMessage implements ClientMessage {
-    public final byte[] statementId;
-    public final List<Object> values;
-    public final Set<Integer> valuesToInclude;
-    public final List<ColumnDefinitionMessage> parameters;
+public class PreparedStatementExecuteMessage extends ClientMessage {
+    private final byte[] statementId;
+    private final byte[] nullBytes;
+    private final ByteBuf typeBytes;
+    private final ByteBuf valueBytes;
 
-    public PreparedStatementExecuteMessage(byte[] statementId, List<Object> values, Set<Integer> valuesToInclude, List<ColumnDefinitionMessage> parameters) {
+    public PreparedStatementExecuteMessage(byte[] statementId, byte[] nullBytes, ByteBuf typeBytes, ByteBuf valueBytes) {
         this.statementId = statementId;
-        this.values = values;
-        this.valuesToInclude = valuesToInclude;
-        this.parameters = parameters;
+        this.nullBytes = nullBytes;
+        this.typeBytes = typeBytes;
+        this.valueBytes = valueBytes;
     }
 
     @Override
-    public void encodeInto(ByteBuf packet) {
-        throw new UnsupportedOperationException();
-    }
+    public ByteBuf getPacketContents() {
+        ByteBuf prefix = newMysqlBuffer(1 + 4 + 1 + 4);
+        prefix.writeByte(PACKET_HEADER_STMT_EXECUTE);
+        prefix.writeBytes(statementId);
+        prefix.writeByte(0); // flags
+        prefix.writeIntLE(1); // iteration-count
 
-    @Override
-    public int packetSequenceNumber() {
-        return 0;
-    }
+        ByteBuf nullBytes = Unpooled.wrappedBuffer(this.nullBytes);
 
-    public int kind() {
-        return PREPARED_STATEMENT_EXECUTE;
+        return Unpooled.wrappedBuffer(prefix, nullBytes, typeBytes, valueBytes);
     }
 }

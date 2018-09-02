@@ -5,13 +5,14 @@ import java.util.List;
 import com.xs0.asyncdb.common.util.BufferDumper;
 import com.xs0.asyncdb.mysql.binary.ByteBufUtils;
 import com.xs0.asyncdb.mysql.message.client.ClientMessage;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageEncoder;
 import io.netty.buffer.ByteBuf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.xs0.asyncdb.mysql.binary.ByteBufUtils.writePacketLength;
+import static com.xs0.asyncdb.mysql.binary.ByteBufUtils.newMysqlBuffer;
 
 public class MySQLOneToOneEncoder extends MessageToMessageEncoder<ClientMessage> {
     private static final Logger log = LoggerFactory.getLogger(MySQLOneToOneEncoder.class);
@@ -27,9 +28,13 @@ public class MySQLOneToOneEncoder extends MessageToMessageEncoder<ClientMessage>
     }
 
     public void encode(ChannelHandlerContext ctx, ClientMessage message, List<Object> out) {
-        ByteBuf packet = ByteBufUtils.newPacketBuffer();
-        message.encodeInto(packet);
-        writePacketLength(packet, message.packetSequenceNumber());
+        ByteBuf header = newMysqlBuffer(4);
+        ByteBuf contents = message.getPacketContents();
+
+        ByteBufUtils.write3ByteInt(contents.readableBytes(), header);
+        header.writeByte(message.packetSequenceNumber());
+
+        ByteBuf packet = Unpooled.wrappedBuffer(header, contents);
         out.add(packet);
 
         if (log.isTraceEnabled()) {

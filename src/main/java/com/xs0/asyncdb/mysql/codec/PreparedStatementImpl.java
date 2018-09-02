@@ -3,6 +3,7 @@ package com.xs0.asyncdb.mysql.codec;
 import com.xs0.asyncdb.common.PreparedStatement;
 import com.xs0.asyncdb.common.QueryResult;
 import com.xs0.asyncdb.common.exceptions.DatabaseException;
+import jdk.nashorn.internal.ir.ReturnNode;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -20,6 +21,16 @@ class PreparedStatementImpl implements PreparedStatement {
         this.conn = conn;
         this.query = query;
         this.psInfo = psInfo;
+    }
+
+    @Override
+    public int getNumberOfColumns() {
+        return psInfo.columnDefs.size();
+    }
+
+    @Override
+    public int getNumberOfParameters() {
+        return psInfo.paramDefs.size();
     }
 
     @Override

@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.CompletableFuture;
 
 import static com.xs0.asyncdb.mysql.binary.ByteBufUtils.readCString;
 import static com.xs0.asyncdb.mysql.binary.ByteBufUtils.readFixedBytes;
@@ -27,31 +28,42 @@ public class InitialHandshakeStateMachine implements MySQLStateMachine {
     private static final int STATE_INITIAL = 0;
     private static final int STATE_CLIENT_HANDSHAKE_SENT = 1;
 
+    private final MySQLConnectionHandler conn;
+    private final CompletableFuture<MySQLConnectionHandler> promise;
+    private final Configuration conf;
+
     private int state = STATE_INITIAL;
-    private MySQLConnectionHandler conn;
-    private int sequenceNumber = 1;
+
+    public InitialHandshakeStateMachine(MySQLConnectionHandler conn, Configuration conf, CompletableFuture<MySQLConnectionHandler> promise) {
+        this.conn = conn;
+        this.promise = promise;
+        this.conf = conf;
+    }
+
+    public CompletableFuture<MySQLConnectionHandler> getPromise() {
+        return promise;
+    }
 
     @Override
-    public Result init(MySQLConnectionHandler conn) {
-        this.conn = conn;
+    public Result start(Support support) {
         return Result.expectingMorePackets();
     }
 
     @Override
-    public Result processPacket(ByteBuf packet) {
+    public Result processPacket(ByteBuf packet, Support support) {
         switch (state) {
             case STATE_INITIAL:
-                return processPacket_INITIAL(packet);
+                return processPacket_INITIAL(packet, support);
 
             case STATE_CLIENT_HANDSHAKE_SENT:
-                return processPacket_HANDSHAKE_SENT(packet);
+                return processPacket_HANDSHAKE_SENT(packet, support);
 
             default:
                 throw new IllegalStateException("Invalid state");
         }
     }
 
-    private Result processPacket_INITIAL(ByteBuf packet) {
+    private Result processPacket_INITIAL(ByteBuf packet, Support support) {
         int header = consumePacketHeader(packet);
         switch (header) {
             case PACKET_HEADER_ERR:
@@ -61,8 +73,9 @@ public class InitialHandshakeStateMachine implements MySQLStateMachine {
             case PACKET_HEADER_HANDSHAKE_V10:
                 HandshakeMessage handshake = HandshakeV10Decoder.decodeAfterHeader(packet);
                 conn.setServerInfo(handshake);
-                HandshakeResponseMessage response = generateHandshakeResponse(handshake.authenticationMethod, handshake.seed);
-                conn.sendMessage(response);
+
+                HandshakeResponseMessage response = generateHandshakeResponse(handshake.authenticationMethod, handshake.seed, conf);
+                support.sendMessage(response);
                 state = STATE_CLIENT_HANDSHAKE_SENT;
                 return Result.expectingMorePackets();
 
@@ -71,15 +84,16 @@ public class InitialHandshakeStateMachine implements MySQLStateMachine {
         }
     }
 
-    private Result processPacket_HANDSHAKE_SENT(ByteBuf packet) {
+    private Result processPacket_HANDSHAKE_SENT(ByteBuf packet, Support support) {
         int header = consumePacketHeader(packet);
         switch (header) {
             case PACKET_HEADER_OK:
                 log.debug("Authentication successful");
+                promise.complete(conn);
                 return Result.stateMachineFinished();
 
             case PACKET_HEADER_AUTH_SWITCH_REQUEST:
-                return respondToAuthSwitchRequest(packet);
+                return respondToAuthSwitchRequest(packet, support, conf);
 
             case PACKET_HEADER_ERR:
                 ErrorMessage error = ErrorDecoder.decodeAfterHeader(packet, UTF_8, conn.serverInfo().serverCapabilities);
@@ -90,24 +104,22 @@ public class InitialHandshakeStateMachine implements MySQLStateMachine {
         }
     }
 
-    private Result respondToAuthSwitchRequest(ByteBuf packet) {
+    private Result respondToAuthSwitchRequest(ByteBuf packet, Support support, Configuration config) {
         String pluginName = readCString(packet, UTF_8);
         if (pluginName == null)
             return Result.protocolErrorAbortEverything("Couldn't read pluginName during auth");
         byte[] pluginData = readFixedBytes(packet, packet.readableBytes());
 
-        byte[] auth = generateAuth(pluginName, pluginData, conn.configuration.password, false);
+        byte[] auth = generateAuth(pluginName, pluginData, config.password, false);
         if (auth == null) {
             return Result.protocolErrorAbortEverything("Unsupported authentication mechanism ("+pluginName+") requested by server");
         } else {
-            conn.sendMessage(new AuthenticationSwitchResponse(auth, ++sequenceNumber));
+            support.sendMessage(new AuthenticationSwitchResponse(auth));
             return Result.expectingMorePackets();
         }
     }
 
-    private HandshakeResponseMessage generateHandshakeResponse(String authenticationMethod, byte[] authSeed) {
-        Configuration config = conn.configuration;
-
+    private HandshakeResponseMessage generateHandshakeResponse(String authenticationMethod, byte[] authSeed, Configuration config) {
         HandshakeResponseMessage response = new HandshakeResponseMessage(config.username);
 
         if (authenticationMethod != null)

@@ -3,9 +3,10 @@ package com.xs0.asyncdb.mysql.message.client;
 import com.xs0.asyncdb.mysql.util.MySQLIO;
 import io.netty.buffer.ByteBuf;
 
+import static com.xs0.asyncdb.mysql.binary.ByteBufUtils.newMysqlBuffer;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-public class QueryMessage implements ClientMessage {
+public class QueryMessage extends ClientMessage {
     public final String query;
 
     public QueryMessage(String query) {
@@ -13,13 +14,10 @@ public class QueryMessage implements ClientMessage {
     }
 
     @Override
-    public void encodeInto(ByteBuf packet) {
-        packet.writeByte(MySQLIO.PACKET_HEDAER_COM_QUERY);
-        packet.writeCharSequence(query, UTF_8);
-    }
-
-    @Override
-    public int packetSequenceNumber() {
-        return 0;
+    public ByteBuf getPacketContents() {
+        ByteBuf contents = newMysqlBuffer(query.length() + 25);
+        contents.writeByte(MySQLIO.PACKET_HEDAER_COM_QUERY);
+        contents.writeCharSequence(query, UTF_8);
+        return contents;
     }
 }

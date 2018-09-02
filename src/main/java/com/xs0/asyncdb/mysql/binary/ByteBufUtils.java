@@ -117,22 +117,12 @@ public class ByteBufUtils {
         return result;
     }
 
-    public static ByteBuf newPacketBuffer() {
-        return newPacketBuffer(1024);
-    }
-
-    public static ByteBuf newPacketBuffer(int sizeEstimate) {
-        ByteBuf buffer = newMysqlBuffer(sizeEstimate);
-        buffer.writeInt(0);
-        return buffer;
-    }
-
     public static ByteBuf newMysqlBuffer() {
         return newMysqlBuffer(1024);
     }
 
     public static ByteBuf newMysqlBuffer(int sizeEstimate) {
-        return Unpooled.buffer(sizeEstimate).order(ByteOrder.LITTLE_ENDIAN);
+        return Unpooled.buffer(sizeEstimate);
     }
 
     public static void writeCString(ByteBuf b, String content, Charset charset) {
@@ -168,5 +158,12 @@ public class ByteBufUtils {
         byte[] result = new byte[length];
         buffer.readBytes(result);
         return result;
+    }
+
+    public static void setNullBit(int offset, byte[] nullBytes, int index) {
+        // https://dev.mysql.com/doc/internals/en/null-bitmap.html
+
+        int pos = offset + index;
+        nullBytes[pos >>> 3] |= 1 << (pos & 7);
     }
 }

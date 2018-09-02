@@ -4,11 +4,10 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public interface Connection {
-    CompletableFuture<Connection> disconnect();
-
     CompletableFuture<Connection> connect();
-
+    CompletableFuture<Void> disconnect();
     boolean isConnected();
+
 
     CompletableFuture<QueryResult> sendQuery(String query);
 

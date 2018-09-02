@@ -23,6 +23,8 @@ public class BinaryRowDecoder {
         //log.debug( "decoding row\n{}", MySQLHelper.dumpAsHex(buffer))
         //PrintUtils.printArray("bitmap", buffer)
 
+        buffer.readByte(); // header
+
         int nullCount = (columns.size() + 9) / 8;
 
         byte[] nullBitMask = new byte[nullCount];

@@ -30,9 +30,7 @@ public class MySQLConnection extends TimeoutScheduler implements Connection {
     private final CompletableFuture<Connection> connectionPromise;
     private final CompletableFuture<Connection> disconnectionPromise;
 
-    private final AtomicReference<CompletableFuture<QueryResult>> queryPromiseReference = new AtomicReference<>(null);
     private final MySQLConnectionHandler connectionHandler;
-    private boolean connected = false;
     private Throwable _lastException = null;
     private Version serverVersion = null;
 
@@ -59,7 +57,6 @@ public class MySQLConnection extends TimeoutScheduler implements Connection {
 
         this.connectionHandler = new MySQLConnectionHandler(
             configuration,
-            this,
             group,
             connectionId
         );
@@ -89,53 +86,17 @@ public class MySQLConnection extends TimeoutScheduler implements Connection {
         this.connectionHandler.connect().whenComplete((ignored, connectError) -> {
             if (connectError != null) {
                 connectionPromise.completeExceptionally(connectError);
+            } else {
+                connectionPromise.complete(this);
             }
-            // (we complete() successfully later, after handshake is completed..)
         });
 
         return connectionPromise;
     }
 
     @Override
-    public CompletableFuture<Connection> disconnect() {
-        throw new UnsupportedOperationException("disconnect");
-        // TODO
-    }
-
-    public CompletableFuture<Void> close() {
-        /*
-        if (this.isConnected()) {
-            if (!this.disconnectionPromise.isDone()) {
-                DatabaseException exception = new DatabaseException("Connection is being closed");
-                exception.fillInStackTrace();
-                this.failQueryPromise(exception);
-                this.connectionHandler.clearQueryState();
-                this.connectionHandler.write(QuitMessage.instance()).addListener(quitResult -> {
-                    if (quitResult.isSuccess()) {
-                        this.connectionHandler.disconnect().addListener(disconnectResult -> {
-                            if (disconnectResult.isSuccess()) {
-                                disconnectionPromise.complete(this);
-                            } else {
-                                disconnectionPromise.completeExceptionally(disconnectResult.cause());
-                            }
-                        });
-                    } else {
-                        disconnectionPromise.completeExceptionally(quitResult.cause());
-                    }
-                });
-            }
-        }
-
-        return disconnectionPromise;
-        */
-        // TODO
-        return CompletableFuture.completedFuture(null);
-    }
-
-    public void connected(ChannelHandlerContext ctx) {
-        if (log.isDebugEnabled())
-            log.debug("Connected to {}", ctx.channel().remoteAddress());
-        this.connected = true;
+    public CompletableFuture<Void> disconnect() {
+        return this.connectionHandler.disconnect();
     }
 
     @Override
@@ -155,7 +116,7 @@ public class MySQLConnection extends TimeoutScheduler implements Connection {
 
     @Override
     public CompletableFuture<PreparedStatement> prepareStatement(String query) {
-        throw new UnsupportedOperationException();
+        return this.connectionHandler.prepareStatement(query);
     }
 
     static int countParameterMarks(String query) {

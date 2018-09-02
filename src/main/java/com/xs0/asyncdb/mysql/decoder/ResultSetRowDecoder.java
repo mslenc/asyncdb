@@ -15,7 +15,6 @@ public class ResultSetRowDecoder {
             int firstByte = buffer.readUnsignedByte();
 
             if (firstByte == TEXT_RESULTSET_NULL) {
-                buffer.readByte();
                 row.add(null);
             } else {
                 int length = (int) readBinaryLength(firstByte, buffer);

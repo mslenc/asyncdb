@@ -23,21 +23,27 @@ public class MySQLNativePasswordAuthentication {
             throw new RuntimeException(e);
         }
 
-        byte[] initialDigest = messageDigest.digest(password.getBytes(charset));
+        byte[] shaPass = messageDigest.digest(password.getBytes(charset));
 
         messageDigest.reset();
 
-        byte[] finalDigest = messageDigest.digest(initialDigest);
+        byte[] shaShaPass = messageDigest.digest(shaPass);
 
         messageDigest.reset();
 
-        messageDigest.update(seed);
-        messageDigest.update(finalDigest);
+        if (seed.length == 21 && seed[20] == 0) {
+            // for some reason, the seed is sent as 21 zero-terminated bytes, even though it's supposed to be 20 bytes
+            messageDigest.update(seed, 0, 20);
+        } else {
+            messageDigest.update(seed);
+        }
+
+        messageDigest.update(shaShaPass);
 
         byte[] result = messageDigest.digest();
 
         for (int counter = 0; counter < result.length; counter++) {
-            result[counter] = (byte) (result[counter] ^ initialDigest[counter]);
+            result[counter] ^= shaPass[counter];
         }
 
         return result;

@@ -1,11 +1,15 @@
 package com.xs0.asyncdb.mysql.decoder;
 
 import com.xs0.asyncdb.common.exceptions.ProtocolException;
+import com.xs0.asyncdb.common.util.BufferDumper;
 import com.xs0.asyncdb.mysql.message.server.HandshakeMessage;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import kotlin.text.Charsets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.nio.Buffer;
 
 import static com.xs0.asyncdb.mysql.binary.ByteBufUtils.readCString;
 import static com.xs0.asyncdb.mysql.binary.ByteBufUtils.readFixedBytes;
@@ -47,6 +51,7 @@ public class HandshakeV10Decoder {
             int lengthOfAuthPluginData = 0;
             if ((capabilityFlags & CLIENT_PLUGIN_AUTH) != 0) {
                 lengthOfAuthPluginData = packet.readUnsignedByte();
+                System.err.println("Length of auth Plugin DATA = " + lengthOfAuthPluginData);
             } else {
                 packet.skipBytes(1);
             }

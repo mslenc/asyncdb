@@ -1,11 +1,9 @@
 package com.xs0.asyncdb.mysql.codec.statemachine;
 
 import com.xs0.asyncdb.common.PreparedStatement;
-import com.xs0.asyncdb.mysql.codec.MySQLConnectionHandler;
 import com.xs0.asyncdb.mysql.codec.PreparedStatementInfo;
 import com.xs0.asyncdb.mysql.decoder.ColumnDefinitionDecoder;
 import com.xs0.asyncdb.mysql.decoder.EOFMessageDecoder;
-import com.xs0.asyncdb.mysql.decoder.ErrorDecoder;
 import com.xs0.asyncdb.mysql.decoder.PreparedStatementPrepareResponseDecoder;
 import com.xs0.asyncdb.mysql.ex.MySQLException;
 import com.xs0.asyncdb.mysql.message.client.PreparedStatementPrepareMessage;
@@ -32,7 +30,6 @@ public class PrepareStatementStateMachine implements MySQLStateMachine {
     private final CompletableFuture<PreparedStatement> promise;
 
     private int state = STATE_AWAITING_PREPARE_OK;
-    private MySQLConnectionHandler conn;
     private PreparedStatementPrepareResponse initialResponse;
     private ArrayList<ColumnDefinitionMessage> paramDefs = new ArrayList<>();
     private ArrayList<ColumnDefinitionMessage> columnDefs = new ArrayList<>();
@@ -43,30 +40,29 @@ public class PrepareStatementStateMachine implements MySQLStateMachine {
     }
 
     @Override
-    public Result init(MySQLConnectionHandler conn) {
+    public Result start(Support support) {
         if (promise.isDone())
             return Result.stateMachineFinished();
 
-        this.conn = conn;
-        conn.sendMessage(new PreparedStatementPrepareMessage(query));
+        support.sendMessage(new PreparedStatementPrepareMessage(query));
         return Result.expectingMorePackets();
     }
 
     @Override
-    public Result processPacket(ByteBuf packet) {
+    public Result processPacket(ByteBuf packet, Support support) {
         switch (state) {
             case STATE_AWAITING_PREPARE_OK:
-                return processPacket_AWAITING_PREPARE_OK(packet);
+                return processPacket_AWAITING_PREPARE_OK(packet, support);
             case STATE_READING_PARAMS:
-                return processPacket_READING_PARAMS(packet);
+                return processPacket_READING_PARAMS(packet, support);
             case STATE_READING_COLUMNS:
-                return processPacket_READING_COLUMNS(packet);
+                return processPacket_READING_COLUMNS(packet, support);
             default:
                 return Result.protocolErrorAbortEverything("Unexpected state (" + state + ")");
         }
     }
 
-    private Result processPacket_AWAITING_PREPARE_OK(ByteBuf packet) {
+    private Result processPacket_AWAITING_PREPARE_OK(ByteBuf packet, Support support) {
         int header = consumePacketHeader(packet);
 
         switch (header) {
@@ -80,11 +76,11 @@ public class PrepareStatementStateMachine implements MySQLStateMachine {
                     state = STATE_READING_COLUMNS;
                     return Result.expectingMorePackets();
                 } else {
-                    return finish(emptyList(), emptyList());
+                    return finish(emptyList(), emptyList(), support);
                 }
 
             case PACKET_HEADER_ERR:
-                ErrorMessage err = ErrorDecoder.decodeAfterHeader(packet, UTF_8, conn.serverInfo().serverCapabilities);
+                ErrorMessage err = support.decodeErrorAfterHeader(packet);
                 promise.completeExceptionally(new MySQLException(err));
                 return Result.stateMachineFinished();
 
@@ -93,10 +89,10 @@ public class PrepareStatementStateMachine implements MySQLStateMachine {
         }
     }
 
-    private Result processPacket_READING_PARAMS(ByteBuf packet) {
+    private Result processPacket_READING_PARAMS(ByteBuf packet, Support support) {
         // first, we expect N column definitions
         if (paramDefs.size() < initialResponse.paramsCount) {
-            ColumnDefinitionMessage columnDef = ColumnDefinitionDecoder.decode(packet, UTF_8, conn.decoderRegistry);
+            ColumnDefinitionMessage columnDef = ColumnDefinitionDecoder.decode(packet, UTF_8, support.decoderRegistry());
             paramDefs.add(columnDef);
             return Result.expectingMorePackets();
         }
@@ -112,7 +108,7 @@ public class PrepareStatementStateMachine implements MySQLStateMachine {
                     state = STATE_READING_COLUMNS;
                     return Result.expectingMorePackets();
                 } else {
-                    return finish(paramDefs, columnDefs);
+                    return finish(paramDefs, columnDefs, support);
                 }
 
             default:
@@ -120,10 +116,10 @@ public class PrepareStatementStateMachine implements MySQLStateMachine {
         }
     }
 
-    private Result processPacket_READING_COLUMNS(ByteBuf packet) {
+    private Result processPacket_READING_COLUMNS(ByteBuf packet, Support support) {
         // first, we expect N column definitions
         if (columnDefs.size() < initialResponse.columnsCount) {
-            ColumnDefinitionMessage columnDef = ColumnDefinitionDecoder.decode(packet, UTF_8, conn.decoderRegistry);
+            ColumnDefinitionMessage columnDef = ColumnDefinitionDecoder.decode(packet, UTF_8, support.decoderRegistry());
             columnDefs.add(columnDef);
             return Result.expectingMorePackets();
         }
@@ -134,7 +130,7 @@ public class PrepareStatementStateMachine implements MySQLStateMachine {
             case PACKET_HEADER_EOF:
                 EOFMessage eof = EOFMessageDecoder.decodeAfterHeader(packet);
                 // TODO: need to check status flags?
-                return finish(paramDefs, columnDefs);
+                return finish(paramDefs, columnDefs, support);
 
             default:
                 return Result.unknownHeaderByte(header, "text query (reading fields)");
@@ -142,9 +138,9 @@ public class PrepareStatementStateMachine implements MySQLStateMachine {
     }
 
 
-    private Result finish(List<ColumnDefinitionMessage> paramDefs, List<ColumnDefinitionMessage> columnDefs) {
+    private Result finish(List<ColumnDefinitionMessage> paramDefs, List<ColumnDefinitionMessage> columnDefs, Support support) {
         PreparedStatementInfo info = new PreparedStatementInfo(initialResponse.statementId, paramDefs, columnDefs);
-        PreparedStatement statement = conn.rememberPreparedStatement(info);
+        PreparedStatement statement = support.createPreparedStatement(query, info);
         promise.complete(statement);
         return Result.stateMachineFinished();
     }
