@@ -3,7 +3,6 @@ package com.xs0.asyncdb.mysql.codec;
 import com.xs0.asyncdb.common.PreparedStatement;
 import com.xs0.asyncdb.common.QueryResult;
 import com.xs0.asyncdb.common.exceptions.DatabaseException;
-import jdk.nashorn.internal.ir.ReturnNode;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -12,10 +11,10 @@ import static com.xs0.asyncdb.common.util.FutureUtils.failedFuture;
 import static java.util.Collections.emptyList;
 
 class PreparedStatementImpl implements PreparedStatement {
-    final MySQLConnectionHandler conn;
-    final String query;
-    final PreparedStatementInfo psInfo;
-    CompletableFuture<Void> closingPromise;
+    private final MySQLConnectionHandler conn;
+    private final String query;
+    private final PreparedStatementInfo psInfo;
+    private CompletableFuture<Void> closingPromise;
 
     public PreparedStatementImpl(MySQLConnectionHandler conn, String query, PreparedStatementInfo psInfo) {
         this.conn = conn;
@@ -53,9 +52,14 @@ class PreparedStatementImpl implements PreparedStatement {
         if (closingPromise != null)
             return closingPromise;
 
-        CompletableFuture<Void> promise = new CompletableFuture<>();
-        this.closingPromise = promise;
-        conn.closePreparedStatement(psInfo, closingPromise);
-        return promise;
+        this.closingPromise = new CompletableFuture<>();
+        conn.closePreparedStatement(psInfo).whenComplete((closeSuccess, closeError) -> {
+            if (closeError != null) {
+                closingPromise.completeExceptionally(closeError);
+            } else {
+                closingPromise.complete(closeSuccess);
+            }
+        });
+        return closingPromise;
     }
 }

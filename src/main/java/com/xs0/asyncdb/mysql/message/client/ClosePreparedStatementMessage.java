@@ -6,19 +6,23 @@ import io.netty.buffer.ByteBuf;
 
 import static com.xs0.asyncdb.mysql.binary.ByteBufUtils.newMysqlBuffer;
 
-public class ResetPreparedStatementMessage extends ClientMessage {
+public class ClosePreparedStatementMessage extends ClientMessage {
     private final byte[] statementId;
 
-    public ResetPreparedStatementMessage(MySQLCommand command, byte[] statementId) {
+    public ClosePreparedStatementMessage(MySQLCommand command, byte[] statementId) {
         super(command);
 
         this.statementId = statementId;
     }
+
     @Override
     public ByteBuf getPacketContents() {
+        // https://dev.mysql.com/doc/internals/en/com-stmt-close.html
+
         ByteBuf contents = newMysqlBuffer(5);
-        contents.writeByte(MySQLIO.PACKET_HEADER_STMT_RESET);
+        contents.writeByte(MySQLIO.PACKET_HEADER_STMT_CLOSE);
         contents.writeBytes(statementId);
+
         return contents;
     }
 }

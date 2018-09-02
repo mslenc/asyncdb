@@ -10,6 +10,7 @@ public class PreparedStatementInfo {
     public final List<ColumnDefinitionMessage> columnDefs;
     public final boolean[] sentAsLong;
     private boolean longParamsSent;
+    private boolean closeSent;
 
     public PreparedStatementInfo(byte[] statementId, List<ColumnDefinitionMessage> paramDefs, List<ColumnDefinitionMessage> columnDefs) {
         this.statementId = statementId;
@@ -26,5 +27,13 @@ public class PreparedStatementInfo {
 
     public void markLongParamsSent() {
         longParamsSent = true;
+    }
+
+    public boolean wasClosed() {
+        return closeSent;
+    }
+
+    public void markAsClosed() {
+        this.closeSent = true;
     }
 }

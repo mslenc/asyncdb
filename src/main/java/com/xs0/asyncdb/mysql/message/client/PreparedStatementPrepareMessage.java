@@ -1,5 +1,6 @@
 package com.xs0.asyncdb.mysql.message.client;
 
+import com.xs0.asyncdb.mysql.state.MySQLCommand;
 import io.netty.buffer.ByteBuf;
 
 import static com.xs0.asyncdb.mysql.binary.ByteBufUtils.newMysqlBuffer;
@@ -9,7 +10,9 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class PreparedStatementPrepareMessage extends ClientMessage {
     private final String statement;
 
-    public PreparedStatementPrepareMessage(String statement) {
+    public PreparedStatementPrepareMessage(MySQLCommand command, String statement) {
+        super(command);
+
         this.statement = statement;
     }
 

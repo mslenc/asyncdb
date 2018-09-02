@@ -1,4 +1,4 @@
-package com.xs0.asyncdb.mysql.codec.statemachine;
+package com.xs0.asyncdb.mysql.state.commands;
 
 import com.xs0.asyncdb.common.QueryResult;
 import com.xs0.asyncdb.common.general.MutableResultSet;
@@ -19,6 +19,7 @@ import com.xs0.asyncdb.mysql.message.server.ColumnDefinitionMessage;
 import com.xs0.asyncdb.mysql.message.server.EOFMessage;
 import com.xs0.asyncdb.mysql.message.server.ErrorMessage;
 import com.xs0.asyncdb.mysql.message.server.OkMessage;
+import com.xs0.asyncdb.mysql.state.MySQLCommand;
 import com.xs0.asyncdb.mysql.util.MySQLIO;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -35,7 +36,7 @@ import static com.xs0.asyncdb.mysql.column.ColumnType.FIELD_TYPE_NULL;
 import static com.xs0.asyncdb.mysql.util.MySQLIO.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-public class ExecutePreparedStatementStateMachine implements MySQLStateMachine {
+public class ExecutePreparedStatementCommand extends MySQLCommand {
     private static final int STATE_AWAITING_RESET_RESULT = 0;
     private static final int STATE_AWAITING_COLUMN_COUNT = 1;
     private static final int STATE_READING_COLUMNS = 2;
@@ -55,12 +56,17 @@ public class ExecutePreparedStatementStateMachine implements MySQLStateMachine {
     private ArrayList<ColumnDefinitionMessage> columnDefs = new ArrayList<>();
     private MutableResultSet<ColumnDefinitionMessage> resultSet;
 
-    public ExecutePreparedStatementStateMachine(PreparedStatementInfo psInfo, List<Object> values, CompletableFuture<QueryResult> promise) {
+    public ExecutePreparedStatementCommand(PreparedStatementInfo psInfo, List<Object> values, CompletableFuture<QueryResult> promise) {
         this.psInfo = psInfo;
         this.values = values;
         this.promise = promise;
 
         assert values.size() == psInfo.paramDefs.size();
+    }
+
+    @Override
+    public CompletableFuture<QueryResult> getPromise() {
+        return promise;
     }
 
     @Override
@@ -84,7 +90,7 @@ public class ExecutePreparedStatementStateMachine implements MySQLStateMachine {
             if (longValue != null) {
                 // not null
                 typeBytes.writeShortLE(FIELD_TYPE_LONG_BLOB);
-                longValues.add(new SendLongDataMessage(psInfo.statementId, paramIndex, longValue));
+                longValues.add(new SendLongDataMessage(this, psInfo.statementId, paramIndex, longValue));
             } else
             if (value != null) {
                 // not null
@@ -109,11 +115,11 @@ public class ExecutePreparedStatementStateMachine implements MySQLStateMachine {
             }
         }
 
-        execMessage = new PreparedStatementExecuteMessage(psInfo.statementId, nullBytes, typeBytes, valueBytes);
+        execMessage = new PreparedStatementExecuteMessage(this, psInfo.statementId, nullBytes, typeBytes, valueBytes);
 
         if (psInfo.shouldReset()) {
             state = STATE_AWAITING_RESET_RESULT;
-            support.sendMessage(new ResetPreparedStatementMessage(psInfo.statementId));
+            support.sendMessage(new ResetPreparedStatementMessage(this, psInfo.statementId));
             return Result.expectingMorePackets();
         }
 

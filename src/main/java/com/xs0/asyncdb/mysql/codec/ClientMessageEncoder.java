@@ -13,16 +13,16 @@ import org.slf4j.LoggerFactory;
 
 import static com.xs0.asyncdb.mysql.binary.ByteBufUtils.newMysqlBuffer;
 
-public class MySQLOneToOneEncoder extends MessageToMessageEncoder<ClientMessage> {
-    private static final Logger log = LoggerFactory.getLogger(MySQLOneToOneEncoder.class);
+public class ClientMessageEncoder extends MessageToMessageEncoder<ClientMessage> {
+    private static final Logger log = LoggerFactory.getLogger(ClientMessageEncoder.class);
 
-    private static final MySQLOneToOneEncoder instance = new MySQLOneToOneEncoder();
+    private static final ClientMessageEncoder instance = new ClientMessageEncoder();
 
-    public static MySQLOneToOneEncoder instance() {
+    public static ClientMessageEncoder instance() {
         return instance;
     }
 
-    private MySQLOneToOneEncoder() {
+    private ClientMessageEncoder() {
         super(ClientMessage.class);
     }
 
@@ -31,7 +31,7 @@ public class MySQLOneToOneEncoder extends MessageToMessageEncoder<ClientMessage>
         ByteBuf contents = message.getPacketContents();
 
         header.writeMediumLE(contents.readableBytes());
-        header.writeByte(message.packetSequenceNumber());
+        header.writeByte(message.getCommand().nextPacketSequenceNumber());
 
         ByteBuf packet = Unpooled.wrappedBuffer(header, contents);
         out.add(packet);

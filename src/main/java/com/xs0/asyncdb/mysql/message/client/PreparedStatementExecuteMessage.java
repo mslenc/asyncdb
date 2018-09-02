@@ -1,5 +1,6 @@
 package com.xs0.asyncdb.mysql.message.client;
 
+import com.xs0.asyncdb.mysql.state.MySQLCommand;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
@@ -12,7 +13,9 @@ public class PreparedStatementExecuteMessage extends ClientMessage {
     private final ByteBuf typeBytes;
     private final ByteBuf valueBytes;
 
-    public PreparedStatementExecuteMessage(byte[] statementId, byte[] nullBytes, ByteBuf typeBytes, ByteBuf valueBytes) {
+    public PreparedStatementExecuteMessage(MySQLCommand command, byte[] statementId, byte[] nullBytes, ByteBuf typeBytes, ByteBuf valueBytes) {
+        super(command);
+
         this.statementId = statementId;
         this.nullBytes = nullBytes;
         this.typeBytes = typeBytes;

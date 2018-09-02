@@ -15,9 +15,8 @@ import com.xs0.asyncdb.common.exceptions.DatabaseException;
 import com.xs0.asyncdb.common.util.BufferDumper;
 import com.xs0.asyncdb.common.util.FutureUtils;
 import com.xs0.asyncdb.mysql.binary.BinaryRowEncoder;
-import com.xs0.asyncdb.mysql.codec.commands.*;
-import com.xs0.asyncdb.mysql.codec.statemachine.InitialHandshakeStateMachine;
-import com.xs0.asyncdb.mysql.codec.statemachine.MySQLStateMachine;
+import com.xs0.asyncdb.mysql.state.MySQLCommand;
+import com.xs0.asyncdb.mysql.state.commands.*;
 import com.xs0.asyncdb.mysql.decoder.ErrorDecoder;
 import com.xs0.asyncdb.mysql.ex.MySQLException;
 import com.xs0.asyncdb.mysql.message.client.*;
@@ -33,10 +32,9 @@ import org.slf4j.LoggerFactory;
 
 import static com.xs0.asyncdb.common.util.FutureUtils.failedFuture;
 import static com.xs0.asyncdb.common.util.FutureUtils.safelyComplete;
-import static com.xs0.asyncdb.common.util.FutureUtils.safelyFail;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-public class MySQLConnectionHandler extends SimpleChannelInboundHandler<Object> implements MySQLStateMachine.Support {
+public class MySQLConnectionHandler extends SimpleChannelInboundHandler<Object> implements MySQLCommand.Support {
     private static final int STATE_AWAITING_CONNECT_CALL = 0;
     private static final int STATE_AWAITING_SOCKET = 1;
     private static final int STATE_RUNNING_STATE_MACHINE = 2;
@@ -53,11 +51,9 @@ public class MySQLConnectionHandler extends SimpleChannelInboundHandler<Object> 
     private HandshakeMessage serverInfo;
 
     private int state;
-    private int sequenceNumber = 1;
 
-    private InitialHandshakeStateMachine initialHandshake;
-    private MySQLStateMachine currentStateMachine;
-    private CompletableFuture<?> currentPromise;
+    private InitialHandshakeCommand initialHandshake;
+    private MySQLCommand currentCommand;
     private final ArrayDeque<MySQLCommand> commandQueue = new ArrayDeque<>();
 
     public MySQLConnectionHandler(Configuration configuration,
@@ -89,7 +85,7 @@ public class MySQLConnectionHandler extends SimpleChannelInboundHandler<Object> 
                     new LengthFieldBasedFrameDecoder(ByteOrder.LITTLE_ENDIAN, 0xFFFFFF + 4, 0, 3, 1, 4, true),
                     new LongPacketMerger(),
 
-                    MySQLOneToOneEncoder.instance(),
+                    ClientMessageEncoder.instance(),
                     MySQLConnectionHandler.this
                 );
             }
@@ -97,17 +93,16 @@ public class MySQLConnectionHandler extends SimpleChannelInboundHandler<Object> 
 
         CompletableFuture<MySQLConnectionHandler> promise = new CompletableFuture<>();
 
-        initialHandshake = new InitialHandshakeStateMachine(this, configuration, promise);
+        initialHandshake = new InitialHandshakeCommand(this, configuration, promise);
 
         ChannelFuture connectFuture = bootstrap.connect(new InetSocketAddress(configuration.host, configuration.port));
         connectFuture.addListener(f -> {
             if (f.isSuccess()) {
                 state = STATE_RUNNING_STATE_MACHINE;
-                currentStateMachine = initialHandshake;
-                currentPromise = initialHandshake.getPromise();
+                currentCommand = initialHandshake;
                 handleStateMachineResult(initialHandshake.start(this));
             } else {
-                safelyFail(promise, f.cause());
+                safelyFail(initialHandshake, f.cause());
             }
         });
 
@@ -127,27 +122,27 @@ public class MySQLConnectionHandler extends SimpleChannelInboundHandler<Object> 
             log.trace("Received a message: \n{}", BufferDumper.dumpAsHex(packet));
         }
 
-        MySQLStateMachine.Result result;
+        MySQLCommand.Result result;
 
-        if (currentStateMachine != null) {
+        if (currentCommand != null) {
             try {
-                result = currentStateMachine.processPacket(packet, this);
+                result = currentCommand.processPacket(packet, this);
                 if (result != null) {
                     this.currentContext.flush();
                 } else {
-                    result = MySQLStateMachine.Result.protocolErrorAbortEverything("State machine returned no result");
+                    result = MySQLCommand.Result.protocolErrorAbortEverything("State machine returned no result");
                 }
             } catch (Exception e) {
-                result = MySQLStateMachine.Result.protocolErrorAbortEverything(e); // who knows what state it is in now..
+                result = MySQLCommand.Result.protocolErrorAbortEverything(e); // who knows what state it is in now..
             }
         } else {
-            result = MySQLStateMachine.Result.protocolErrorAbortEverything(new IllegalStateException("A message received with no state machine active"));
+            result = MySQLCommand.Result.protocolErrorAbortEverything(new IllegalStateException("A message received with no state machine active"));
         }
 
         handleStateMachineResult(result);
     }
 
-    private void handleStateMachineResult(MySQLStateMachine.Result result) {
+    private void handleStateMachineResult(MySQLCommand.Result result) {
         switch (result.resultType) {
             case EXPECTING_MORE_PACKETS:
                 // nothing to handle here :)
@@ -157,24 +152,21 @@ public class MySQLConnectionHandler extends SimpleChannelInboundHandler<Object> 
                 MySQLCommand next = commandQueue.pollFirst();
                 if (next == null) {
                     state = STATE_IDLE;
-                    currentStateMachine = null;
-                    currentPromise = null;
+                    currentCommand = null;
                 } else {
                     state = STATE_RUNNING_STATE_MACHINE;
-                    sequenceNumber = 0; // a new command is supposed to have seq number 0
-                    currentStateMachine = next.createStateMachine();
-                    currentPromise = next.getPromise();
+                    currentCommand = next;
 
-                    MySQLStateMachine.Result initResult;
+                    MySQLCommand.Result initResult;
                     try {
-                        initResult = currentStateMachine.start(this);
+                        initResult = currentCommand.start(this);
                         if (initResult != null) {
                             currentContext.flush();
                         } else {
-                            initResult = MySQLStateMachine.Result.protocolErrorAbortEverything("State machine returned no result");
+                            initResult = MySQLCommand.Result.protocolErrorAbortEverything("State machine returned no result");
                         }
                     } catch (Exception e) {
-                        initResult = MySQLStateMachine.Result.protocolErrorAbortEverything(e);
+                        initResult = MySQLCommand.Result.protocolErrorAbortEverything(e);
                     }
 
                     handleStateMachineResult(initResult);
@@ -195,16 +187,15 @@ public class MySQLConnectionHandler extends SimpleChannelInboundHandler<Object> 
     void doCloseCleanUp(Throwable error) {
         try {
             if (error != null) {
-                safelyFail(currentPromise, error);
+                safelyFail(currentCommand, error);
             } else {
-                safelyComplete(currentPromise, null); // we assume it's the promise for close()
+                safelyCompleteWithNull(currentCommand); // we assume it's the promise for close()
             }
 
             for (MySQLCommand command : commandQueue)
-                safelyFail(command.getPromise(), new ConnectionClosedException(error));
+                safelyFail(command, new ConnectionClosedException(error));
         } finally {
-            currentPromise = null;
-            currentStateMachine = null;
+            currentCommand = null;
             state = STATE_CLOSED;
             disconnect();
             commandQueue.clear();
@@ -213,7 +204,7 @@ public class MySQLConnectionHandler extends SimpleChannelInboundHandler<Object> 
 
     void resumeExecutionIfIdle() {
         if (state == STATE_IDLE)
-            handleStateMachineResult(MySQLStateMachine.Result.stateMachineFinished());
+            handleStateMachineResult(MySQLCommand.Result.stateMachineFinished());
     }
 
     void enqueueCommand(MySQLCommand command) {
@@ -242,7 +233,7 @@ public class MySQLConnectionHandler extends SimpleChannelInboundHandler<Object> 
     }
 
     private void handleException(Throwable cause) {
-        handleStateMachineResult(MySQLStateMachine.Result.protocolErrorAbortEverything(cause));
+        handleStateMachineResult(MySQLCommand.Result.protocolErrorAbortEverything(cause));
 
 //        handlerDelegate.exceptionCaught(cause);
     }
@@ -276,11 +267,6 @@ public class MySQLConnectionHandler extends SimpleChannelInboundHandler<Object> 
     public void sendMessage(ClientMessage message) {
         switch (this.state) {
             case STATE_RUNNING_STATE_MACHINE:
-                message.assignPacketSequenceNumber(sequenceNumber++);
-                if (sequenceNumber > 255) {
-                    sequenceNumber = 1; // 0 is reserved for initial packet in a command (if I read the manual correctly)
-                }
-
                 log.debug("Writing {}", message);
 
                 this.currentContext.write(message);
@@ -321,17 +307,23 @@ public class MySQLConnectionHandler extends SimpleChannelInboundHandler<Object> 
         return promise;
     }
 
-    void closePreparedStatement(PreparedStatementInfo psInfo, CompletableFuture<Void> closingPromise) {
-        throw new UnsupportedOperationException("TODO");
-    }
+    CompletableFuture<Void> closePreparedStatement(PreparedStatementInfo psInfo) {
+        if (psInfo.wasClosed()) {
+            return CompletableFuture.completedFuture(null);
+        }
 
-    public com.xs0.asyncdb.common.PreparedStatement rememberPreparedStatement(PreparedStatementInfo info) {
-        throw new UnsupportedOperationException("TODO");
+        CompletableFuture<Void> promise = new CompletableFuture<>();
+        enqueueCommand(new ClosePreparedStatementCommand(psInfo, promise));
+        return promise.whenComplete((closeSuccess, closeError) -> {
+            if (closeError == null) {
+                psInfo.markAsClosed();
+            }
+        });
     }
 
     public CompletableFuture<QueryResult> sendQuery(String query) {
         CompletableFuture<QueryResult> promise = new CompletableFuture<>();
-        enqueueCommand(new ExecuteQueryCommand(query, promise));
+        enqueueCommand(new TextBasedQueryCommand(query, promise));
         return promise;
     }
 
@@ -362,5 +354,15 @@ public class MySQLConnectionHandler extends SimpleChannelInboundHandler<Object> 
     public PreparedStatement createPreparedStatement(String query, PreparedStatementInfo psInfo) {
         // TODO: remember them all, for clean-up?
         return new PreparedStatementImpl(this, query, psInfo);
+    }
+
+    private static void safelyFail(MySQLCommand command, Throwable cause) {
+        if (command != null)
+            FutureUtils.safelyFail(command.getPromise(), cause);
+    }
+
+    private static void safelyCompleteWithNull(MySQLCommand command) {
+        if (command != null)
+            FutureUtils.safelyComplete(command.getPromise(), null);
     }
 }

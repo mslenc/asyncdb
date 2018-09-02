@@ -1,5 +1,6 @@
 package com.xs0.asyncdb.mysql.message.client;
 
+import com.xs0.asyncdb.mysql.state.MySQLCommand;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
@@ -11,7 +12,9 @@ public class SendLongDataMessage extends ClientMessage {
     public final ByteBuf paramValue;
     public final int paramIndex;
 
-    public SendLongDataMessage(byte[] statementId, int paramIndex, ByteBuf paramValue) {
+    public SendLongDataMessage(MySQLCommand command, byte[] statementId, int paramIndex, ByteBuf paramValue) {
+        super(command);
+
         this.statementId = statementId;
         this.paramValue = paramValue;
         this.paramIndex = paramIndex;

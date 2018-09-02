@@ -1,6 +1,7 @@
 package com.xs0.asyncdb.mysql.message.client;
 
 import com.xs0.asyncdb.mysql.binary.ByteBufUtils;
+import com.xs0.asyncdb.mysql.state.MySQLCommand;
 import com.xs0.asyncdb.mysql.util.CharsetMapper;
 import io.netty.buffer.ByteBuf;
 
@@ -28,7 +29,9 @@ public class HandshakeResponseMessage extends ClientMessage {
 
     private String database;
 
-    public HandshakeResponseMessage(String username) {
+    public HandshakeResponseMessage(MySQLCommand command, String username) {
+        super(command);
+
         this.username = Objects.requireNonNull(username, "Missing username");
     }
 

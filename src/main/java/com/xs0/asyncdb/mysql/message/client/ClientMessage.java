@@ -1,26 +1,17 @@
 package com.xs0.asyncdb.mysql.message.client;
 
+import com.xs0.asyncdb.mysql.state.MySQLCommand;
 import io.netty.buffer.ByteBuf;
 
 public abstract class ClientMessage {
-    private boolean hasSequenceNumber;
-    private int sequenceNumber;
+    private final MySQLCommand command;
 
-    public final void assignPacketSequenceNumber(int sequenceNumber) {
-        if (hasSequenceNumber) {
-            throw new IllegalStateException("Sequence number already assigned");
-        } else {
-            hasSequenceNumber = true;
-            this.sequenceNumber = sequenceNumber;
-        }
+    protected ClientMessage(MySQLCommand command) {
+        this.command = command;
     }
 
-    public final int packetSequenceNumber() {
-        if (hasSequenceNumber) {
-            return sequenceNumber;
-        } else {
-            throw new IllegalStateException("Missing sequence number");
-        }
+    public final MySQLCommand getCommand() {
+        return command;
     }
 
     public abstract ByteBuf getPacketContents();
