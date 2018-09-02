@@ -3,7 +3,6 @@ package com.xs0.asyncdb.mysql.codec;
 import java.util.List;
 
 import com.xs0.asyncdb.common.util.BufferDumper;
-import com.xs0.asyncdb.mysql.binary.ByteBufUtils;
 import com.xs0.asyncdb.mysql.message.client.ClientMessage;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
@@ -31,7 +30,7 @@ public class MySQLOneToOneEncoder extends MessageToMessageEncoder<ClientMessage>
         ByteBuf header = newMysqlBuffer(4);
         ByteBuf contents = message.getPacketContents();
 
-        ByteBufUtils.write3ByteInt(contents.readableBytes(), header);
+        header.writeMediumLE(contents.readableBytes());
         header.writeByte(message.packetSequenceNumber());
 
         ByteBuf packet = Unpooled.wrappedBuffer(header, contents);

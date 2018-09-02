@@ -17,7 +17,7 @@ public class LocalDateEncoder implements BinaryEncoder {
         LocalDate date = (LocalDate) value;
 
         buffer.writeByte(4);
-        buffer.writeShort(date.getYear());
+        buffer.writeShortLE(date.getYear());
         buffer.writeByte(date.getMonthValue());
         buffer.writeByte(date.getDayOfMonth());
     }

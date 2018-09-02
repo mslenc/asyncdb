@@ -11,6 +11,6 @@ public class DoubleDecoder implements BinaryDecoder {
 
     @Override
     public Double decode(ByteBuf buffer) {
-        return buffer.readDouble();
+        return buffer.readDoubleLE();
     }
 }

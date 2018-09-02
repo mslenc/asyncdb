@@ -21,12 +21,12 @@ public class LocalTimeEncoder implements BinaryEncoder {
 
         buffer.writeByte(hasMicros ? 12 : 8);
         buffer.writeByte(0); // we can't have negative values..
-        buffer.writeInt(0); // days
+        buffer.writeIntLE(0); // days
         buffer.writeByte(time.getHour());
         buffer.writeByte(time.getMinute());
         buffer.writeByte(time.getSecond());
         if (hasMicros) {
-            buffer.writeInt(micros);
+            buffer.writeIntLE(micros);
         }
     }
 

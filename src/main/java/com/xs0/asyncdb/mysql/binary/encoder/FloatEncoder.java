@@ -12,7 +12,7 @@ public class FloatEncoder implements BinaryEncoder {
 
     @Override
     public void encode(Object value, ByteBuf buffer) {
-        buffer.writeFloat((Float)value);
+        buffer.writeFloatLE((Float)value);
     }
 
     @Override

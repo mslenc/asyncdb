@@ -12,7 +12,7 @@ public class IntegerEncoder implements BinaryEncoder {
 
     @Override
     public void encode(Object value, ByteBuf buffer) {
-        buffer.writeInt((Integer)value);
+        buffer.writeIntLE((Integer)value);
     }
 
     @Override

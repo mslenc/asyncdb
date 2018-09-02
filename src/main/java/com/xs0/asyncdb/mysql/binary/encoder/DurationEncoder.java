@@ -40,13 +40,13 @@ public class DurationEncoder implements BinaryEncoder {
         buffer.writeByte(hasMicros ? 12 : 8);
         buffer.writeByte(negative ? 1 : 0);
 
-        buffer.writeInt(days);
+        buffer.writeIntLE(days);
         buffer.writeByte(hours);
         buffer.writeByte(minutes);
         buffer.writeByte(seconds);
 
         if (hasMicros) {
-            buffer.writeInt(micros);
+            buffer.writeIntLE(micros);
         }
     }
 

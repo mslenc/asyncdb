@@ -12,7 +12,7 @@ public class DoubleEncoder implements BinaryEncoder {
 
     @Override
     public void encode(Object value, ByteBuf buffer) {
-        buffer.writeDouble((Double)value);
+        buffer.writeDoubleLE((Double)value);
     }
 
     @Override

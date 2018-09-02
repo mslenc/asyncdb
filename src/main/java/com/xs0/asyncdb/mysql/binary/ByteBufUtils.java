@@ -5,7 +5,6 @@ import com.xs0.asyncdb.mysql.util.MySQLIO;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
-import java.nio.ByteOrder;
 import java.nio.charset.Charset;
 
 public class ByteBufUtils {
@@ -39,27 +38,13 @@ public class ByteBufUtils {
                 case 252:
                     return buffer.readUnsignedShortLE();
                 case 253:
-                    return read3ByteInt(buffer);
+                    return buffer.readUnsignedMediumLE();
                 case 254:
                     return buffer.readLongLE();
                 default:
                     throw new UnknownLengthException(firstByte);
             }
         }
-    }
-
-    public static int read3ByteInt(ByteBuf buffer) {
-        int a = buffer.readUnsignedByte();
-        int b = buffer.readUnsignedByte();
-        int c = buffer.readUnsignedByte();
-
-        return a | (b << 8) | (c << 16);
-    }
-
-    public static void write3ByteInt(int value, ByteBuf buffer) {
-        buffer.writeByte(value);
-        buffer.writeByte(value >>> 8);
-        buffer.writeByte(value >>> 16);
     }
 
     public static void writeLength(long length, ByteBuf buffer) {
@@ -72,7 +57,7 @@ public class ByteBufUtils {
         } else
         if (length < 16777216L) {
             buffer.writeByte(253);
-            write3ByteInt((int)length, buffer);
+            buffer.writeMediumLE((int)length);
         } else {
             buffer.writeByte(254);
             buffer.writeLongLE(length);
@@ -128,27 +113,6 @@ public class ByteBufUtils {
     public static void writeCString(ByteBuf b, String content, Charset charset) {
         b.writeCharSequence(content, charset);
         b.writeByte(0);
-    }
-
-    public static void writePacketLength(ByteBuf buffer) {
-        writePacketLength(buffer, 1);
-    }
-
-    public static void writePacketLength(ByteBuf buffer, int sequence) {
-        int length = buffer.writerIndex() - 4;
-        buffer.markWriterIndex();
-        buffer.writerIndex(0);
-
-        write3BytesInt( buffer, length );
-        buffer.writeByte(sequence);
-
-        buffer.resetWriterIndex();
-    }
-
-    public static void write3BytesInt(ByteBuf b, int value) {
-        b.writeByte(value);
-        b.writeByte(value >>> 8);
-        b.writeByte(value >>> 16);
     }
 
     public static byte[] readFixedBytes(ByteBuf buffer, int length) {

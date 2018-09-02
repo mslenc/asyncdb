@@ -12,7 +12,7 @@ public class LongEncoder implements BinaryEncoder {
 
     @Override
     public void encode(Object value, ByteBuf buffer) {
-        buffer.writeLong((Long)value);
+        buffer.writeLongLE((Long)value);
     }
 
     @Override

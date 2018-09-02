@@ -11,6 +11,6 @@ public class FloatDecoder implements BinaryDecoder {
 
     @Override
     public Float decode(ByteBuf buffer) {
-        return buffer.readFloat();
+        return buffer.readFloatLE();
     }
 }

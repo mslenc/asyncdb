@@ -21,7 +21,7 @@ public class LocalDateTimeEncoder implements BinaryEncoder {
 
         buffer.writeByte(hasMicros ? 11 : 7);
 
-        buffer.writeShort(dateTime.getYear());
+        buffer.writeShortLE(dateTime.getYear());
         buffer.writeByte(dateTime.getMonthValue());
         buffer.writeByte(dateTime.getDayOfMonth());
         buffer.writeByte(dateTime.getHour());
@@ -29,7 +29,7 @@ public class LocalDateTimeEncoder implements BinaryEncoder {
         buffer.writeByte(dateTime.getSecond());
 
         if (hasMicros) {
-            buffer.writeInt(micros);
+            buffer.writeIntLE(micros);
         }
     }
 

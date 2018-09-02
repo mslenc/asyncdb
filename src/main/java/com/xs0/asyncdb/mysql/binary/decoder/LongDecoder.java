@@ -11,6 +11,6 @@ public class LongDecoder implements BinaryDecoder {
 
     @Override
     public Long decode(ByteBuf buffer) {
-        return buffer.readLong();
+        return buffer.readLongLE();
     }
 }
