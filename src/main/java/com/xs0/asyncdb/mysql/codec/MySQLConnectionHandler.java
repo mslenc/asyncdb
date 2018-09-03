@@ -12,6 +12,8 @@ import com.xs0.asyncdb.common.PreparedStatement;
 import com.xs0.asyncdb.common.QueryResult;
 import com.xs0.asyncdb.common.exceptions.ConnectionClosedException;
 import com.xs0.asyncdb.common.exceptions.DatabaseException;
+import com.xs0.asyncdb.common.sql.SqlLiteralEncoders;
+import com.xs0.asyncdb.common.sql.SqlQueryPlaceholders;
 import com.xs0.asyncdb.common.util.BufferDumper;
 import com.xs0.asyncdb.common.util.FutureUtils;
 import com.xs0.asyncdb.mysql.binary.BinaryRowEncoder;
@@ -366,5 +368,17 @@ public class MySQLConnectionHandler extends SimpleChannelInboundHandler<Object> 
     private static void safelyCompleteWithNull(MySQLCommand command) {
         if (command != null)
             FutureUtils.safelyComplete(command.getPromise(), null);
+    }
+
+    public CompletableFuture<QueryResult> sendQuery(String query, List<Object> values) {
+        String queryWithValues;
+
+        try {
+            queryWithValues = SqlQueryPlaceholders.insertValuesForPlaceholders(query, values, SqlLiteralEncoders.DEFAULT, codecSettings);
+        } catch (Exception e) {
+            return failedFuture(e);
+        }
+
+        return sendQuery(queryWithValues);
     }
 }

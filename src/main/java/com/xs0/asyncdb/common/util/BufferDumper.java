@@ -7,7 +7,7 @@ public class BufferDumper {
 
     private static final int BYTES_PER_ROW = 8;
 
-    public static final String dumpAsHex(ByteBuf buffer) {
+    public static String dumpAsHex(ByteBuf buffer) {
         int numBytes = buffer.readableBytes();
 
         int firstPos = buffer.readerIndex();

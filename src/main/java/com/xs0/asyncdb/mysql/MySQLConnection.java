@@ -10,6 +10,7 @@ import io.netty.channel.EventLoopGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -92,6 +93,11 @@ public class MySQLConnection extends TimeoutScheduler implements Connection {
     }
 
     @Override
+    public CompletableFuture<QueryResult> sendQuery(String query, List<Object> values) {
+        return connectionHandler.sendQuery(query, values);
+    }
+
+    @Override
     public boolean isConnected() {
         return this.connectionHandler.isConnected();
     }
@@ -104,63 +110,5 @@ public class MySQLConnection extends TimeoutScheduler implements Connection {
     @Override
     public CompletableFuture<PreparedStatement> prepareStatement(String query) {
         return this.connectionHandler.prepareStatement(query);
-    }
-
-    static int countParameterMarks(String query) {
-        int mode = 0; // 1 = inside ', 2 = inside ", 3 = inside `, 16 = after \
-
-        int parameterCount = 0;
-
-        for (int i = 0, len = query.length(); i < len; i++) {
-            if ((mode & 16) == 16) { // after backslash
-                mode ^= 16;
-                continue;
-            }
-
-            switch (query.charAt(i)) {
-                case '\\':
-                    if (mode == 0) { // outside a string.. who knows what the \ is supposed to be..
-                        // ignore
-                    } else {
-                        mode |= 16; // enter escape mode, next char handled above..
-                    }
-                    break;
-
-                case '\'':
-                    if (mode == 0) {
-                        mode = 1;
-                    } else
-                    if (mode == 1) {
-                        mode = 0;
-                    }
-                    break;
-
-                case '"':
-                    if (mode == 0) {
-                        mode = 2;
-                    } else
-                    if (mode == 2) {
-                        mode = 0;
-                    }
-                    break;
-
-                case '`':
-                    if (mode == 0) {
-                        mode = 3;
-                    } else
-                    if (mode == 3) {
-                        mode = 0;
-                    }
-                    break;
-
-                case '?':
-                    if (mode == 0) {
-                        parameterCount++;
-                    }
-                    break;
-            }
-        }
-
-        return parameterCount;
     }
 }
