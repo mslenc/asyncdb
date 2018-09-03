@@ -1,7 +1,6 @@
 package com.xs0.asyncdb.mysql.message.server;
 
 import io.netty.buffer.ByteBuf;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -56,13 +55,11 @@ public class ResultSetRowMessage implements ServerMessage, List<ByteBuf>, Clonea
         return clone;
     }
 
-    @NotNull
     @Override
     public Object[] toArray() {
         return buffer.toArray();
     }
 
-    @NotNull
     @Override
     public <T> T[] toArray(T[] a) {
         return buffer.toArray(a);
@@ -104,44 +101,40 @@ public class ResultSetRowMessage implements ServerMessage, List<ByteBuf>, Clonea
     }
 
     @Override
-    public boolean addAll(@NotNull Collection<? extends ByteBuf> c) {
+    public boolean addAll(Collection<? extends ByteBuf> c) {
         return buffer.addAll(c);
     }
 
     @Override
-    public boolean addAll(int index, @NotNull Collection<? extends ByteBuf> c) {
+    public boolean addAll(int index, Collection<? extends ByteBuf> c) {
         return buffer.addAll(index, c);
     }
 
     @Override
-    public boolean removeAll(@NotNull Collection<?> c) {
+    public boolean removeAll(Collection<?> c) {
         return buffer.removeAll(c);
     }
 
     @Override
-    public boolean retainAll(@NotNull Collection<?> c) {
+    public boolean retainAll(Collection<?> c) {
         return buffer.retainAll(c);
     }
 
-    @NotNull
     @Override
     public ListIterator<ByteBuf> listIterator(int index) {
         return buffer.listIterator(index);
     }
 
-    @NotNull
     @Override
     public ListIterator<ByteBuf> listIterator() {
         return buffer.listIterator();
     }
 
-    @NotNull
     @Override
     public Iterator<ByteBuf> iterator() {
         return buffer.iterator();
     }
 
-    @NotNull
     @Override
     public List<ByteBuf> subList(int fromIndex, int toIndex) {
         return buffer.subList(fromIndex, toIndex);
@@ -183,7 +176,7 @@ public class ResultSetRowMessage implements ServerMessage, List<ByteBuf>, Clonea
     }
 
     @Override
-    public boolean containsAll(@NotNull Collection<?> c) {
+    public boolean containsAll(Collection<?> c) {
         return buffer.containsAll(c);
     }
 

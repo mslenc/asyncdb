@@ -1,7 +1,5 @@
 package com.xs0.asyncdb.common.util;
 
-import org.jetbrains.annotations.NotNull;
-
 public class Version implements Comparable<Version> {
     public final int major;
     public final int minor;
@@ -14,7 +12,7 @@ public class Version implements Comparable<Version> {
     }
 
     @Override
-    public int compareTo(@NotNull Version other) {
+    public int compareTo(Version other) {
         if (major != other.major)
             return Integer.compare(major, other.major);
 
