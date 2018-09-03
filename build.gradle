@@ -23,10 +23,7 @@ dependencies {
     compile 'org.slf4j:slf4j-api:1.7.25'
 
     // https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
-    compile 'ch.qos.logback:logback-classic:1.2.3'
-
-    // https://mvnrepository.com/artifact/mysql/mysql-connector-java
-    compile 'mysql:mysql-connector-java:8.0.12'
+    testCompile 'ch.qos.logback:logback-classic:1.2.3'
 }
 
 compileKotlin {
