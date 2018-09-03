@@ -130,4 +130,10 @@ public class ByteBufUtils {
         int pos = offset + index;
         nullBytes[pos >>> 3] |= 1 << (pos & 7);
     }
+
+    public static boolean isNullBitSet(int offset, byte[] nullBytes, int index) {
+        int pos = offset + index;
+
+        return (nullBytes[pos >>> 3] & (1 << (pos & 7))) != 0;
+    }
 }

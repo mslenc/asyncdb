@@ -29,7 +29,34 @@ public class MySQLIO {
     public static final int PACKET_HEADER_HANDSHAKE_V10 = 0x0A;
     public static final int PACKET_HEADER_AUTH_SWITCH_REQUEST = 0xFE;
 
+    // https://dev.mysql.com/doc/dev/mysql-server/latest/group__group__cs__column__definition__flags.html
+    public static final int FIELD_FLAG_NOT_NULL = 1;
+    public static final int FIELD_FLAG_PRIMARY_KEY = 2;
+    public static final int FIELD_FLAG_UNIQUE_KEY = 4;
+    public static final int FIELD_FLAG_MULTIPLE_KEY = 8;
+    public static final int FIELD_FLAG_BLOB = 16;
+    public static final int FIELD_FLAG_UNSIGNED = 32;
+    public static final int FIELD_FLAG_ZEROFILL = 64;
+    public static final int FIELD_FLAG_BINARY = 128;
+    public static final int FIELD_FLAG_ENUM = 256;
+    public static final int FIELD_FLAG_AUTO_INCREMENT = 512;
+    public static final int FIELD_FLAG_TIMESTAMP = 1024;
+    public static final int FIELD_FLAG_SET = 2048;
+    public static final int FIELD_FLAG_NO_DEFAULT_VALUE = 4096;
+    public static final int FIELD_FLAG_ON_UPDATE_NOW = 8192;
+    public static final int FIELD_FLAG_NUM = 32768;
 
+    int SERVER_PROTOCOL_VERSION = 10;
+
+    // these messages don't actually exist
+    // but we use them to simplify the switch statements
+    int COLUMN_DEFINITION = 100;
+    int COLUMN_DEFINITION_FINISHED = 101;
+    int PARAM_PROCESSING_FINISHED = 102;
+    int PARAM_AND_COLUMN_PROCESSING_FINISHED = 103;
+    int ROW = 104;
+    int BINARY_ROW = 105;
+    int PREPARED_STATEMENT_PREPARE_RESPONSE = 106;
 
     public static final int TEXT_RESULTSET_NULL = 0xfb;
 

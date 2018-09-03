@@ -1,4 +1,4 @@
-package com.xs0.asyncdb.mysql.encoder.auth;
+package com.xs0.asyncdb.mysql.auth;
 
 import java.nio.charset.Charset;
 

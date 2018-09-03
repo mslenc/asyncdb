@@ -8,9 +8,4 @@ public class EOFMessage implements ServerMessage {
         this.warningCount = warningCount;
         this.flags = flags;
     }
-
-    @Override
-    public int kind() {
-        return EOF;
-    }
 }

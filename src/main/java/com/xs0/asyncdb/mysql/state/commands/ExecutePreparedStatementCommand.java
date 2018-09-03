@@ -7,6 +7,7 @@ import com.xs0.asyncdb.mysql.binary.BinaryRowDecoder;
 import com.xs0.asyncdb.mysql.binary.BinaryRowEncoder;
 import com.xs0.asyncdb.mysql.binary.ByteBufUtils;
 import com.xs0.asyncdb.mysql.binary.encoder.BinaryEncoder;
+import com.xs0.asyncdb.mysql.codec.CodecSettings;
 import com.xs0.asyncdb.mysql.codec.PreparedStatementInfo;
 import com.xs0.asyncdb.mysql.decoder.ColumnDefinitionDecoder;
 import com.xs0.asyncdb.mysql.decoder.EOFMessageDecoder;
@@ -47,6 +48,7 @@ public class ExecutePreparedStatementCommand extends MySQLCommand {
     private final PreparedStatementInfo psInfo;
     private final List<Object> values;
     private final CompletableFuture<QueryResult> promise;
+    private final CodecSettings codecSettings;
 
     private int state;
 
@@ -56,9 +58,10 @@ public class ExecutePreparedStatementCommand extends MySQLCommand {
     private ArrayList<ColumnDefinitionMessage> columnDefs = new ArrayList<>();
     private MutableResultSet<ColumnDefinitionMessage> resultSet;
 
-    public ExecutePreparedStatementCommand(PreparedStatementInfo psInfo, List<Object> values, CompletableFuture<QueryResult> promise) {
+    public ExecutePreparedStatementCommand(PreparedStatementInfo psInfo, List<Object> values, CodecSettings codecSettings, CompletableFuture<QueryResult> promise) {
         this.psInfo = psInfo;
         this.values = values;
+        this.codecSettings = codecSettings;
         this.promise = promise;
 
         assert values.size() == psInfo.paramDefs.size();
@@ -229,7 +232,7 @@ public class ExecutePreparedStatementCommand extends MySQLCommand {
             return Result.stateMachineFinished();
         }
 
-        Object[] values = BinaryRowDecoder.instance().decode(packet, columnDefs);
+        Object[] values = BinaryRowDecoder.instance().decode(packet, columnDefs, codecSettings);
         resultSet.addRow(values);
         return Result.expectingMorePackets();
     }

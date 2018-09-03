@@ -18,9 +18,4 @@ public class HandshakeMessage implements ServerMessage {
         this.statusFlags = statusFlags;
         this.authenticationMethod = authenticationMethod;
     }
-
-    @Override
-    public int kind() {
-        return SERVER_PROTOCOL_VERSION;
-    }
 }

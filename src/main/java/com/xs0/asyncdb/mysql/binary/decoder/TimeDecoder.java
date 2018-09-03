@@ -1,5 +1,7 @@
 package com.xs0.asyncdb.mysql.binary.decoder;
 
+import com.xs0.asyncdb.common.general.ColumnData;
+import com.xs0.asyncdb.mysql.codec.CodecSettings;
 import com.xs0.asyncdb.mysql.ex.DecodingException;
 import io.netty.buffer.ByteBuf;
 
@@ -13,7 +15,7 @@ public class TimeDecoder implements BinaryDecoder {
     }
 
     @Override
-    public Duration decode(ByteBuf buffer) {
+    public Duration decode(ByteBuf buffer, CodecSettings settings, ColumnData columnData) {
         int len = buffer.readUnsignedByte();
 
         switch (len) {

@@ -16,15 +16,6 @@ public class ResultSetRowMessage implements ServerMessage, List<ByteBuf>, Clonea
         buffer = new ArrayList<>();
     }
 
-    private ResultSetRowMessage(ArrayList<ByteBuf> buffer) {
-        this.buffer = buffer;
-    }
-
-    @Override
-    public int kind() {
-        return ROW;
-    }
-
     @Override
     public int size() {
         return buffer.size();

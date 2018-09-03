@@ -4,4 +4,5 @@ public interface ColumnData {
     String name();
     int dataType();
     long dataTypeSize();
+    boolean isUnsigned();
 }

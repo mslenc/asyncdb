@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import static com.xs0.asyncdb.common.util.FutureUtils.failedFuture;
 import static com.xs0.asyncdb.common.util.FutureUtils.safelyComplete;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.time.ZoneOffset.UTC;
 
 public class MySQLConnectionHandler extends SimpleChannelInboundHandler<Object> implements MySQLCommand.Support {
     private static final int STATE_AWAITING_CONNECT_CALL = 0;
@@ -55,6 +56,7 @@ public class MySQLConnectionHandler extends SimpleChannelInboundHandler<Object> 
     private InitialHandshakeCommand initialHandshake;
     private MySQLCommand currentCommand;
     private final ArrayDeque<MySQLCommand> commandQueue = new ArrayDeque<>();
+    private final CodecSettings codecSettings = new CodecSettings(UTF_8, UTC);
 
     public MySQLConnectionHandler(Configuration configuration,
                                   EventLoopGroup group,
@@ -65,7 +67,7 @@ public class MySQLConnectionHandler extends SimpleChannelInboundHandler<Object> 
         this.configuration = configuration;
         this.group = group;
         this.log = LoggerFactory.getLogger("[connection-handler]" + connectionId);
-        this.decoderRegistry = new DecoderRegistry(configuration.charset);
+        this.decoderRegistry = DecoderRegistry.instance();
     }
 
     public CompletableFuture<MySQLConnectionHandler> connect() {
@@ -303,7 +305,7 @@ public class MySQLConnectionHandler extends SimpleChannelInboundHandler<Object> 
             return FutureUtils.failedFuture(new MySQLException(new ErrorMessage(1058, "21S01", "Column count doesn't match value count")));
 
         CompletableFuture<QueryResult> promise = new CompletableFuture<>();
-        enqueueCommand(new ExecutePreparedStatementCommand(psInfo, values, promise));
+        enqueueCommand(new ExecutePreparedStatementCommand(psInfo, values, codecSettings, promise));
         return promise;
     }
 

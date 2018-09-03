@@ -6,32 +6,26 @@ import com.xs0.asyncdb.common.util.NettyUtils;
 import com.xs0.asyncdb.common.util.Version;
 import com.xs0.asyncdb.mysql.codec.MySQLConnectionHandler;
 import com.xs0.asyncdb.mysql.util.CharsetMapper;
-import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.EventLoopGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class MySQLConnection extends TimeoutScheduler implements Connection {
     private static AtomicLong counter = new AtomicLong();
     private static Version microsecondsVersion = new Version(5, 6, 0);
     private static Logger log = LoggerFactory.getLogger(MySQLConnection.class);
 
-    private final Configuration configuration;
-    private final CharsetMapper charsetMapper;
     private final EventLoopGroup group;
 
     private final long connectionCount;
     private final String connectionId;
 
     private final CompletableFuture<Connection> connectionPromise;
-    private final CompletableFuture<Connection> disconnectionPromise;
 
     private final MySQLConnectionHandler connectionHandler;
-    private Throwable _lastException = null;
     private Version serverVersion = null;
 
     public MySQLConnection(Configuration configuration,
@@ -48,8 +42,6 @@ public class MySQLConnection extends TimeoutScheduler implements Connection {
 
         charsetMapper.toInt(configuration.charset); // (verify support for charset)
 
-        this.configuration = configuration;
-        this.charsetMapper = charsetMapper;
         this.group = group;
 
         this.connectionCount = counter.incrementAndGet();
@@ -62,15 +54,10 @@ public class MySQLConnection extends TimeoutScheduler implements Connection {
         );
 
         this.connectionPromise = new CompletableFuture<>();
-        this.disconnectionPromise = new CompletableFuture<>();
     }
 
     public Version version() {
         return serverVersion;
-    }
-
-    public Throwable lastException() {
-        return _lastException;
     }
 
     public long count() {

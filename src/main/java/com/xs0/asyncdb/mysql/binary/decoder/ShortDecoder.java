@@ -1,5 +1,7 @@
 package com.xs0.asyncdb.mysql.binary.decoder;
 
+import com.xs0.asyncdb.common.general.ColumnData;
+import com.xs0.asyncdb.mysql.codec.CodecSettings;
 import io.netty.buffer.ByteBuf;
 
 public class ShortDecoder implements BinaryDecoder {
@@ -10,7 +12,11 @@ public class ShortDecoder implements BinaryDecoder {
     }
 
     @Override
-    public Short decode(ByteBuf buffer) {
-        return buffer.readShortLE();
+    public Number decode(ByteBuf buffer, CodecSettings settings, ColumnData columnData) {
+        if (columnData.isUnsigned()) {
+            return buffer.readUnsignedShortLE();
+        } else {
+            return buffer.readShortLE();
+        }
     }
 }

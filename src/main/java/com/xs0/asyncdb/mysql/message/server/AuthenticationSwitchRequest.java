@@ -8,9 +8,4 @@ public class AuthenticationSwitchRequest implements ServerMessage {
         this.method = method;
         this.seed = seed;
     }
-
-    @Override
-    public int kind() {
-        return EOF;
-    }
 }

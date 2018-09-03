@@ -1,19 +1,21 @@
 package com.xs0.asyncdb.mysql.binary.decoder;
 
+import com.xs0.asyncdb.common.general.ColumnData;
+import com.xs0.asyncdb.mysql.codec.CodecSettings;
 import com.xs0.asyncdb.mysql.ex.DecodingException;
 import io.netty.buffer.ByteBuf;
 
 import java.time.LocalDateTime;
 
-public class TimestampDecoder implements BinaryDecoder {
-    private static final TimestampDecoder instance = new TimestampDecoder();
+public class DateTimeDecoder implements BinaryDecoder {
+    private static final DateTimeDecoder instance = new DateTimeDecoder();
 
-    public static TimestampDecoder instance() {
+    public static DateTimeDecoder instance() {
         return instance;
     }
 
     @Override
-    public LocalDateTime decode(ByteBuf buffer) {
+    public LocalDateTime decode(ByteBuf buffer, CodecSettings settings, ColumnData columnData) {
         int size = buffer.readUnsignedByte();
 
         switch (size) {

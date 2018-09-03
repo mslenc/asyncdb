@@ -41,4 +41,8 @@ public class MySQLQueryResult implements QueryResult {
     public ResultSet resultSet() {
         return resultSet;
     }
+
+    public long lastInsertId() {
+        return lastInsertId;
+    }
 }

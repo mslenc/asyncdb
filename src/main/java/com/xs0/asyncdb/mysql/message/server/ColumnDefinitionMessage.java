@@ -3,6 +3,7 @@ package com.xs0.asyncdb.mysql.message.server;
 import com.xs0.asyncdb.common.column.ColumnDecoder;
 import com.xs0.asyncdb.common.general.ColumnData;
 import com.xs0.asyncdb.mysql.binary.decoder.BinaryDecoder;
+import com.xs0.asyncdb.mysql.util.MySQLIO;
 
 public class ColumnDefinitionMessage implements ServerMessage, ColumnData {
     public final String catalog;
@@ -36,11 +37,6 @@ public class ColumnDefinitionMessage implements ServerMessage, ColumnData {
     }
 
     @Override
-    public int kind() {
-        return COLUMN_DEFINITION;
-    }
-
-    @Override
     public String name() {
         return name;
     }
@@ -53,5 +49,10 @@ public class ColumnDefinitionMessage implements ServerMessage, ColumnData {
     @Override
     public long dataTypeSize() {
         return columnLength;
+    }
+
+    @Override
+    public boolean isUnsigned() {
+        return (flags & MySQLIO.FIELD_FLAG_UNSIGNED) != 0;
     }
 }

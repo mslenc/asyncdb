@@ -1,5 +1,7 @@
 package com.xs0.asyncdb.mysql.binary.decoder;
 
+import com.xs0.asyncdb.common.general.ColumnData;
+import com.xs0.asyncdb.mysql.codec.CodecSettings;
 import io.netty.buffer.ByteBuf;
 
 public class DoubleDecoder implements BinaryDecoder {
@@ -10,7 +12,7 @@ public class DoubleDecoder implements BinaryDecoder {
     }
 
     @Override
-    public Double decode(ByteBuf buffer) {
+    public Double decode(ByteBuf buffer, CodecSettings settings, ColumnData columnData) {
         return buffer.readDoubleLE();
     }
 }

@@ -6,26 +6,22 @@ import com.xs0.asyncdb.mysql.binary.decoder.ByteDecoder;
 import com.xs0.asyncdb.mysql.column.ByteArrayColumnDecoder;
 import com.xs0.asyncdb.mysql.column.DurationDecoder;
 
-import java.nio.charset.Charset;
-
 import static com.xs0.asyncdb.mysql.column.ColumnType.*;
 import static com.xs0.asyncdb.mysql.util.CharsetMapper.CHARSET_BINARY;
 
 public class DecoderRegistry {
-    private final BigDecimalDecoder bigDecimalDecoder;
-    private final StringDecoder stringDecoder;
+    private static final DecoderRegistry instance = new DecoderRegistry();
 
-    public DecoderRegistry(Charset charset) {
-        this.bigDecimalDecoder = new BigDecimalDecoder(charset);
-        this.stringDecoder = new StringDecoder(charset);
+    public static DecoderRegistry instance() {
+        return instance;
     }
 
     public BinaryDecoder binaryDecoderFor(int columnType, int charsetCode) {
         switch (columnType) {
             case FIELD_TYPE_VARCHAR:
             case FIELD_TYPE_ENUM:
-            case FIELD_TYPE_SET: // TODO: verify if this is actually appropriate for SET
-                return this.stringDecoder;
+            case FIELD_TYPE_SET:
+                return StringDecoder.instance();
 
             case FIELD_TYPE_BLOB:
             case FIELD_TYPE_LONG_BLOB:
@@ -36,7 +32,7 @@ public class DecoderRegistry {
                 if (charsetCode == CHARSET_BINARY) {
                     return ByteArrayDecoder.instance();
                 } else {
-                    return this.stringDecoder;
+                    return StringDecoder.instance();
                 }
 
             case FIELD_TYPE_BIT:
@@ -64,11 +60,13 @@ public class DecoderRegistry {
 
             case FIELD_TYPE_DECIMAL:
             case FIELD_TYPE_NEW_DECIMAL:
-                return this.bigDecimalDecoder;
+                return BigDecimalDecoder.instance();
 
             case FIELD_TYPE_DATETIME:
+                return DateTimeDecoder.instance();
+
             case FIELD_TYPE_TIMESTAMP:
-                return TimestampDecoder.instance();
+                return InstantDecoder.instance();
 
             case FIELD_TYPE_DATE:
                 return DateDecoder.instance();
@@ -81,7 +79,7 @@ public class DecoderRegistry {
 
             case FIELD_TYPE_JSON:
                 // TODO: verify if this is appropriate for JSON
-                return this.stringDecoder;
+                return StringDecoder.instance();
 
             case FIELD_TYPE_GEOMETRY:
                 // TODO: verify if this is appropriate for GEOMETRY

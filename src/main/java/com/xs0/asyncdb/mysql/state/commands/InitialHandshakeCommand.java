@@ -1,11 +1,11 @@
 package com.xs0.asyncdb.mysql.state.commands;
 
 import com.xs0.asyncdb.common.Configuration;
+import com.xs0.asyncdb.mysql.auth.MySQLNativePasswordAuthentication;
+import com.xs0.asyncdb.mysql.auth.MySQLOldPasswordAuthentication;
 import com.xs0.asyncdb.mysql.codec.MySQLConnectionHandler;
 import com.xs0.asyncdb.mysql.decoder.ErrorDecoder;
 import com.xs0.asyncdb.mysql.decoder.HandshakeV10Decoder;
-import com.xs0.asyncdb.mysql.encoder.auth.MySQLNativePasswordAuthentication;
-import com.xs0.asyncdb.mysql.encoder.auth.MySQLOldPasswordAuthentication;
 import com.xs0.asyncdb.mysql.message.client.AuthenticationSwitchResponse;
 import com.xs0.asyncdb.mysql.message.client.HandshakeResponseMessage;
 import com.xs0.asyncdb.mysql.message.server.ErrorMessage;

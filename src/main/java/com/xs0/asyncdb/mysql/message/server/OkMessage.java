@@ -14,9 +14,4 @@ public class OkMessage implements ServerMessage {
         this.warnings = warnings;
         this.message = message;
     }
-
-    @Override
-    public int kind() {
-        return OK;
-    }
 }

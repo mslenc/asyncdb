@@ -10,9 +10,4 @@ public class ErrorMessage implements ServerMessage {
         this.sqlState = sqlState;
         this.errorMessage = errorMessage;
     }
-
-    @Override
-    public int kind() {
-        return ERROR;
-    }
 }

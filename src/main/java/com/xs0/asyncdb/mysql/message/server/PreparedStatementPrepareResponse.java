@@ -12,9 +12,4 @@ public class PreparedStatementPrepareResponse implements ServerMessage {
         this.paramsCount = paramsCount;
         this.columnsCount = columnsCount;
     }
-
-    @Override
-    public int kind() {
-        return PREPARED_STATEMENT_PREPARE_RESPONSE;
-    }
 }

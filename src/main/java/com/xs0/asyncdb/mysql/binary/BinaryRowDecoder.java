@@ -1,16 +1,14 @@
 package com.xs0.asyncdb.mysql.binary;
 
 import com.xs0.asyncdb.common.exceptions.BufferNotFullyConsumedException;
+import com.xs0.asyncdb.mysql.codec.CodecSettings;
 import com.xs0.asyncdb.mysql.message.server.ColumnDefinitionMessage;
 import io.netty.buffer.ByteBuf;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
 public class BinaryRowDecoder {
-    private static final Logger log = LoggerFactory.getLogger(BinaryRowDecoder.class);
-    private static final int BITMAP_OFFSET = 9;
+    private static final int NULL_MASK_OFFSET = 2;
 
     private static final BinaryRowDecoder instance = new BinaryRowDecoder();
 
@@ -18,47 +16,24 @@ public class BinaryRowDecoder {
         return instance;
     }
 
-    public Object[] decode(ByteBuf buffer, List<ColumnDefinitionMessage> columns) {
-        //log.debug("columns are {} - {}", buffer.readableBytes(), columns)
-        //log.debug( "decoding row\n{}", MySQLHelper.dumpAsHex(buffer))
-        //PrintUtils.printArray("bitmap", buffer)
-
+    public Object[] decode(ByteBuf buffer, List<ColumnDefinitionMessage> columns, CodecSettings settings) {
         buffer.readByte(); // header
 
-        int nullCount = (columns.size() + 9) / 8;
+        int nullCount = (columns.size() + 7 + NULL_MASK_OFFSET) / 8;
 
-        byte[] nullBitMask = new byte[nullCount];
-        buffer.readBytes(nullBitMask);
-
-        int nullMaskPos = 0;
-        int bit = 4;
+        byte[] nullBytes = new byte[nullCount];
+        buffer.readBytes(nullBytes);
 
         Object[] row = new Object[columns.size()];
 
-        int index = 0;
+        for (int i = 0, n = columns.size(); i < n; i++) {
+            if (ByteBufUtils.isNullBitSet(NULL_MASK_OFFSET, nullBytes, i))
+                continue;
 
-        while (index < columns.size()) {
-            if ((nullBitMask[nullMaskPos] & bit) != 0) {
-                row[index] = null;
-            } else {
-                ColumnDefinitionMessage column = columns.get(index);
+            ColumnDefinitionMessage column = columns.get(i);
 
-                //log.debug(s"${decoder.getClass.getSimpleName} - ${buffer.readableBytes()}")
-                //log.debug("Column value [{}] - {}", value, column.name)
-
-                row[index] = column.binaryDecoder.decode(buffer);
-            }
-
-            bit <<= 1;
-            if ((bit & 0xff) == 0) {
-                bit = 1;
-                nullMaskPos++;
-            }
-
-            index++;
+            row[i] = column.binaryDecoder.decode(buffer, settings, column);
         }
-
-        // log.debug("values are {}", row)
 
         if (buffer.readableBytes() != 0) {
             throw new BufferNotFullyConsumedException(buffer);
