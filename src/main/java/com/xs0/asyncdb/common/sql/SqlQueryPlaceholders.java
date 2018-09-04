@@ -13,12 +13,16 @@ public class SqlQueryPlaceholders {
         int parameterCount = 0;
 
         for (int i = 0, len = query.length(); i < len; i++) {
+            char c = query.charAt(i);
+
+            if (c != '?')
+                out.append(c);
+
             if ((mode & 16) == 16) { // after backslash
                 mode ^= 16;
                 continue;
             }
 
-            char c = query.charAt(i);
             switch (c) {
                 case '\\':
                     if (mode == 0) { // outside a string.. who knows what the \ is supposed to be..
@@ -26,7 +30,6 @@ public class SqlQueryPlaceholders {
                     } else {
                         mode |= 16; // enter escape mode, next char handled above..
                     }
-                    out.append(c);
                     break;
 
                 case '\'':
@@ -36,7 +39,6 @@ public class SqlQueryPlaceholders {
                     if (mode == 1) {
                         mode = 0;
                     }
-                    out.append(c);
                     break;
 
                 case '"':
@@ -46,7 +48,6 @@ public class SqlQueryPlaceholders {
                     if (mode == 2) {
                         mode = 0;
                     }
-                    out.append(c);
                     break;
 
                 case '`':
@@ -56,7 +57,6 @@ public class SqlQueryPlaceholders {
                     if (mode == 3) {
                         mode = 0;
                     }
-                    out.append(c);
                     break;
 
                 case '?':

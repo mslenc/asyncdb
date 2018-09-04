@@ -98,8 +98,10 @@ public class DecoderRegistry {
                 return DateEncoderDecoder.instance();
 
             case FIELD_TYPE_DATETIME:
-            case FIELD_TYPE_TIMESTAMP:
                 return LocalDateTimeEncoderDecoder.instance();
+
+            case FIELD_TYPE_TIMESTAMP:
+                return InstantEncoderDecoder.instance();
 
             case FIELD_TYPE_DECIMAL:
             case FIELD_TYPE_NEW_DECIMAL:

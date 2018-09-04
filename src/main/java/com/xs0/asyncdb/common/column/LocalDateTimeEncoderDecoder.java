@@ -30,7 +30,7 @@ public class LocalDateTimeEncoderDecoder implements ColumnEncoderDecoder {
     }
 
     @Override
-    public Object decode(String value) {
+    public LocalDateTime decode(String value) {
         if (value.equals(ZeroedTimestamp)) {
             return null;
         } else {
