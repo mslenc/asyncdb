@@ -29,7 +29,9 @@ public class LocalTimeLiteralEncoder implements SqlLiteralEncoder {
     @Override
     public void encode(Object value, StringBuilder out, CodecSettings settings) {
         LocalTime time = (LocalTime) value;
+        out.append("'");
         out.append(time.format(formatter));
+        out.append("'");
     }
 
     @Override

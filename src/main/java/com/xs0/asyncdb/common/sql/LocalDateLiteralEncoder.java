@@ -31,7 +31,9 @@ public class LocalDateLiteralEncoder implements SqlLiteralEncoder {
     @Override
     public void encode(Object value, StringBuilder out, CodecSettings settings) {
         LocalDate date = (LocalDate) value;
+        out.append("'");
         out.append(date.format(formatter));
+        out.append("'");
     }
 
     @Override

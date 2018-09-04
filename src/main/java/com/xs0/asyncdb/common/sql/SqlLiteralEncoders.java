@@ -79,5 +79,6 @@ public class SqlLiteralEncoders {
             .add(SqlDateLiteralEncoder.instance())
             .add(SqlTimeLiteralEncoder.instance())
             .add(SqlTimestampLiteralEncoder.instance())
+            .add(YearLiteralEncoder.instance())
             .build();
 }

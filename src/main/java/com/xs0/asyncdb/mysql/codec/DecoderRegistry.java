@@ -46,6 +46,8 @@ public class DecoderRegistry {
                 return IntegerDecoder.instance();
 
             case FIELD_TYPE_YEAR:
+                return YearDecoder.instance();
+
             case FIELD_TYPE_SHORT:
                 return ShortDecoder.instance();
 
@@ -130,7 +132,7 @@ public class DecoderRegistry {
                 return StringEncoderDecoder.instance();
 
             case FIELD_TYPE_YEAR:
-                return ShortEncoderDecoder.instance();
+                return YearEncoderDecoder.instance();
 
             case FIELD_TYPE_BIT:
                 return ByteArrayColumnDecoder.instance();
