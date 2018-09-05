@@ -23,4 +23,12 @@ public class QueryMessage extends ClientMessage {
         contents.writeCharSequence(query, UTF_8);
         return contents;
     }
+
+    public String toString(boolean fullDetails) {
+        if (fullDetails || query.length() <= 100) {
+            return "COM_QUERY(query=\"" + query + "\")";
+        } else {
+            return "COM_QUERY(query=\"" + query.substring(0, 50) + "[...]" + query.substring(query.length() - 50) + "\")";
+        }
+    }
 }

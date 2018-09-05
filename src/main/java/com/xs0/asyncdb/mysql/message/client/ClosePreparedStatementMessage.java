@@ -1,5 +1,6 @@
 package com.xs0.asyncdb.mysql.message.client;
 
+import com.xs0.asyncdb.mysql.binary.ByteBufUtils;
 import com.xs0.asyncdb.mysql.state.MySQLCommand;
 import com.xs0.asyncdb.mysql.util.MySQLIO;
 import io.netty.buffer.ByteBuf;
@@ -24,5 +25,10 @@ public class ClosePreparedStatementMessage extends ClientMessage {
         contents.writeBytes(statementId);
 
         return contents;
+    }
+
+    @Override
+    public String toString(boolean fullDetails) {
+        return "STMT_CLOSE(statement_id=" + ByteBufUtils.toHexString(statementId) + ")";
     }
 }

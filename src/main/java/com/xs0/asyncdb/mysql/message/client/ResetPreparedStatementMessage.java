@@ -1,5 +1,6 @@
 package com.xs0.asyncdb.mysql.message.client;
 
+import com.xs0.asyncdb.mysql.binary.ByteBufUtils;
 import com.xs0.asyncdb.mysql.state.MySQLCommand;
 import com.xs0.asyncdb.mysql.util.MySQLIO;
 import io.netty.buffer.ByteBuf;
@@ -20,5 +21,10 @@ public class ResetPreparedStatementMessage extends ClientMessage {
         contents.writeByte(MySQLIO.PACKET_HEADER_STMT_RESET);
         contents.writeBytes(statementId);
         return contents;
+    }
+
+    @Override
+    public String toString(boolean fullDetails) {
+        return "STMT_RESET(statement_id=" + ByteBufUtils.toHexString(statementId) + ")";
     }
 }

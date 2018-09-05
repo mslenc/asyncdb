@@ -84,4 +84,9 @@ public class HandshakeResponseMessage extends ClientMessage {
 
         return contents;
     }
+
+    @Override
+    public String toString(boolean fullDetails) {
+        return "HandshakeResponse(TODO)";
+    }
 }

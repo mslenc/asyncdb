@@ -19,4 +19,9 @@ public class AuthenticationSwitchResponse extends ClientMessage {
 
         return Unpooled.wrappedBuffer(authData);
     }
+
+    @Override
+    public String toString(boolean fullDetails) {
+        return "AuthSwitchResponse";
+    }
 }

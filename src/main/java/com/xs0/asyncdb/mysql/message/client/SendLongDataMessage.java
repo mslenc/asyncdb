@@ -1,5 +1,6 @@
 package com.xs0.asyncdb.mysql.message.client;
 
+import com.xs0.asyncdb.mysql.binary.ByteBufUtils;
 import com.xs0.asyncdb.mysql.state.MySQLCommand;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -28,5 +29,10 @@ public class SendLongDataMessage extends ClientMessage {
         paramInfo.writeShortLE(paramIndex);
 
         return Unpooled.wrappedBuffer(paramInfo, paramValue);
+    }
+
+    @Override
+    public String toString(boolean fullDetails) {
+        return "STMT_SEND_LONG_DATA(statementId=" + ByteBufUtils .toHexString(statementId) + ", value=" + paramValue.readableBytes() + " bytes)";
     }
 }

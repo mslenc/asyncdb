@@ -136,4 +136,17 @@ public class ByteBufUtils {
 
         return (nullBytes[pos >>> 3] & (1 << (pos & 7))) != 0;
     }
+
+    private static final char[] HEX_CHARS = "0123456789ABCDEF".toCharArray();
+
+    public static String toHexString(byte[] bytes) {
+        StringBuilder out = new StringBuilder();
+
+        for (byte b : bytes) {
+            out.append(HEX_CHARS[(b & 0xF0) >>> 4]);
+            out.append(HEX_CHARS[b & 0x0F]);
+        }
+
+        return out.toString();
+    }
 }

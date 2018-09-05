@@ -23,4 +23,13 @@ public class PreparedStatementPrepareMessage extends ClientMessage {
         contents.writeCharSequence(statement, UTF_8);
         return contents;
     }
+
+    @Override
+    public String toString(boolean fullDetails) {
+        if (fullDetails || statement.length() <= 100) {
+            return "STMT_PREPARE(query=\"" + statement + "\")";
+        } else {
+            return "STMT_PREPARE(query=\"" + statement.substring(0, 50) + "[...]" + statement.substring(statement.length() - 50) + "\")";
+        }
+    }
 }

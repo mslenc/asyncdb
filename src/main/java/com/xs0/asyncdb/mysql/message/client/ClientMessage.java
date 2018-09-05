@@ -15,4 +15,11 @@ public abstract class ClientMessage {
     }
 
     public abstract ByteBuf getPacketContents();
+
+    @Override
+    public String toString() {
+        return toString(false);
+    }
+
+    public abstract String toString(boolean fullDetails);
 }

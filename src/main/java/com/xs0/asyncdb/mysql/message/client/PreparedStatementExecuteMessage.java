@@ -5,6 +5,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
 import static com.xs0.asyncdb.mysql.binary.ByteBufUtils.newMysqlBuffer;
+import static com.xs0.asyncdb.mysql.binary.ByteBufUtils.toHexString;
 import static com.xs0.asyncdb.mysql.util.MySQLIO.PACKET_HEADER_STMT_EXECUTE;
 
 public class PreparedStatementExecuteMessage extends ClientMessage {
@@ -33,5 +34,10 @@ public class PreparedStatementExecuteMessage extends ClientMessage {
         ByteBuf nullBytes = Unpooled.wrappedBuffer(this.nullBytes);
 
         return Unpooled.wrappedBuffer(prefix, nullBytes, typeBytes, valueBytes);
+    }
+
+    @Override
+    public String toString(boolean fullDetails) {
+        return "STMT_EXECUTE(statement_id=" + toHexString(statementId) + ", TODO)";
     }
 }
