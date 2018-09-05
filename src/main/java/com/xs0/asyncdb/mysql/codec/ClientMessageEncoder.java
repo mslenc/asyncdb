@@ -5,6 +5,7 @@ import java.util.List;
 import com.xs0.asyncdb.common.util.BufferDumper;
 import com.xs0.asyncdb.mysql.message.client.ClientMessage;
 import io.netty.buffer.Unpooled;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageEncoder;
 import io.netty.buffer.ByteBuf;
@@ -13,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import static com.xs0.asyncdb.mysql.binary.ByteBufUtils.newMysqlBuffer;
 
+@ChannelHandler.Sharable
 public class ClientMessageEncoder extends MessageToMessageEncoder<ClientMessage> {
     private static final Logger log = LoggerFactory.getLogger(ClientMessageEncoder.class);
 
