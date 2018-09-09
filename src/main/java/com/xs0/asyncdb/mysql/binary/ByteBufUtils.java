@@ -1,9 +1,7 @@
 package com.xs0.asyncdb.mysql.binary;
 
-import com.xs0.asyncdb.mysql.ex.UnknownLengthException;
 import com.xs0.asyncdb.mysql.util.MySQLIO;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 
 import java.nio.charset.Charset;
 
@@ -25,11 +23,11 @@ public class ByteBufUtils {
         return readBinaryLength(buffer.readUnsignedByte(), buffer);
     }
 
-    public static long readBinaryLength(int firstByte, ByteBuf buffer) {
-        if (firstByte <= 250) {
-            return firstByte;
+    public static long readBinaryLength(int firstUnsignedByte, ByteBuf buffer) {
+        if (firstUnsignedByte <= 250) {
+            return firstUnsignedByte;
         } else {
-            switch (firstByte) {
+            switch (firstUnsignedByte) {
                 case MySQLIO.PACKET_HEADER_GET_MORE_CLIENT_DATA:
                     return -1;
                 case MySQLIO.PACKET_HEADER_ERR:
@@ -41,26 +39,36 @@ public class ByteBufUtils {
                     return buffer.readUnsignedMediumLE();
                 case 254:
                     return buffer.readLongLE();
-                default:
-                    throw new UnknownLengthException(firstByte);
             }
         }
+
+        throw new AssertionError("Unreachable");
     }
 
     public static void writeLength(long length, ByteBuf buffer) {
-        if (length < 251L) {
-            buffer.writeByte((int)length);
-        } else
-        if (length < 65536L) {
-            buffer.writeByte(252);
-            buffer.writeShortLE((int)length);
-        } else
-        if (length < 16777216L) {
-            buffer.writeByte(253);
-            buffer.writeMediumLE((int)length);
-        } else {
-            buffer.writeByte(254);
-            buffer.writeLongLE(length);
+        switch (Long.numberOfLeadingZeros(length)) {
+            case 64:
+            case 63: case 62: case 61: case 60: case 59: case 58: case 57: case 56:
+                if (length <= 250) {
+                    buffer.writeByte((int) length);
+                    break;
+                }
+                // else fallthrough
+
+            case 55: case 54: case 53: case 52: case 51: case 50: case 49: case 48:
+                buffer.writeByte(252);
+                buffer.writeShortLE((int)length);
+                break;
+
+            case 47: case 46: case 45: case 44: case 43: case 42: case 41: case 40:
+                buffer.writeByte(253);
+                buffer.writeMediumLE((int)length);
+                break;
+
+            default:
+                buffer.writeByte(254);
+                buffer.writeLongLE(length);
+                break;
         }
     }
 
@@ -100,14 +108,6 @@ public class ByteBufUtils {
         String result = b.toString(readerIndex, length, charset);
         b.readerIndex(readerIndex + length + 1); // 1 is for NUL at the end
         return result;
-    }
-
-    public static ByteBuf newMysqlBuffer() {
-        return newMysqlBuffer(1024);
-    }
-
-    public static ByteBuf newMysqlBuffer(int sizeEstimate) {
-        return Unpooled.buffer(sizeEstimate);
     }
 
     public static void writeCString(ByteBuf b, String content, Charset charset) {

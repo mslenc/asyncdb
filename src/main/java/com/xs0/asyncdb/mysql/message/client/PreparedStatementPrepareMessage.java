@@ -2,8 +2,8 @@ package com.xs0.asyncdb.mysql.message.client;
 
 import com.xs0.asyncdb.mysql.state.MySQLCommand;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 
-import static com.xs0.asyncdb.mysql.binary.ByteBufUtils.newMysqlBuffer;
 import static com.xs0.asyncdb.mysql.util.MySQLIO.PACKET_HEADER_STMT_PREPARE;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -18,7 +18,7 @@ public class PreparedStatementPrepareMessage extends ClientMessage {
 
     @Override
     public ByteBuf getPacketContents() {
-        ByteBuf contents = newMysqlBuffer(statement.length() + 25);
+        ByteBuf contents = Unpooled.buffer(statement.length() + 25);
         contents.writeByte(PACKET_HEADER_STMT_PREPARE);
         contents.writeCharSequence(statement, UTF_8);
         return contents;

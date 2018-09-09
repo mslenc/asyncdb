@@ -4,8 +4,7 @@ import com.xs0.asyncdb.mysql.binary.ByteBufUtils;
 import com.xs0.asyncdb.mysql.state.MySQLCommand;
 import com.xs0.asyncdb.mysql.util.MySQLIO;
 import io.netty.buffer.ByteBuf;
-
-import static com.xs0.asyncdb.mysql.binary.ByteBufUtils.newMysqlBuffer;
+import io.netty.buffer.Unpooled;
 
 public class ClosePreparedStatementMessage extends ClientMessage {
     private final byte[] statementId;
@@ -20,7 +19,7 @@ public class ClosePreparedStatementMessage extends ClientMessage {
     public ByteBuf getPacketContents() {
         // https://dev.mysql.com/doc/internals/en/com-stmt-close.html
 
-        ByteBuf contents = newMysqlBuffer(5);
+        ByteBuf contents = Unpooled.buffer(5);
         contents.writeByte(MySQLIO.PACKET_HEADER_STMT_CLOSE);
         contents.writeBytes(statementId);
 

@@ -12,8 +12,6 @@ import io.netty.buffer.ByteBuf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.xs0.asyncdb.mysql.binary.ByteBufUtils.newMysqlBuffer;
-
 @ChannelHandler.Sharable
 public class ClientMessageEncoder extends MessageToMessageEncoder<ClientMessage> {
     private static final Logger log = LoggerFactory.getLogger(ClientMessageEncoder.class);
@@ -29,7 +27,7 @@ public class ClientMessageEncoder extends MessageToMessageEncoder<ClientMessage>
     }
 
     public void encode(ChannelHandlerContext ctx, ClientMessage message, List<Object> out) {
-        ByteBuf header = newMysqlBuffer(4);
+        ByteBuf header = Unpooled.buffer(4);
         ByteBuf contents = message.getPacketContents();
 
         header.writeMediumLE(contents.readableBytes());

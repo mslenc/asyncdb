@@ -5,7 +5,6 @@ import com.xs0.asyncdb.mysql.state.MySQLCommand;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
-import static com.xs0.asyncdb.mysql.binary.ByteBufUtils.newMysqlBuffer;
 import static com.xs0.asyncdb.mysql.util.MySQLIO.PACKET_HEADER_STMT_SEND_LONG_DATA;
 
 public class SendLongDataMessage extends ClientMessage {
@@ -23,7 +22,7 @@ public class SendLongDataMessage extends ClientMessage {
 
     @Override
     public ByteBuf getPacketContents() {
-        ByteBuf paramInfo = newMysqlBuffer(1 + 4 + 2);
+        ByteBuf paramInfo = Unpooled.buffer(1 + 4 + 2);
         paramInfo.writeByte(PACKET_HEADER_STMT_SEND_LONG_DATA);
         paramInfo.writeBytes(statementId);
         paramInfo.writeShortLE(paramIndex);

@@ -4,7 +4,6 @@ import com.xs0.asyncdb.mysql.state.MySQLCommand;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
-import static com.xs0.asyncdb.mysql.binary.ByteBufUtils.newMysqlBuffer;
 import static com.xs0.asyncdb.mysql.binary.ByteBufUtils.toHexString;
 import static com.xs0.asyncdb.mysql.util.MySQLIO.PACKET_HEADER_STMT_EXECUTE;
 
@@ -25,7 +24,7 @@ public class PreparedStatementExecuteMessage extends ClientMessage {
 
     @Override
     public ByteBuf getPacketContents() {
-        ByteBuf prefix = newMysqlBuffer(1 + 4 + 1 + 4);
+        ByteBuf prefix = Unpooled.buffer(1 + 4 + 1 + 4);
         prefix.writeByte(PACKET_HEADER_STMT_EXECUTE);
         prefix.writeBytes(statementId);
         prefix.writeByte(0); // flags

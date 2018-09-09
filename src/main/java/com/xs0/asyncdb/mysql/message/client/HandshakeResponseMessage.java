@@ -1,9 +1,9 @@
 package com.xs0.asyncdb.mysql.message.client;
 
-import com.xs0.asyncdb.mysql.binary.ByteBufUtils;
 import com.xs0.asyncdb.mysql.state.MySQLCommand;
 import com.xs0.asyncdb.mysql.util.CharsetMapper;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 
 import java.util.Objects;
 
@@ -57,7 +57,7 @@ public class HandshakeResponseMessage extends ClientMessage {
 
     @Override
     public ByteBuf getPacketContents() {
-        ByteBuf contents = ByteBufUtils.newMysqlBuffer();
+        ByteBuf contents = Unpooled.buffer();
 
         // https://dev.mysql.com/doc/internals/en/connection-phase-packets.html#packet-Protocol::HandshakeResponse
 

@@ -4,8 +4,7 @@ import com.xs0.asyncdb.mysql.binary.ByteBufUtils;
 import com.xs0.asyncdb.mysql.state.MySQLCommand;
 import com.xs0.asyncdb.mysql.util.MySQLIO;
 import io.netty.buffer.ByteBuf;
-
-import static com.xs0.asyncdb.mysql.binary.ByteBufUtils.newMysqlBuffer;
+import io.netty.buffer.Unpooled;
 
 public class ResetPreparedStatementMessage extends ClientMessage {
     private final byte[] statementId;
@@ -17,7 +16,7 @@ public class ResetPreparedStatementMessage extends ClientMessage {
     }
     @Override
     public ByteBuf getPacketContents() {
-        ByteBuf contents = newMysqlBuffer(5);
+        ByteBuf contents = Unpooled.buffer(5);
         contents.writeByte(MySQLIO.PACKET_HEADER_STMT_RESET);
         contents.writeBytes(statementId);
         return contents;

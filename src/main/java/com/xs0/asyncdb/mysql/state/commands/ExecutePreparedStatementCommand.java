@@ -30,7 +30,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import static com.xs0.asyncdb.mysql.binary.ByteBufUtils.newMysqlBuffer;
 import static com.xs0.asyncdb.mysql.binary.ByteBufUtils.setNullBit;
 import static com.xs0.asyncdb.mysql.column.ColumnType.FIELD_TYPE_LONG_BLOB;
 import static com.xs0.asyncdb.mysql.column.ColumnType.FIELD_TYPE_NULL;
@@ -81,8 +80,8 @@ public class ExecutePreparedStatementCommand extends MySQLCommand {
         int numParams = psInfo.paramDefs.size();
 
         byte[] nullBytes = new byte[(numParams + 7) / 8];
-        ByteBuf typeBytes = newMysqlBuffer(numParams * 2 + 1);
-        ByteBuf valueBytes = newMysqlBuffer();
+        ByteBuf typeBytes = Unpooled.buffer(numParams * 2 + 1);
+        ByteBuf valueBytes = Unpooled.buffer();
 
         typeBytes.writeByte(1); // new-params-bound-flag=1
 
