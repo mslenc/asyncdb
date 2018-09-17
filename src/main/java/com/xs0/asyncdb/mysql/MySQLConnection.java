@@ -5,7 +5,6 @@ import com.xs0.asyncdb.common.pool.TimeoutScheduler;
 import com.xs0.asyncdb.common.util.NettyUtils;
 import com.xs0.asyncdb.common.util.Version;
 import com.xs0.asyncdb.mysql.codec.MySQLConnectionHandler;
-import com.xs0.asyncdb.mysql.util.CharsetMapper;
 import io.netty.channel.EventLoopGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
