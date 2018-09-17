@@ -30,18 +30,13 @@ public class MySQLConnection extends TimeoutScheduler implements Connection {
     private Version serverVersion = null;
 
     public MySQLConnection(Configuration configuration,
-                           CharsetMapper charsetMapper,
                            EventLoopGroup group
                            ) {
         if (configuration == null)
             throw new IllegalArgumentException("Missing configuration");
 
-        if (charsetMapper == null)
-            charsetMapper = CharsetMapper.instance();
         if (group == null)
             group = NettyUtils.defaultEventLoopGroup;
-
-        charsetMapper.toInt(configuration.charset); // (verify support for charset)
 
         this.group = group;
 
