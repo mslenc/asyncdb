@@ -1,9 +1,10 @@
 plugins {
     id 'java'
+    id 'maven'
 }
 
-group 'com.xs0'
-version '0.0.1'
+group 'com.github.mslenc'
+version '0.9.1'
 
 sourceCompatibility = 1.8
 
@@ -12,14 +13,20 @@ repositories {
 }
 
 dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.12'
-
     // https://mvnrepository.com/artifact/io.netty/netty-all
     compile 'io.netty:netty-all:4.1.29.Final'
 
     // https://mvnrepository.com/artifact/org.slf4j/slf4j-api
     compile 'org.slf4j:slf4j-api:1.7.25'
 
+    testCompile 'junit:junit:4.12'
+
     // https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
     testCompile 'ch.qos.logback:logback-classic:1.2.3'
+}
+
+compileJava.options.encoding = 'UTF-8'
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
 }
