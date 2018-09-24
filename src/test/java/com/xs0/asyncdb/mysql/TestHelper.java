@@ -5,14 +5,14 @@ import com.xs0.asyncdb.common.Connection;
 import com.xs0.asyncdb.common.QueryResult;
 import com.xs0.asyncdb.common.ResultSet;
 
+import java.io.Console;
+import java.util.Arrays;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 public class TestHelper {
     private ConcurrentLinkedQueue<Throwable> errors = new ConcurrentLinkedQueue<>();
@@ -116,6 +116,7 @@ public class TestHelper {
         futureStarting(future).whenCompleteAsync((result, error) -> {
             try {
                 if (error != null) {
+                    error.printStackTrace();
                     errors.add(error);
                 }
             } finally {
@@ -143,6 +144,7 @@ public class TestHelper {
         futureStarting(future).whenCompleteAsync((result, error) -> {
             try {
                 if (error != null) {
+                    error.printStackTrace();
                     errors.add(error);
                 } else {
                     try {
@@ -188,6 +190,34 @@ public class TestHelper {
             ResultSet resultSet = queryResult.resultSet();
             assertNotNull(resultSet);
             onResult.accept(resultSet);
+        });
+    }
+
+    public void expectResultSetValues(CompletableFuture<QueryResult> sendQuery, Object[][] rows) {
+        expectResultSet(sendQuery, resultSet -> {
+            assertEquals(rows.length, resultSet.size());
+
+            int numCols = resultSet.getColumnNames().size();
+
+            for (int r = 0; r < rows.length; r++) {
+                assertEquals(rows[r].length, numCols);
+
+                for (int c = 0; c < numCols; c++) {
+                    Object expected = rows[r][c];
+                    Object received = resultSet.get(r).get(c);
+
+                    if (expected == null) {
+                        assertNull(received);
+                        continue;
+                    }
+
+                    if (expected.getClass().isArray()) {
+                        assertTrue(Arrays.deepEquals(new Object[] { expected }, new Object[] { received }));
+                    } else {
+                        assertEquals(expected, received);
+                    }
+                }
+            }
         });
     }
 }

@@ -73,6 +73,9 @@ public class ExecutePreparedStatementCommand extends MySQLCommand {
 
     @Override
     public Result start(Support support) {
+        if (promise.isDone())
+            return Result.stateMachineFinished();
+
         // https://dev.mysql.com/doc/internals/en/com-stmt-execute.html#packet-COM_STMT_EXECUTE
 
         BinaryRowEncoder encoders = support.getBinaryEncoders();
@@ -131,8 +134,10 @@ public class ExecutePreparedStatementCommand extends MySQLCommand {
     private Result sendDataAfterReset(Support support) {
         state = STATE_AWAITING_COLUMN_COUNT;
 
-        for (SendLongDataMessage msg : longValues)
+        for (SendLongDataMessage msg : longValues) {
+            psInfo.markLongParamsSent();
             support.sendMessage(msg);
+        }
 
         support.sendMessage(execMessage);
 

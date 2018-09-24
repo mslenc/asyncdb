@@ -3,8 +3,8 @@ package com.xs0.asyncdb.mysql;
 import org.junit.Test;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
 
+import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -21,6 +21,8 @@ public class BasicQueriesTest {
                 assertTrue(result instanceof Number);
                 assertEquals(3, ((Number)result).longValue());
                 assertEquals(3.0, ((Number)result).doubleValue(), 0.0);
+
+                helper.expectSuccess(conn.disconnect());
             });
         });
     }
@@ -40,9 +42,9 @@ public class BasicQueriesTest {
                 ")"
             ));
 
-            helper.expectSuccess(conn.sendQuery("INSERT INTO first_table VALUES(?, ?, ?)", Arrays.asList(1, "Name 1",         BigDecimal.ZERO)));
-            helper.expectSuccess(conn.sendQuery("INSERT INTO first_table VALUES(?, ?, ?)", Arrays.asList(2, "Another name 2", BigDecimal.ONE)));
-            helper.expectSuccess(conn.sendQuery("INSERT INTO first_table VALUES(?, ?, ?)", Arrays.asList(3, "Last name 3",    new BigDecimal("1234567890.0987654321"))));
+            helper.expectSuccess(conn.sendQuery("INSERT INTO first_table VALUES(?, ?, ?)", asList(1, "Name 1",         BigDecimal.ZERO)));
+            helper.expectSuccess(conn.sendQuery("INSERT INTO first_table VALUES(?, ?, ?)", asList(2, "Another name 2", BigDecimal.ONE)));
+            helper.expectSuccess(conn.sendQuery("INSERT INTO first_table VALUES(?, ?, ?)", asList(3, "Last name 3",    new BigDecimal("1234567890.0987654321"))));
 
             helper.expectResultSet(conn.sendQuery("SELECT id, name, a_number FROM first_table ORDER BY id"), resultSet -> {
                 assertEquals(3, resultSet.size());
@@ -58,6 +60,8 @@ public class BasicQueriesTest {
                 assertEquals(0, BigDecimal.ZERO.compareTo((BigDecimal) resultSet.get(0).get(2)));
                 assertEquals(0, BigDecimal.ONE.compareTo((BigDecimal) resultSet.get(1).get(2)));
                 assertEquals(0, new BigDecimal("1234567890.0987654321").compareTo((BigDecimal) resultSet.get(2).get(2)));
+
+                helper.expectSuccess(conn.disconnect());
             });
         });
     }

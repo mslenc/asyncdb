@@ -30,14 +30,20 @@ public class ClientMessageEncoder extends MessageToMessageEncoder<ClientMessage>
         ByteBuf header = Unpooled.buffer(4);
         ByteBuf contents = message.getPacketContents();
 
-        header.writeMediumLE(contents.readableBytes());
-        header.writeByte(message.getCommand().nextPacketSequenceNumber());
+        int readableBytes = contents.readableBytes();
+        int sequenceNumber = message.getCommand().firstPacketSequenceNumber();
 
-        ByteBuf packet = Unpooled.wrappedBuffer(header, contents);
-        out.add(packet);
+        log.debug("Converted a message of {} with sequence number {}", readableBytes, sequenceNumber);
+
+        header.writeMediumLE(readableBytes);
+        header.writeByte(sequenceNumber);
+
+        out.add(header);
+        out.add(contents);
 
         if (log.isTraceEnabled()) {
-            log.trace("Sending message {} - \n{}", message.getClass().getName(), BufferDumper.dumpAsHex(packet));
+            log.trace("Sending header {} - \n{}", message.getClass().getName(), BufferDumper.dumpAsHex(header));
+            log.trace("Sending message {} - \n{}", message.getClass().getName(), BufferDumper.dumpAsHex(contents));
         }
     }
 }

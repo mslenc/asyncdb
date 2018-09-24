@@ -28,6 +28,7 @@ public class ClosePreparedStatementCommand extends MySQLCommand {
     @Override
     public Result start(Support support) {
         support.sendMessage(new ClosePreparedStatementMessage(this, psInfo.statementId));
+        promise.complete(null);
         return Result.stateMachineFinished();
     }
 

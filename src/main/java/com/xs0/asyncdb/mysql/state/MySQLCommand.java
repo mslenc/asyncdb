@@ -12,23 +12,12 @@ import io.netty.buffer.ByteBuf;
 import java.util.concurrent.CompletableFuture;
 
 public abstract class MySQLCommand {
-    private int packetSequenceNumber;
-
     public abstract CompletableFuture<?> getPromise();
     public abstract Result start(Support support);
     public abstract Result processPacket(ByteBuf packet, Support support);
 
-    public final int nextPacketSequenceNumber() {
-        int result = packetSequenceNumber;
-
-        // wrap around, but don't use 0 again, manual suggests it's reserved for first packet in each command only
-        if (result >= 255) {
-            packetSequenceNumber = 1;
-        } else {
-            packetSequenceNumber = result + 1;
-        }
-
-        return result;
+    public int firstPacketSequenceNumber() {
+        return 0;
     }
 
     public static class Result {
