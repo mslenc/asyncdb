@@ -18,10 +18,17 @@ public class ResultSetRowDecoder {
                 row.add(null);
             } else {
                 int length = (int) readBinaryLength(firstByte, buffer);
-                row.add(buffer.readBytes(length));
+                row.add(buffer.readRetainedSlice(length));
             }
         }
 
         return row;
+    }
+
+    // this should match what the decode above is doing..
+    public static void releaseBufs(ResultSetRowMessage rowMsg) {
+        for (ByteBuf buf : rowMsg)
+            if (buf != null)
+                buf.release();
     }
 }

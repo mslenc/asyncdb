@@ -46,6 +46,9 @@ public class MySQLIO {
     public static final int FIELD_FLAG_ON_UPDATE_NOW = 8192;
     public static final int FIELD_FLAG_NUM = 32768;
 
+    public static final int CHARSET_ID_UTF8MB4 = 45;
+    public static final int CHARSET_ID_BINARY = 63;
+
     int SERVER_PROTOCOL_VERSION = 10;
 
     // these messages don't actually exist

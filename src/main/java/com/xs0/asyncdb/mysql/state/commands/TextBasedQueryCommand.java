@@ -143,6 +143,9 @@ public class TextBasedQueryCommand extends MySQLCommand {
 
         ResultSetRowMessage rowMsg = ResultSetRowDecoder.decode(packet);
         resultSet.addRow(remapRow(rowMsg));
+        ResultSetRowDecoder.releaseBufs(rowMsg);
+
+
         return Result.expectingMorePackets();
     }
 

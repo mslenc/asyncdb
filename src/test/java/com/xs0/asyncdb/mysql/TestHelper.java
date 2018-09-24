@@ -5,7 +5,6 @@ import com.xs0.asyncdb.common.Connection;
 import com.xs0.asyncdb.common.QueryResult;
 import com.xs0.asyncdb.common.ResultSet;
 
-import java.io.Console;
 import java.util.Arrays;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -30,7 +29,7 @@ public class TestHelper {
     }
 
     public static void runTest(Configuration config, BiConsumer<Connection, TestHelper> test) {
-        runTest(config, test, 10000L);
+        runTest(config, 10000L, test);
     }
 
     private static Integer pollWithDeadline(BlockingDeque<Integer> queue, long deadline) throws InterruptedException {
@@ -41,7 +40,7 @@ public class TestHelper {
         return queue.pollFirst(remain, TimeUnit.MILLISECONDS);
     }
 
-    public static void runTest(Configuration config, BiConsumer<Connection, TestHelper> test, long timeoutMillis) {
+    public static void runTest(Configuration config, long timeoutMillis, BiConsumer<Connection, TestHelper> test) {
         assertTrue(timeoutMillis > 0 && timeoutMillis <= 300000);
 
         TestHelper testHelper = new TestHelper();

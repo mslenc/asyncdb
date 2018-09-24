@@ -41,12 +41,6 @@ public class InitialHandshakeCommand extends MySQLCommand {
         this.conf = conf;
     }
 
-    @Override
-    public int firstPacketSequenceNumber() {
-        // initial handshake must start with sequence number 1...
-        return 1;
-    }
-
     public CompletableFuture<MySQLConnectionHandler> getPromise() {
         return promise;
     }

@@ -16,10 +16,6 @@ public abstract class MySQLCommand {
     public abstract Result start(Support support);
     public abstract Result processPacket(ByteBuf packet, Support support);
 
-    public int firstPacketSequenceNumber() {
-        return 0;
-    }
-
     public static class Result {
         public enum Type {
             STATE_MACHINE_FINISHED,

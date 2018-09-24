@@ -3,17 +3,13 @@ package com.xs0.asyncdb.mysql;
 import com.xs0.asyncdb.mysql.binary.ByteBufUtils;
 import org.junit.Test;
 
-import java.math.BigDecimal;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 
 import static java.util.Arrays.asList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class BlobQueriesTest {
     @Test
@@ -148,7 +144,7 @@ public class BlobQueriesTest {
 
     @Test
     public void testLargeBlobs() {
-        TestHelper.runTest(TestHelper.config(false, "asyncdb"), (conn, helper) -> {
+        TestHelper.runTest(TestHelper.config(false, "asyncdb"), 60000, (conn, helper) -> {
             CompletableFuture<Void> testFinished = new CompletableFuture<>();
             helper.expectSuccess(testFinished);
 
@@ -165,11 +161,10 @@ public class BlobQueriesTest {
             ));
 
             byte[] mediumBytes = randomBytes(15777412);
-            byte[] longBytes = randomBytes(100000000);
+            byte[] longBytes = randomBytes(35000000);
 
             byte[] mediumBytes2 = randomBytes(13521412);
-            byte[] longBytes2 = randomBytes(123456789);
-            // (those lengths don't have any special meaning either)
+            byte[] longBytes2 = randomBytes(18930255);
 
             Object[][] expectBlobs = {
                 { 1, mediumBytes,  null       },
@@ -178,9 +173,9 @@ public class BlobQueriesTest {
             };
 
             Object[][] expectHashes = {
-                { 3, sha1(mediumBytes),  null             },
-                { 4, null,               sha1(longBytes)  },
-                { 5, sha1(mediumBytes2), sha1(longBytes2) }
+                { 1, sha1(mediumBytes),  null             },
+                { 2, null,               sha1(longBytes)  },
+                { 3, sha1(mediumBytes2), sha1(longBytes2) }
             };
 
             helper.expectSuccess(conn.sendQuery("INSERT INTO bloobs VALUES(?, ?, ?)", asList(expectBlobs[0])));
@@ -200,7 +195,10 @@ public class BlobQueriesTest {
 
     @Test
     public void testLargeBlobsWithPS() {
-        TestHelper.runTest(TestHelper.config(false, "asyncdb"), (conn, helper) -> {
+        TestHelper.runTest(TestHelper.config(false, "asyncdb"), 60000, (conn, helper) -> {
+            CompletableFuture<Void> testFinished = new CompletableFuture<>();
+            helper.expectSuccess(testFinished);
+
             helper.expectSuccess(conn.sendQuery(
                 "DROP TABLE IF EXISTS blobbers"
             ));
@@ -214,10 +212,10 @@ public class BlobQueriesTest {
             ));
 
             byte[] mediumBytes = randomBytes(5115421);
-            byte[] longBytes = randomBytes(100000001);
+            byte[] longBytes = randomBytes(34000000);
 
             byte[] mediumBytes2 = randomBytes(15321412);
-            byte[] longBytes2 = randomBytes(123456777);
+            byte[] longBytes2 = randomBytes(19800099);
 
             Object[][] expectBlobs = {
                 { 1, mediumBytes,  null       },
@@ -245,8 +243,10 @@ public class BlobQueriesTest {
                     helper.expectResultSetValues(selectPs.execute(Collections.emptyList()), expectBlobs);
                     helper.expectSuccess(selectPs.close());
 
-//                    helper.expectSuccess(conn.sendQuery("DROP TABLE blobbers"));
+                    helper.expectSuccess(conn.sendQuery("DROP TABLE blobbers"));
                     helper.expectSuccess(conn.disconnect());
+
+                    testFinished.complete(null);
                 });
 
                 helper.expectSuccess(ps.close());
