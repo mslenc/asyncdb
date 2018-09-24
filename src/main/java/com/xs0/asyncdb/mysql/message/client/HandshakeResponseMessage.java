@@ -1,7 +1,6 @@
 package com.xs0.asyncdb.mysql.message.client;
 
 import com.xs0.asyncdb.mysql.state.MySQLCommand;
-import com.xs0.asyncdb.mysql.util.CharsetMapper;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
@@ -19,9 +18,6 @@ public class HandshakeResponseMessage extends ClientMessage {
                                   CLIENT_MULTI_RESULTS |
                                   CLIENT_SECURE_CONNECTION;
 
-    private final static int charsetId = CharsetMapper.CHARSET_UTF8MB4_BIN;
-    private final static int maxPacketSize = 0xFFFFFF;
-
     private String username;
 
     private String authMethod;
@@ -33,6 +29,12 @@ public class HandshakeResponseMessage extends ClientMessage {
         super(command);
 
         this.username = Objects.requireNonNull(username, "Missing username");
+    }
+
+    @Override
+    public int getFirstPacketSequenceNumber() {
+        // initial handshake must start with sequence number 1, for some unknown reason...
+        return 1;
     }
 
     public void setDatabase(String database) {
@@ -62,8 +64,8 @@ public class HandshakeResponseMessage extends ClientMessage {
         // https://dev.mysql.com/doc/internals/en/connection-phase-packets.html#packet-Protocol::HandshakeResponse
 
         contents.writeIntLE(capabilityFlags);
-        contents.writeIntLE(maxPacketSize);
-        contents.writeByte(charsetId);
+        contents.writeIntLE(MAX_PACKET_LENGTH);
+        contents.writeByte(CHARSET_ID_UTF8MB4);
         contents.writeZero(23);
         writeCString(contents, username, UTF_8);
 

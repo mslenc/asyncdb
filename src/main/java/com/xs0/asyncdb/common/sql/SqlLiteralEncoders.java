@@ -42,12 +42,16 @@ public class SqlLiteralEncoders {
 
         public Builder add(SqlLiteralEncoder encoder) {
             for (Class<?> klass : encoder.supportedClasses()) {
-                if (!Modifier.isAbstract(klass.getModifiers())) {
+                if (klass.isArray()) {
                     directIndex.put(klass, encoder);
-                }
+                } else {
+                    if (!Modifier.isAbstract(klass.getModifiers())) {
+                        directIndex.put(klass, encoder);
+                    }
 
-                if (!Modifier.isFinal(klass.getModifiers())) {
-                    subclassIndex.put(klass, encoder);
+                    if (!Modifier.isFinal(klass.getModifiers())) {
+                        subclassIndex.put(klass, encoder);
+                    }
                 }
             }
 

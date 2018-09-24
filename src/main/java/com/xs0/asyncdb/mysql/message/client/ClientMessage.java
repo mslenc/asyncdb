@@ -16,6 +16,10 @@ public abstract class ClientMessage {
 
     public abstract ByteBuf getPacketContents();
 
+    public int getFirstPacketSequenceNumber() {
+        return 0;
+    }
+
     @Override
     public String toString() {
         return toString(false);
