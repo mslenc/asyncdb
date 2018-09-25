@@ -11,25 +11,20 @@ import static org.junit.Assert.assertTrue;
 public class BasicQueriesTest {
     @Test
     public void testMySQLCanDoArithmetic() {
-        TestHelper.runTest(TestHelper.config(false, "asyncdb"), (conn, helper) -> {
-            helper.expectResultSet(conn.sendQuery("SELECT 1 + 2"), resultSet -> {
-                assertEquals(1, resultSet.size());
-                assertEquals(0, resultSet.get(0).getRowNumber());
+        TestHelper.runTest((conn, helper, testFinished) -> {
+            Object[][] expect = {
+                { 3L, new BigDecimal("3.5") }
+            };
 
-                Object result = resultSet.get(0).get(0);
-
-                assertTrue(result instanceof Number);
-                assertEquals(3, ((Number)result).longValue());
-                assertEquals(3.0, ((Number)result).doubleValue(), 0.0);
-
-                helper.expectSuccess(conn.disconnect());
-            });
+            helper.expectResultSetValues(conn.sendQuery("SELECT 1 + 2, 3.1 + 0.4"), expect);
+            helper.expectSuccess(conn.disconnect());
+            testFinished.complete(null);
         });
     }
 
     @Test
     public void testMySQLCanRememberStuff() {
-        TestHelper.runTest(TestHelper.config(false, "asyncdb"), (conn, helper) -> {
+        TestHelper.runTest((conn, helper, testFinished) -> {
             helper.expectSuccess(conn.sendQuery(
                 "DROP TABLE IF EXISTS first_table"
             ));
@@ -62,6 +57,8 @@ public class BasicQueriesTest {
                 assertEquals(0, new BigDecimal("1234567890.0987654321").compareTo((BigDecimal) resultSet.get(2).get(2)));
 
                 helper.expectSuccess(conn.disconnect());
+
+                testFinished.complete(null);
             });
         });
     }

@@ -14,7 +14,7 @@ import static java.util.Arrays.asList;
 public class BlobQueriesTest {
     @Test
     public void testSmallBlobs() {
-        TestHelper.runTest(TestHelper.config(false, "asyncdb"), (conn, helper) -> {
+        TestHelper.runTest((conn, helper, testFinished) -> {
             helper.expectSuccess(conn.sendQuery(
                 "DROP TABLE IF EXISTS blobbies"
             ));
@@ -71,12 +71,14 @@ public class BlobQueriesTest {
             helper.expectSuccess(conn.sendQuery("DROP TABLE blobbies"));
 
             helper.expectSuccess(conn.disconnect());
+
+            testFinished.complete(null);
         });
     }
 
     @Test
     public void testSmallBlobsWithPS() {
-        TestHelper.runTest(TestHelper.config(false, "asyncdb"), (conn, helper) -> {
+        TestHelper.runTest((conn, helper, testFinished) -> {
             helper.expectSuccess(conn.sendQuery(
                 "DROP TABLE IF EXISTS blobbies"
             ));
@@ -134,20 +136,20 @@ public class BlobQueriesTest {
                     helper.expectSuccess(selectPs.close());
 
                     helper.expectSuccess(conn.sendQuery("DROP TABLE blobbies"));
-                    helper.expectSuccess(conn.disconnect());
-                });
 
-                helper.expectSuccess(ps.close());
+                    helper.expectSuccess(ps.close());
+
+                    helper.expectSuccess(conn.disconnect());
+
+                    testFinished.complete(null);
+                });
             });
         });
     }
 
     @Test
     public void testLargeBlobs() {
-        TestHelper.runTest(TestHelper.config(false, "asyncdb"), 60000, (conn, helper) -> {
-            CompletableFuture<Void> testFinished = new CompletableFuture<>();
-            helper.expectSuccess(testFinished);
-
+        TestHelper.runTest(60000, (conn, helper, testFinished) -> {
             helper.expectSuccess(conn.sendQuery(
                 "DROP TABLE IF EXISTS bloobs"
             ));
@@ -195,10 +197,7 @@ public class BlobQueriesTest {
 
     @Test
     public void testLargeBlobsWithPS() {
-        TestHelper.runTest(TestHelper.config(false, "asyncdb"), 60000, (conn, helper) -> {
-            CompletableFuture<Void> testFinished = new CompletableFuture<>();
-            helper.expectSuccess(testFinished);
-
+        TestHelper.runTest(60000, (conn, helper, testFinished) -> {
             helper.expectSuccess(conn.sendQuery(
                 "DROP TABLE IF EXISTS blobbers"
             ));
@@ -244,12 +243,12 @@ public class BlobQueriesTest {
                     helper.expectSuccess(selectPs.close());
 
                     helper.expectSuccess(conn.sendQuery("DROP TABLE blobbers"));
+                    helper.expectSuccess(ps.close());
+
                     helper.expectSuccess(conn.disconnect());
 
                     testFinished.complete(null);
                 });
-
-                helper.expectSuccess(ps.close());
             });
         });
     }

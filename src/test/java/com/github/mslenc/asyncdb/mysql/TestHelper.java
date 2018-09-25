@@ -18,6 +18,10 @@ public class TestHelper {
     private AtomicInteger futureCounter = new AtomicInteger(0);
     private LinkedBlockingDeque<Integer> backQueue = new LinkedBlockingDeque<>();
 
+    interface TestContents {
+        void start(Connection conn, TestHelper helper, CompletableFuture<Void> testFinished);
+    }
+
 
     static Configuration config(boolean rootUser, String database) {
         return Configuration.newMySQLBuilder().
@@ -28,8 +32,8 @@ public class TestHelper {
             build();
     }
 
-    public static void runTest(Configuration config, BiConsumer<Connection, TestHelper> test) {
-        runTest(config, 10000L, test);
+    public static void runTest(TestContents test) {
+        runTest(10000L, test);
     }
 
     private static Integer pollWithDeadline(BlockingDeque<Integer> queue, long deadline) throws InterruptedException {
@@ -40,7 +44,9 @@ public class TestHelper {
         return queue.pollFirst(remain, TimeUnit.MILLISECONDS);
     }
 
-    public static void runTest(Configuration config, long timeoutMillis, BiConsumer<Connection, TestHelper> test) {
+    public static void runTest(long timeoutMillis, TestContents test) {
+        Configuration config = config(false, "asyncdb");
+
         assertTrue(timeoutMillis > 0 && timeoutMillis <= 300000);
 
         TestHelper testHelper = new TestHelper();
@@ -57,17 +63,14 @@ public class TestHelper {
             }
 
             try {
-                test.accept(conn, testHelper);
+                CompletableFuture<Void> testFinished = new CompletableFuture<>();
+                testHelper.expectSuccess(testFinished);
+
+                test.start(conn, testHelper, testFinished);
             } catch (Throwable t) {
                 testHelper.errors.add(t);
                 testHelper.backQueue.add(-2);
                 return;
-            }
-
-            if (testHelper.futureCounter.get() < 1) {
-                testHelper.errors.add(new UnsupportedOperationException("Tests that don't start anything async are not supported."));
-                testHelper.futureCounter.incrementAndGet();
-                testHelper.backQueue.add(-3);
             }
 
             // and off we go...
