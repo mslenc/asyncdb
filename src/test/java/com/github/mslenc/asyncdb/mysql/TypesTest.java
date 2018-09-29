@@ -135,6 +135,17 @@ public class TypesTest {
             { "DECIMAL(15,5)", new BigInteger("1234567890"), new BigDecimal("1234567890.00000") },
             { "DECIMAL(15,5)", 0, new BigDecimal("0.00000") },
             { "DECIMAL(15,5)", Math.PI, new BigDecimal("3.14159") },
+
+            { "SET('a', 'b', 'c', 'd')", "", "" },
+            { "SET('a', 'b', 'c', 'd')", "a", "a" },
+            { "SET('a', 'b', 'c', 'd')", "a,b", "a,b" },
+            { "SET('a', 'b', 'c', 'd')", "b,a,c", "a,b,c" },
+            { "SET('a', 'b', 'c', 'd')", "d,c,b,a", "a,b,c,d" },
+
+            { "ENUM('a', 'b', 'c', 'd')", "a", "a" },
+            { "ENUM('a', 'b', 'c', 'd')", "b", "b" },
+            { "ENUM('a', 'b', 'c', 'd')", "c", "c" },
+            { "ENUM('a', 'b', 'c', 'd')", "d", "d" },
         };
 
         return Arrays.asList(data);

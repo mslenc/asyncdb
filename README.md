@@ -29,6 +29,8 @@ TINYTEXT   | String
 TEXT       | String
 MEDIUMTEXT | String
 LONGTEXT   | String
+ENUM       | String
+SET        | String
 
 ### Binary types
 
