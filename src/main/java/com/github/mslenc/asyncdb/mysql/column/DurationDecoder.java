@@ -15,9 +15,16 @@ public class DurationDecoder implements ColumnDecoder {
     public Object decode(String value) {
         String[] parts = value.split("[.:]");
 
+        boolean negative = value.startsWith("-");
+
         int hours = Integer.parseInt(parts[0]);
         int minutes = Integer.parseInt(parts[1]);
         int seconds = Integer.parseInt(parts[2]);
+
+        if (negative) {
+            minutes *= -1;
+            seconds *= -1;
+        }
 
         Duration hms = Duration.ofSeconds(3600L * hours + 60L * minutes + seconds);
 
@@ -42,7 +49,11 @@ public class DurationDecoder implements ColumnDecoder {
 
             long nanos = Long.parseLong(last) * multiplier;
 
-            return hms.plusNanos(nanos);
+            if (negative) {
+                return hms.minusNanos(nanos);
+            } else {
+                return hms.plusNanos(nanos);
+            }
         } else {
             return hms;
         }

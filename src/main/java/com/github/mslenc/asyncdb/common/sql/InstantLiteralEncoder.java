@@ -17,7 +17,7 @@ public class InstantLiteralEncoder implements SqlLiteralEncoder {
     @Override
     public void encode(Object value, StringBuilder out, CodecSettings settings) {
         Instant instant = (Instant) value;
-        ZonedDateTime dateTime = ZonedDateTime.ofInstant(instant, settings.timezone());
+        ZonedDateTime dateTime = ZonedDateTime.ofInstant(instant, settings.serverTimezone());
         LocalDateTimeLiteralEncoder.instance().encode(dateTime.toLocalDateTime(), out, settings);
     }
 

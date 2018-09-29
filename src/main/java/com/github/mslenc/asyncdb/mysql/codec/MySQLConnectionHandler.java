@@ -3,6 +3,7 @@ package com.github.mslenc.asyncdb.mysql.codec;
 import java.net.InetSocketAddress;
 import java.nio.ByteOrder;
 import java.time.Duration;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -59,7 +60,7 @@ public class MySQLConnectionHandler extends SimpleChannelInboundHandler<Object> 
     private InitialHandshakeCommand initialHandshake;
     private MySQLCommand currentCommand;
     private final ArrayDeque<MySQLCommand> commandQueue = new ArrayDeque<>();
-    private final CodecSettings codecSettings = new CodecSettings(UTF_8, UTC);
+    private final CodecSettings codecSettings = new CodecSettings(UTF_8, ZoneId.systemDefault(), UTC);
 
     public MySQLConnectionHandler(Configuration configuration,
                                   EventLoopGroup group,

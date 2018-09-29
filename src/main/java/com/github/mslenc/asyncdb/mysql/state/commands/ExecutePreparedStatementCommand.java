@@ -109,7 +109,7 @@ public class ExecutePreparedStatementCommand extends MySQLCommand {
 
                 typeBytes.writeShortLE(encoder.encodesTo());
                 try {
-                    encoder.encode(value, valueBytes);
+                    encoder.encode(value, valueBytes, codecSettings);
                 } catch (Exception e) {
                     promise.completeExceptionally(e);
                     return Result.stateMachineFinished();

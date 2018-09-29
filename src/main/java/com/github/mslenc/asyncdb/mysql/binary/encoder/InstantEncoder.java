@@ -1,5 +1,6 @@
 package com.github.mslenc.asyncdb.mysql.binary.encoder;
 
+import com.github.mslenc.asyncdb.mysql.codec.CodecSettings;
 import com.github.mslenc.asyncdb.mysql.column.ColumnType;
 import io.netty.buffer.ByteBuf;
 
@@ -15,10 +16,10 @@ public class InstantEncoder implements BinaryEncoder {
     }
 
     @Override
-    public void encode(Object value, ByteBuf buffer) {
+    public void encode(Object value, ByteBuf buffer, CodecSettings codecSettings) {
         Instant instant = (Instant) value;
-        LocalDateTime ldt = LocalDateTime.ofInstant(instant, ZoneId.systemDefault()); // TODO: timezone handling
-        LocalDateTimeEncoder.instance().encode(ldt, buffer);
+        LocalDateTime ldt = LocalDateTime.ofInstant(instant, codecSettings.serverTimezone());
+        LocalDateTimeEncoder.instance().encode(ldt, buffer, codecSettings);
     }
 
     @Override

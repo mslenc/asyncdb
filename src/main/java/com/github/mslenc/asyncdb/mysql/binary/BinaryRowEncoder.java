@@ -1,6 +1,7 @@
 package com.github.mslenc.asyncdb.mysql.binary;
 
 import com.github.mslenc.asyncdb.common.ULong;
+import com.github.mslenc.asyncdb.common.column.YearEncoderDecoder;
 import com.github.mslenc.asyncdb.mysql.binary.encoder.*;
 import io.netty.buffer.ByteBuf;
 
@@ -31,17 +32,14 @@ public class BinaryRowEncoder {
         this.encoders.put(ULong.class, ULongEncoder.instance());
         this.encoders.put(Float.class, FloatEncoder.instance());
         this.encoders.put(Double.class, DoubleEncoder.instance());
-        this.encoders.put(LocalDateTime.class, LocalDateTimeEncoder.instance());
-        this.encoders.put(Instant.class, InstantEncoder.instance());
         this.encoders.put(LocalDate.class, LocalDateEncoder.instance());
-        this.encoders.put(Date.class, JavaDateEncoder.instance());
-        this.encoders.put(Timestamp.class, SQLTimestampEncoder.instance());
-        this.encoders.put(java.sql.Date.class, SQLDateEncoder.instance());
-        this.encoders.put(Time.class, SQLTimeEncoder.instance());
+        this.encoders.put(LocalDateTime.class, LocalDateTimeEncoder.instance());
+        this.encoders.put(LocalTime.class, LocalTimeEncoder.instance());
+        this.encoders.put(Instant.class, InstantEncoder.instance());
+        this.encoders.put(Year.class, YearEncoder.instance());
         this.encoders.put(Duration.class, DurationEncoder.instance());
         this.encoders.put(byte[].class, ByteArrayEncoder.instance());
         this.encoders.put(Boolean.class, BooleanEncoder.instance());
-        this.encoders.put(GregorianCalendar.class, CalendarEncoder.instance());
     }
 
     public BinaryEncoder encoderFor(Object v) {
@@ -60,21 +58,6 @@ public class BinaryRowEncoder {
 
         if (v instanceof BigDecimal)
             return stringEncoder;
-
-        if (v instanceof Timestamp)
-            return SQLTimestampEncoder.instance();
-
-        if (v instanceof java.sql.Date)
-            return SQLDateEncoder.instance();
-
-        if (v instanceof Calendar)
-            return CalendarEncoder.instance();
-
-        if (v instanceof Time)
-            return SQLTimeEncoder.instance();
-
-        if (v instanceof Date)
-            return JavaDateEncoder.instance();
 
         if (v instanceof ByteBuffer)
             return ByteBufferEncoder.instance();

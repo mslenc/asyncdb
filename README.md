@@ -40,3 +40,13 @@ TINYBLOB   | byte[]
 BLOB       | byte[]
 MEDIUMBLOB | byte[]
 LONGBLOB   | byte[]
+
+### Temporal types
+
+MySQL type | Java type
+-----------|----------
+DATE       | LocalDate
+DATETIME   | LocalDateTime
+TIME       | Duration
+TIMESTAMP  | Instant
+YEAR       | Year

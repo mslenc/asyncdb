@@ -20,6 +20,7 @@ public class MySQLConnection extends TimeoutScheduler implements Connection {
     private static AtomicLong counter = new AtomicLong();
     private static Version microsecondsVersion = new Version(5, 6, 0);
     private static Logger log = LoggerFactory.getLogger(MySQLConnection.class);
+    public static final String DEFAULT_INIT_SQL = "set session time_zone='+00:00', sql_mode='STRICT_ALL_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO', autocommit=1";
 
     private final EventLoopGroup group;
 
@@ -67,7 +68,7 @@ public class MySQLConnection extends TimeoutScheduler implements Connection {
         return group;
     }
 
-    public CompletableFuture<Connection> connect() {
+    private CompletableFuture<Connection> doConnect() {
         this.connectionHandler.connect().whenComplete((ignored, connectError) -> {
             if (connectError != null) {
                 connectionPromise.completeExceptionally(connectError);
@@ -79,14 +80,14 @@ public class MySQLConnection extends TimeoutScheduler implements Connection {
         return connectionPromise;
     }
 
+    public CompletableFuture<Connection> connect() {
+        return connectAndInit(DEFAULT_INIT_SQL);
+    }
+
     public CompletableFuture<Connection> connectAndInit(String... sqls) {
-        if (sqls == null || sqls.length < 1)
-            return connect();
-
-
         CompletableFuture<Connection> promise = new CompletableFuture<>();
 
-        connect().whenComplete((conn, connError) -> {
+        doConnect().whenComplete((conn, connError) -> {
             if (connError != null) {
                 promise.completeExceptionally(connError);
                 return;

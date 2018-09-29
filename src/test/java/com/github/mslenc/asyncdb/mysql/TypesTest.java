@@ -8,6 +8,8 @@ import org.junit.runners.Parameterized.Parameters;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.sql.Timestamp;
+import java.time.*;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -40,6 +42,11 @@ public class TypesTest {
 
     @Parameters(name = "{0}: {1} => {2}")
     public static Iterable<Object[]> data() {
+        LocalDateTime nowDateTime = LocalDateTime.now();
+        Instant nowInstant = Instant.now();
+        Instant nowInstantNoMicros = Instant.ofEpochSecond(nowInstant.getEpochSecond());
+        LocalDate nowDate = nowDateTime.toLocalDate();
+
         Object[][] data = {
             { "TINYINT", -128, (byte) -128 },
             { "TINYINT",   -1, (byte)   -1 },
@@ -146,9 +153,46 @@ public class TypesTest {
             { "ENUM('a', 'b', 'c', 'd')", "b", "b" },
             { "ENUM('a', 'b', 'c', 'd')", "c", "c" },
             { "ENUM('a', 'b', 'c', 'd')", "d", "d" },
+
+            { "DATE", "2018-09-29", LocalDate.of(2018, 9, 29) },
+            { "DATE", LocalDate.of(2018, 9, 28), LocalDate.of(2018, 9, 28) },
+            { "DATE", Instant.ofEpochSecond(1538051157), LocalDate.of(2018, 9, 27) },
+            { "DATE", LocalDateTime.of(2018, 9, 23, 12, 0, 0), LocalDate.of(2018, 9, 23) },
+            { "DATE", nowDate, nowDate },
+            { "DATE", nowDateTime, nowDate },
+
+            { "DATETIME", "2018-09-29 18:05:23", LocalDateTime.of(2018, 9, 29, 18, 5, 23) },
+            { "DATETIME", LocalDateTime.of(2018, 9, 29, 18, 6, 1), LocalDateTime.of(2018, 9, 29, 18, 6, 1) },
+            { "DATETIME", Instant.ofEpochSecond(1538051157), LocalDateTime.of(2018, 9, 27, 12, 25, 57) },
+            { "DATETIME", nowInstantNoMicros, LocalDateTime.ofInstant(nowInstantNoMicros, ZoneOffset.UTC) },
+            { "DATETIME(6)", nowInstant, LocalDateTime.ofInstant(nowInstant, ZoneOffset.UTC) },
+
+            { "TIME", "12:55:07", Duration.ofSeconds(12 * 3600 + 55 * 60 + 7) },
+            { "TIME", LocalTime.of(19, 4, 57), Duration.ofSeconds(19 * 3600 + 4 * 60 + 57) },
+            { "TIME", Duration.ofSeconds(-582454, 124141000), Duration.ofSeconds(-582454, 0) },
+            { "TIME", Duration.ofSeconds(590587, 491872000), Duration.ofSeconds(590587, 0) },
+            { "TIME(6)", Duration.ofSeconds(-582454, 502423000), Duration.ofSeconds(-582454, 502423000) },
+            { "TIME(6)", Duration.ofSeconds(590587, 491872000), Duration.ofSeconds(590587, 491872000) },
+            { "TIME", "-156:23:55", Duration.ofSeconds(-156*3600 - 23*60 - 55) },
+
+            { "TIMESTAMP", "2019-09-29 17:39:24.123", LocalDateTime.of(2019, 9, 29, 17, 39, 24).toInstant(ZoneOffset.UTC) },
+            { "TIMESTAMP(6)", "2019-09-29 17:39:24.123", LocalDateTime.of(2019, 9, 29, 17, 39, 24, 123000000).toInstant(ZoneOffset.UTC) },
+            { "TIMESTAMP", nowInstantNoMicros, nowInstantNoMicros },
+            { "TIMESTAMP(6)", nowInstant, nowInstant },
+
+            { "YEAR", "2018", Year.of(2018) },
+            { "YEAR", Year.of(2018), Year.of(2018) },
         };
 
         return Arrays.asList(data);
+    }
+
+    public static void main(String[] args) {
+        Timestamp ts = Timestamp.valueOf("2016-05-19 21:44:51");
+        System.out.println(ts);
+
+        Timestamp ts2 = new Timestamp(System.currentTimeMillis());
+        System.out.println(ts2);
     }
 
     final String mySqlType;

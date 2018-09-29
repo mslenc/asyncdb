@@ -73,16 +73,11 @@ public class SqlLiteralEncoders {
             .add(ByteArrayLiteralEncoder.instance())
             .add(ByteBufLiteralEncoder.instance())
             .add(ByteBufferLiteralEncoder.instance())
-            .add(CalendarLiteralEncoder.instance())
             .add(DurationLiteralEncoder.instance())
             .add(InstantLiteralEncoder.instance())
-            .add(JavaDateLiteralEncoder.instance())
             .add(LocalDateLiteralEncoder.instance())
             .add(LocalDateTimeLiteralEncoder.instance())
             .add(LocalTimeLiteralEncoder.instance())
-            .add(SqlDateLiteralEncoder.instance())
-            .add(SqlTimeLiteralEncoder.instance())
-            .add(SqlTimestampLiteralEncoder.instance())
             .add(YearLiteralEncoder.instance())
             .build();
 }

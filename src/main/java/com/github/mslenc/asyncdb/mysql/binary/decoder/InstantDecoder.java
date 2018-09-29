@@ -18,6 +18,6 @@ public class InstantDecoder implements BinaryDecoder {
     public Instant decode(ByteBuf buffer, CodecSettings settings, ColumnData columnData) {
         LocalDateTime value = DateTimeDecoder.instance().decode(buffer, settings, columnData);
 
-        return value.atZone(settings.timezone()).toInstant();
+        return value.atZone(settings.serverTimezone()).toInstant();
     }
 }

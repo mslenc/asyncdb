@@ -1,6 +1,7 @@
 package com.github.mslenc.asyncdb.mysql.binary.encoder;
 
 import com.github.mslenc.asyncdb.mysql.binary.ByteBufUtils;
+import com.github.mslenc.asyncdb.mysql.codec.CodecSettings;
 import com.github.mslenc.asyncdb.mysql.column.ColumnType;
 import io.netty.buffer.ByteBuf;
 
@@ -12,7 +13,7 @@ public class ByteArrayEncoder implements BinaryEncoder {
     }
 
     @Override
-    public void encode(Object value, ByteBuf buffer) {
+    public void encode(Object value, ByteBuf buffer, CodecSettings codecSettings) {
         byte[] bytes = (byte[]) value;
 
         ByteBufUtils.writeLength(bytes.length, buffer);

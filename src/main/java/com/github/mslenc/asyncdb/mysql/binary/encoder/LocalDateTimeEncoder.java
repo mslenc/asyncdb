@@ -1,5 +1,6 @@
 package com.github.mslenc.asyncdb.mysql.binary.encoder;
 
+import com.github.mslenc.asyncdb.mysql.codec.CodecSettings;
 import com.github.mslenc.asyncdb.mysql.column.ColumnType;
 import io.netty.buffer.ByteBuf;
 
@@ -13,7 +14,7 @@ public class LocalDateTimeEncoder implements BinaryEncoder {
     }
 
     @Override
-    public void encode(Object value, ByteBuf buffer) {
+    public void encode(Object value, ByteBuf buffer, CodecSettings codecSettings) {
         LocalDateTime dateTime = (LocalDateTime) value;
 
         int micros = dateTime.getNano() / 1000;
