@@ -6,8 +6,11 @@ import com.github.mslenc.asyncdb.mysql.binary.decoder.*;
 import com.github.mslenc.asyncdb.mysql.column.ByteArrayColumnDecoder;
 import com.github.mslenc.asyncdb.mysql.column.DurationDecoder;
 
+import java.time.OffsetDateTime;
+
 import static com.github.mslenc.asyncdb.mysql.column.ColumnType.*;
 import static com.github.mslenc.asyncdb.mysql.util.MySQLIO.CHARSET_ID_BINARY;
+import static com.github.mslenc.asyncdb.mysql.util.MySQLIO.FIELD_FLAG_UNSIGNED;
 
 public class DecoderRegistry {
     private static final DecoderRegistry instance = new DecoderRegistry();
@@ -16,7 +19,9 @@ public class DecoderRegistry {
         return instance;
     }
 
-    public BinaryDecoder binaryDecoderFor(int columnType, int charsetCode) {
+    public BinaryDecoder binaryDecoderFor(int columnType, int charsetCode, int flags) {
+        boolean unsigned = (flags & FIELD_FLAG_UNSIGNED) != 0;
+
         switch (columnType) {
             case FIELD_TYPE_VARCHAR:
             case FIELD_TYPE_ENUM:
@@ -39,26 +44,28 @@ public class DecoderRegistry {
                 return ByteArrayDecoder.instance();
 
             case FIELD_TYPE_LONGLONG:
-                return LongDecoder.instance();
+                return LongDecoder.instance(unsigned);
 
             case FIELD_TYPE_LONG:
-            case FIELD_TYPE_INT24:
-                return IntegerDecoder.instance();
+                return IntegerDecoder.instance(unsigned);
 
-            case FIELD_TYPE_YEAR:
-                return YearDecoder.instance();
+            case FIELD_TYPE_INT24:
+                return IntegerDecoder.instance(false);
 
             case FIELD_TYPE_SHORT:
-                return ShortDecoder.instance();
+                return ShortDecoder.instance(unsigned);
 
             case FIELD_TYPE_TINY:
-                return com.github.mslenc.asyncdb.mysql.binary.decoder.ByteDecoder.instance();
+                return com.github.mslenc.asyncdb.mysql.binary.decoder.ByteDecoder.instance(unsigned);
 
             case FIELD_TYPE_DOUBLE:
                 return DoubleDecoder.instance();
 
             case FIELD_TYPE_FLOAT:
                 return FloatDecoder.instance();
+
+            case FIELD_TYPE_YEAR:
+                return YearDecoder.instance();
 
             case FIELD_TYPE_DECIMAL:
             case FIELD_TYPE_NEW_DECIMAL:
@@ -92,7 +99,9 @@ public class DecoderRegistry {
         }
     }
 
-    public ColumnDecoder textDecoderFor(int columnType, int charsetCode) {
+    public ColumnDecoder textDecoderFor(int columnType, int charsetCode, int flags) {
+        boolean unsigned = (flags & FIELD_FLAG_UNSIGNED) != 0;
+
         switch (columnType) {
             case FIELD_TYPE_DATE:
                 return DateEncoderDecoder.instance();
@@ -114,20 +123,38 @@ public class DecoderRegistry {
                 return FloatEncoderDecoder.instance();
 
             case FIELD_TYPE_INT24:
-            case FIELD_TYPE_LONG:
                 return IntegerEncoderDecoder.instance();
 
+            case FIELD_TYPE_LONG:
+                if (unsigned) {
+                    return LongEncoderDecoder.instance();
+                } else {
+                    return IntegerEncoderDecoder.instance();
+                }
+
             case FIELD_TYPE_LONGLONG:
-                return LongEncoderDecoder.instance();
+                if (unsigned) {
+                    return UnsignedLongEncoderDecoder.instance();
+                } else {
+                    return LongEncoderDecoder.instance();
+                }
 
             case FIELD_TYPE_SHORT:
-                return ShortEncoderDecoder.instance();
+                if (unsigned) {
+                    return IntegerEncoderDecoder.instance();
+                } else {
+                    return ShortEncoderDecoder.instance();
+                }
 
             case FIELD_TYPE_TIME:
                 return DurationDecoder.instance();
 
             case FIELD_TYPE_TINY:
-                return ByteDecoder.instance();
+                if (unsigned) {
+                    return ShortEncoderDecoder.instance();
+                } else {
+                    return ByteDecoder.instance();
+                }
 
             case FIELD_TYPE_VARCHAR:
             case FIELD_TYPE_ENUM:

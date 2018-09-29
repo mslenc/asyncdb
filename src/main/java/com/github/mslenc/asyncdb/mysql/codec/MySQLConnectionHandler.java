@@ -202,8 +202,8 @@ public class MySQLConnectionHandler extends SimpleChannelInboundHandler<Object> 
         } finally {
             currentCommand = null;
             state = STATE_CLOSED;
-            disconnect();
             commandQueue.clear();
+            currentContext.disconnect();
         }
     }
 

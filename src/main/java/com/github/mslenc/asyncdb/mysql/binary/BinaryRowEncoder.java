@@ -1,5 +1,6 @@
 package com.github.mslenc.asyncdb.mysql.binary;
 
+import com.github.mslenc.asyncdb.common.ULong;
 import com.github.mslenc.asyncdb.mysql.binary.encoder.*;
 import io.netty.buffer.ByteBuf;
 
@@ -27,6 +28,7 @@ public class BinaryRowEncoder {
         this.encoders.put(Short.class, ShortEncoder.instance());
         this.encoders.put(Integer.class, IntegerEncoder.instance());
         this.encoders.put(Long.class, LongEncoder.instance());
+        this.encoders.put(ULong.class, ULongEncoder.instance());
         this.encoders.put(Float.class, FloatEncoder.instance());
         this.encoders.put(Double.class, DoubleEncoder.instance());
         this.encoders.put(LocalDateTime.class, LocalDateTimeEncoder.instance());

@@ -80,11 +80,11 @@ public class BlobQueriesTest {
     public void testSmallBlobsWithPS() {
         TestHelper.runTest((conn, helper, testFinished) -> {
             helper.expectSuccess(conn.sendQuery(
-                "DROP TABLE IF EXISTS blobbies"
+                "DROP TABLE IF EXISTS blobbies_ps"
             ));
 
             helper.expectSuccess(conn.sendQuery(
-                "CREATE TABLE blobbies(" +
+                "CREATE TABLE blobbies_ps(" +
                     "id INT NOT NULL PRIMARY KEY," +
                     "tiny_one TINYBLOB," +
                     "blob_one BLOB," +
@@ -119,23 +119,23 @@ public class BlobQueriesTest {
                 { 5, sha1(tinyBytes2), sha1(blobBytes2), sha1(mediumBytes2), sha1(longBytes2) }
             };
 
-            helper.expectSuccess(conn.prepareStatement("INSERT INTO blobbies VALUES(?, ?, ?, ?, ?)"), ps -> {
+            helper.expectSuccess(conn.prepareStatement("INSERT INTO blobbies_ps VALUES(?, ?, ?, ?, ?)"), ps -> {
                 helper.expectSuccess(ps.execute(asList(expectBlobs[0])));
                 helper.expectSuccess(ps.execute(asList(expectBlobs[1])));
                 helper.expectSuccess(ps.execute(asList(expectBlobs[2])));
                 helper.expectSuccess(ps.execute(asList(expectBlobs[3])));
                 helper.expectSuccess(ps.execute(asList(expectBlobs[4])));
 
-                helper.expectSuccess(conn.prepareStatement("SELECT id, sha1(tiny_one), sha1(blob_one), sha1(medium_one), sha1(long_one) FROM blobbies ORDER BY id"), selectShaPs -> {
+                helper.expectSuccess(conn.prepareStatement("SELECT id, sha1(tiny_one), sha1(blob_one), sha1(medium_one), sha1(long_one) FROM blobbies_ps ORDER BY id"), selectShaPs -> {
                     helper.expectResultSetValues(selectShaPs.execute(Collections.emptyList()), expectHashes);
                     helper.expectSuccess(selectShaPs.close());
                 });
 
-                helper.expectSuccess(conn.prepareStatement("SELECT id, tiny_one, blob_one, medium_one, long_one FROM blobbies ORDER BY id"), selectPs -> {
+                helper.expectSuccess(conn.prepareStatement("SELECT id, tiny_one, blob_one, medium_one, long_one FROM blobbies_ps ORDER BY id"), selectPs -> {
                     helper.expectResultSetValues(selectPs.execute(Collections.emptyList()), expectBlobs);
                     helper.expectSuccess(selectPs.close());
 
-                    helper.expectSuccess(conn.sendQuery("DROP TABLE blobbies"));
+                    helper.expectSuccess(conn.sendQuery("DROP TABLE blobbies_ps"));
 
                     helper.expectSuccess(ps.close());
 

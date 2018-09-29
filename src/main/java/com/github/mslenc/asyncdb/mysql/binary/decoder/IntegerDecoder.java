@@ -4,19 +4,20 @@ import com.github.mslenc.asyncdb.mysql.codec.CodecSettings;
 import com.github.mslenc.asyncdb.common.general.ColumnData;
 import io.netty.buffer.ByteBuf;
 
-public class IntegerDecoder implements BinaryDecoder {
-    private static final IntegerDecoder instance = new IntegerDecoder();
-
-    public static IntegerDecoder instance() {
-        return instance;
-    }
-
-    @Override
-    public Number decode(ByteBuf buffer, CodecSettings settings, ColumnData columnData) {
-        if (columnData.isUnsigned()) {
-            return buffer.readUnsignedIntLE();
-        } else {
+public abstract class IntegerDecoder implements BinaryDecoder {
+    private static final IntegerDecoder instance_signed = new IntegerDecoder() {
+        public Integer decode(ByteBuf buffer, CodecSettings settings, ColumnData columnData) {
             return buffer.readIntLE();
         }
+    };
+
+    private static final IntegerDecoder instance_unsigned = new IntegerDecoder() {
+        public Long decode(ByteBuf buffer, CodecSettings settings, ColumnData columnData) {
+            return buffer.readUnsignedIntLE();
+        }
+    };
+
+    public static IntegerDecoder instance(boolean unsigned) {
+        return unsigned ? instance_unsigned : instance_signed;
     }
 }

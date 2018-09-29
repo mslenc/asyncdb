@@ -42,8 +42,8 @@ public class ColumnDefinitionDecoder {
             columnType,
             flags,
             decimals,
-            registry.binaryDecoderFor(columnType, characterSet),
-            registry.textDecoderFor(columnType,characterSet)
+            registry.binaryDecoderFor(columnType, characterSet, flags),
+            registry.textDecoderFor(columnType,characterSet, flags)
         );
     }
 }

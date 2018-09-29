@@ -79,9 +79,44 @@ public class MySQLConnection extends TimeoutScheduler implements Connection {
         return connectionPromise;
     }
 
+    public CompletableFuture<Connection> connectAndInit(String... sqls) {
+        if (sqls == null || sqls.length < 1)
+            return connect();
+
+
+        CompletableFuture<Connection> promise = new CompletableFuture<>();
+
+        connect().whenComplete((conn, connError) -> {
+            if (connError != null) {
+                promise.completeExceptionally(connError);
+                return;
+            }
+
+            continueSendingInitStatements(conn, promise, sqls, 0);
+        });
+
+        return promise;
+    }
+
+    void continueSendingInitStatements(Connection conn, CompletableFuture<Connection> promise, String[] sqls, int sqlIndex) {
+        if (sqlIndex >= sqls.length) {
+            promise.complete(conn);
+            return;
+        }
+
+        conn.sendQuery(sqls[sqlIndex]).whenComplete((result, error) -> {
+            if (error != null) {
+                promise.completeExceptionally(error);
+                return;
+            }
+
+            continueSendingInitStatements(conn, promise, sqls, sqlIndex + 1);
+        });
+    }
+
     @Override
     public CompletableFuture<Void> disconnect() {
-        return this.connectionHandler.disconnect();
+        return connectionHandler.disconnect();
     }
 
     @Override

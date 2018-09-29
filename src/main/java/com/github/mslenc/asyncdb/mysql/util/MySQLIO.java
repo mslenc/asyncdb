@@ -46,6 +46,8 @@ public class MySQLIO {
     public static final int FIELD_FLAG_ON_UPDATE_NOW = 8192;
     public static final int FIELD_FLAG_NUM = 32768;
 
+    public static final int PREP_STMT_UNSIGNED_FLAG = 0x8000; // see https://dev.mysql.com/doc/internals/en/com-stmt-execute.html
+
     public static final int CHARSET_ID_UTF8MB4 = 45;
     public static final int CHARSET_ID_BINARY = 63;
 

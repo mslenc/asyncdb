@@ -9,6 +9,7 @@ public class FloatEncoderDecoder implements ColumnEncoderDecoder {
 
     @Override
     public Float decode(String value) {
+        System.err.println("Decoding " + value);
         return Float.valueOf(value);
     }
 }

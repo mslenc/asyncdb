@@ -8,7 +8,6 @@ import com.github.mslenc.asyncdb.common.ResultSet;
 import java.util.Arrays;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import static org.junit.Assert.*;
@@ -17,6 +16,11 @@ public class TestHelper {
     private ConcurrentLinkedQueue<Throwable> errors = new ConcurrentLinkedQueue<>();
     private AtomicInteger futureCounter = new AtomicInteger(0);
     private LinkedBlockingDeque<Integer> backQueue = new LinkedBlockingDeque<>();
+
+    static final String[] connInit = {
+        "SET SESSION sql_mode = 'STRICT_ALL_TABLES'",
+        "SET time_zone = 'UTC'"
+    };
 
     interface TestContents {
         void start(Connection conn, TestHelper helper, CompletableFuture<Void> testFinished);
@@ -54,7 +58,7 @@ public class TestHelper {
         long deadline = System.currentTimeMillis() + timeoutMillis;
 
         MySQLConnection connection = new MySQLConnection(config, null);
-        connection.connect().whenCompleteAsync((conn, error) -> {
+        connection.connectAndInit(connInit).whenCompleteAsync((conn, error) -> {
             if (error != null) {
                 testHelper.errors.add(error);
                 testHelper.futureCounter.incrementAndGet();
@@ -184,41 +188,70 @@ public class TestHelper {
     }
 
     public void expectResultSet(CompletableFuture<QueryResult> future) {
-        expectSuccess(future, queryResult -> assertNotNull(queryResult.resultSet()));
+        expectResultSet(future, ignored -> {});
     }
 
     public void expectResultSet(CompletableFuture<QueryResult> future, Consumer<ResultSet> onResult) {
         expectSuccess(future, queryResult -> {
-            ResultSet resultSet = queryResult.resultSet();
-            assertNotNull(resultSet);
-            onResult.accept(resultSet);
+            CompletableFuture<Void> successPromise = new CompletableFuture<>();
+            expectSuccess(successPromise);
+
+            try {
+                ResultSet resultSet = queryResult.resultSet();
+                assertNotNull(resultSet);
+                onResult.accept(resultSet);
+
+                successPromise.complete(null);
+            } catch (Throwable t) {
+                successPromise.completeExceptionally(t);
+            }
         });
     }
 
     public void expectResultSetValues(CompletableFuture<QueryResult> sendQuery, Object[][] rows) {
+        expectResultSetValues(sendQuery, rows, ignored -> { });
+    }
+
+    public void expectResultSetValues(CompletableFuture<QueryResult> sendQuery, Object[][] rows, Consumer<ResultSet> onResult) {
         expectResultSet(sendQuery, resultSet -> {
-            assertEquals(rows.length, resultSet.size());
+            CompletableFuture<Void> successPromise = new CompletableFuture<>();
+            expectSuccess(successPromise);
 
-            int numCols = resultSet.getColumnNames().size();
+            try {
+                assertEquals(rows.length, resultSet.size());
 
-            for (int r = 0; r < rows.length; r++) {
-                assertEquals(rows[r].length, numCols);
+                int numCols = resultSet.getColumnNames().size();
 
-                for (int c = 0; c < numCols; c++) {
-                    Object expected = rows[r][c];
-                    Object received = resultSet.get(r).get(c);
+                for (int r = 0; r < rows.length; r++) {
+                    assertEquals(rows[r].length, numCols);
 
-                    if (expected == null) {
-                        assertNull(received);
-                        continue;
-                    }
+                    for (int c = 0; c < numCols; c++) {
+                        Object expected = rows[r][c];
+                        Object received = resultSet.get(r).get(c);
 
-                    if (expected.getClass().isArray()) {
-                        assertTrue(Arrays.deepEquals(new Object[] { expected }, new Object[] { received }));
-                    } else {
-                        assertEquals(expected, received);
+                        if (expected == null) {
+                            assertNull(received);
+                            continue;
+                        }
+
+                        if (expected instanceof Consumer) {
+                            ((Consumer)expected).accept(received);
+                            continue;
+                        }
+
+                        if (expected.getClass().isArray()) {
+                            assertTrue(Arrays.deepEquals(new Object[] { expected }, new Object[] { received }));
+                        } else {
+                            assertEquals(expected, received);
+                        }
                     }
                 }
+
+                onResult.accept(resultSet);
+
+                successPromise.complete(null);
+            } catch (Throwable t) {
+                successPromise.completeExceptionally(t);
             }
         });
     }
