@@ -6,7 +6,6 @@ import com.github.mslenc.asyncdb.mysql.codec.CodecSettings;
 import io.netty.buffer.ByteBuf;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 
 public class ULongLiteralEncoder implements SqlLiteralEncoder {

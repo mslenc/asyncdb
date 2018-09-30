@@ -1,6 +1,5 @@
 package com.github.mslenc.asyncdb.common.sql;
 
-import com.github.mslenc.asyncdb.common.ULong;
 import com.github.mslenc.asyncdb.mysql.binary.ByteBufUtils;
 import com.github.mslenc.asyncdb.mysql.codec.CodecSettings;
 import io.netty.buffer.ByteBuf;

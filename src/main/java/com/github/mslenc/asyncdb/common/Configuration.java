@@ -1,7 +1,6 @@
 package com.github.mslenc.asyncdb.common;
 
 import java.time.Duration;
-import java.time.ZoneOffset;
 import java.util.Objects;
 
 public class Configuration {
