@@ -115,13 +115,13 @@ public class InitialHandshakeCommand extends MySQLCommand {
         if (auth == null) {
             return Result.protocolErrorAbortEverything("Unsupported authentication mechanism ("+pluginName+") requested by server");
         } else {
-            support.sendMessage(new AuthenticationSwitchResponse(this, auth));
+            support.sendMessage(new AuthenticationSwitchResponse(auth));
             return Result.expectingMorePackets();
         }
     }
 
     private HandshakeResponseMessage generateHandshakeResponse(String authenticationMethod, byte[] authSeed, Configuration config) {
-        HandshakeResponseMessage response = new HandshakeResponseMessage(this, config.username);
+        HandshakeResponseMessage response = new HandshakeResponseMessage(config.username);
 
         if (authenticationMethod != null)
             response.setAuthMethod(authenticationMethod, generateAuth(authenticationMethod, authSeed, config.password, true));

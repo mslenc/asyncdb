@@ -1,20 +1,15 @@
 package com.github.mslenc.asyncdb.mysql.message.client;
 
-import com.github.mslenc.asyncdb.mysql.state.MySQLCommand;
 import com.github.mslenc.asyncdb.mysql.util.MySQLIO;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
 import java.nio.charset.StandardCharsets;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
 public class QueryMessage extends ClientMessage {
     public final ByteBuf queryUtf8;
 
-    public QueryMessage(MySQLCommand command, ByteBuf queryUtf8) {
-        super(command);
-        
+    public QueryMessage(ByteBuf queryUtf8) {
         this.queryUtf8 = queryUtf8;
     }
 

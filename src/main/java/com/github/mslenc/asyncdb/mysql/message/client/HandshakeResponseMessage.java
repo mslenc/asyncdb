@@ -1,7 +1,6 @@
 package com.github.mslenc.asyncdb.mysql.message.client;
 
 import com.github.mslenc.asyncdb.mysql.binary.ByteBufUtils;
-import com.github.mslenc.asyncdb.mysql.state.MySQLCommand;
 import com.github.mslenc.asyncdb.mysql.util.MySQLIO;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -24,9 +23,7 @@ public class HandshakeResponseMessage extends ClientMessage {
 
     private String database;
 
-    public HandshakeResponseMessage(MySQLCommand command, String username) {
-        super(command);
-
+    public HandshakeResponseMessage(String username) {
         this.username = Objects.requireNonNull(username, "Missing username");
     }
 

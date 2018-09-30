@@ -50,7 +50,7 @@ public class PrepareStatementCommand extends MySQLCommand {
         if (promise.isDone())
             return Result.stateMachineFinished();
 
-        support.sendMessage(new PreparedStatementPrepareMessage(this, query));
+        support.sendMessage(new PreparedStatementPrepareMessage(query));
         return Result.expectingMorePackets();
     }
 

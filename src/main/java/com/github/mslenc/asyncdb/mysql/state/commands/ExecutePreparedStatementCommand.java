@@ -93,7 +93,7 @@ public class ExecutePreparedStatementCommand extends MySQLCommand {
             if (longValue != null) {
                 // not null
                 typeBytes.writeShortLE(FIELD_TYPE_LONG_BLOB);
-                longValues.add(new SendLongDataMessage(this, psInfo.statementId, paramIndex, longValue));
+                longValues.add(new SendLongDataMessage(psInfo.statementId, paramIndex, longValue));
             } else
             if (value != null) {
                 // not null
@@ -118,11 +118,11 @@ public class ExecutePreparedStatementCommand extends MySQLCommand {
             }
         }
 
-        execMessage = new PreparedStatementExecuteMessage(this, psInfo.statementId, nullBytes, typeBytes, valueBytes);
+        execMessage = new PreparedStatementExecuteMessage(psInfo.statementId, nullBytes, typeBytes, valueBytes);
 
         if (psInfo.shouldReset()) {
             state = STATE_AWAITING_RESET_RESULT;
-            support.sendMessage(new ResetPreparedStatementMessage(this, psInfo.statementId));
+            support.sendMessage(new ResetPreparedStatementMessage(psInfo.statementId));
             return Result.expectingMorePackets();
         }
 

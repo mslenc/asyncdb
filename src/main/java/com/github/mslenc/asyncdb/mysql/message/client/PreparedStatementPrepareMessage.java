@@ -1,6 +1,5 @@
 package com.github.mslenc.asyncdb.mysql.message.client;
 
-import com.github.mslenc.asyncdb.mysql.state.MySQLCommand;
 import com.github.mslenc.asyncdb.mysql.util.MySQLIO;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -10,9 +9,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class PreparedStatementPrepareMessage extends ClientMessage {
     private final String statement;
 
-    public PreparedStatementPrepareMessage(MySQLCommand command, String statement) {
-        super(command);
-
+    public PreparedStatementPrepareMessage(String statement) {
         this.statement = statement;
     }
 

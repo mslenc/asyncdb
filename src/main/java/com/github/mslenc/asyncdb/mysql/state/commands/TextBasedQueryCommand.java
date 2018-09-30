@@ -54,7 +54,7 @@ public class TextBasedQueryCommand extends MySQLCommand {
         if (promise.isDone())
             return Result.stateMachineFinished();
 
-        conn.sendMessage(new QueryMessage(this, queryUtf8));
+        conn.sendMessage(new QueryMessage(queryUtf8));
         return Result.expectingMorePackets();
     }
 

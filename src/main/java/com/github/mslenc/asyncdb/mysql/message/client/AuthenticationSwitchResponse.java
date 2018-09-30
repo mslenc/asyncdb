@@ -1,15 +1,12 @@
 package com.github.mslenc.asyncdb.mysql.message.client;
 
-import com.github.mslenc.asyncdb.mysql.state.MySQLCommand;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
 public class AuthenticationSwitchResponse extends ClientMessage {
     private final byte[] authData;
 
-    public AuthenticationSwitchResponse(MySQLCommand command, byte[] authData) {
-        super(command);
-
+    public AuthenticationSwitchResponse(byte[] authData) {
         this.authData = authData;
     }
 

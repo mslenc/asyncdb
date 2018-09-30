@@ -1,7 +1,6 @@
 package com.github.mslenc.asyncdb.mysql.message.client;
 
 import com.github.mslenc.asyncdb.mysql.binary.ByteBufUtils;
-import com.github.mslenc.asyncdb.mysql.state.MySQLCommand;
 import com.github.mslenc.asyncdb.mysql.util.MySQLIO;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -12,9 +11,7 @@ public class PreparedStatementExecuteMessage extends ClientMessage {
     private final ByteBuf typeBytes;
     private final ByteBuf valueBytes;
 
-    public PreparedStatementExecuteMessage(MySQLCommand command, byte[] statementId, byte[] nullBytes, ByteBuf typeBytes, ByteBuf valueBytes) {
-        super(command);
-
+    public PreparedStatementExecuteMessage(byte[] statementId, byte[] nullBytes, ByteBuf typeBytes, ByteBuf valueBytes) {
         this.statementId = statementId;
         this.nullBytes = nullBytes;
         this.typeBytes = typeBytes;
