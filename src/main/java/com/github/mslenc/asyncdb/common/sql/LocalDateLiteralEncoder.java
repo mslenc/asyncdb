@@ -1,6 +1,7 @@
 package com.github.mslenc.asyncdb.common.sql;
 
 import com.github.mslenc.asyncdb.mysql.codec.CodecSettings;
+import io.netty.buffer.ByteBuf;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -8,6 +9,7 @@ import java.time.format.DateTimeFormatterBuilder;
 import java.util.Collections;
 import java.util.Set;
 
+import static com.github.mslenc.asyncdb.mysql.binary.ByteBufUtils.appendAsciiString;
 import static java.time.temporal.ChronoField.DAY_OF_MONTH;
 import static java.time.temporal.ChronoField.MONTH_OF_YEAR;
 import static java.time.temporal.ChronoField.YEAR;
@@ -29,11 +31,11 @@ public class LocalDateLiteralEncoder implements SqlLiteralEncoder {
                     .toFormatter();
 
     @Override
-    public void encode(Object value, StringBuilder out, CodecSettings settings) {
+    public void encode(Object value, ByteBuf out, CodecSettings settings) {
         LocalDate date = (LocalDate) value;
-        out.append("'");
-        out.append(date.format(formatter));
-        out.append("'");
+        out.writeByte('\'');
+        appendAsciiString(date.format(formatter), out);
+        out.writeByte('\'');
     }
 
     @Override

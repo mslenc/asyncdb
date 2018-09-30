@@ -29,7 +29,7 @@ public class TextBasedQueryCommand extends MySQLCommand {
     private static final int STATE_READING_FIELDS = 1;
     private static final int STATE_READING_ROWS = 2;
 
-    private final String query;
+    private final ByteBuf queryUtf8;
     private final CompletableFuture<QueryResult> promise;
     private final CodecSettings codecSettings;
 
@@ -38,8 +38,8 @@ public class TextBasedQueryCommand extends MySQLCommand {
     private final ArrayList<ColumnDefinitionMessage> columnDefs = new ArrayList<>();
     private MutableResultSet<ColumnDefinitionMessage> resultSet;
 
-    public TextBasedQueryCommand(String query, CompletableFuture<QueryResult> promise, CodecSettings codecSettings) {
-        this.query = query;
+    public TextBasedQueryCommand(ByteBuf queryUtf8, CompletableFuture<QueryResult> promise, CodecSettings codecSettings) {
+        this.queryUtf8 = queryUtf8;
         this.promise = promise;
         this.codecSettings = codecSettings;
     }
@@ -54,7 +54,7 @@ public class TextBasedQueryCommand extends MySQLCommand {
         if (promise.isDone())
             return Result.stateMachineFinished();
 
-        conn.sendMessage(new QueryMessage(this, query));
+        conn.sendMessage(new QueryMessage(this, queryUtf8));
         return Result.expectingMorePackets();
     }
 

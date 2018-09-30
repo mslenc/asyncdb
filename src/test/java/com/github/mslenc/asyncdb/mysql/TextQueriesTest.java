@@ -6,6 +6,7 @@ import org.junit.Test;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Random;
 
 import static java.util.Arrays.asList;
@@ -286,14 +287,30 @@ public class TextQueriesTest {
         return 4;
     }
 
-    static String randomChars(int byteLength) {
+    private static final int[] validCodepoints;
+    static {
+        ArrayList<Integer> cps = new ArrayList<>();
+        for (int cp = 0; cp <= Character.MAX_CODE_POINT; cp++) {
+            if (Character.isDefined(cp) && (cp > 0xFFFF || !Character.isSurrogate((char)cp))) {
+                cps.add(cp);
+            }
+        }
+
+        validCodepoints = new int[cps.size()];
+        int i = 0;
+        for (int cp : cps)
+            validCodepoints[i++] = cp;
+    }
+
+    static String randomChars(int approxByteLength) {
         StringBuilder sb = new StringBuilder();
         Random rnd = new Random();
 
-        int lengthRemain = byteLength;
+        int lengthRemain = approxByteLength;
         while (lengthRemain > 0) {
-            int cp = rnd.nextInt(Character.MAX_CODE_POINT + 1);
-            if (Character.isDefined(cp) && (cp > 0xFFFF || !Character.isSurrogate((char)cp))) {
+            int first = rnd.nextInt(validCodepoints.length);
+            for (int a = 0; a < 8; a++) {
+                int cp = validCodepoints[(first + a) % validCodepoints.length];
                 sb.appendCodePoint(cp);
                 lengthRemain -= utf8len(cp);
             }

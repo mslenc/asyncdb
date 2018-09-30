@@ -5,22 +5,29 @@ import com.github.mslenc.asyncdb.common.Connection;
 import com.github.mslenc.asyncdb.common.PreparedStatement;
 import com.github.mslenc.asyncdb.common.QueryResult;
 import com.github.mslenc.asyncdb.common.pool.TimeoutScheduler;
+import com.github.mslenc.asyncdb.common.sql.SqlLiteralEncoders;
+import com.github.mslenc.asyncdb.common.sql.SqlQueryPlaceholders;
 import com.github.mslenc.asyncdb.common.util.NettyUtils;
 import com.github.mslenc.asyncdb.common.util.Version;
 import com.github.mslenc.asyncdb.mysql.codec.MySQLConnectionHandler;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.EventLoopGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static com.github.mslenc.asyncdb.common.util.FutureUtils.failedFuture;
 
 public class MySQLConnection extends TimeoutScheduler implements Connection {
     private static AtomicLong counter = new AtomicLong();
     private static Version microsecondsVersion = new Version(5, 6, 0);
     private static Logger log = LoggerFactory.getLogger(MySQLConnection.class);
-    public static final String DEFAULT_INIT_SQL = "set session time_zone='+00:00', sql_mode='STRICT_ALL_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO', autocommit=1";
+    public static final String DEFAULT_INIT_SQL = "set session time_zone='+00:00', sql_mode='STRICT_ALL_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO,ANSI_QUOTES', autocommit=1";
 
     private final EventLoopGroup group;
 
@@ -122,12 +129,21 @@ public class MySQLConnection extends TimeoutScheduler implements Connection {
 
     @Override
     public CompletableFuture<QueryResult> sendQuery(String query) {
-        return connectionHandler.sendQuery(query);
+        ByteBuf queryUtf8 = Unpooled.copiedBuffer(query, StandardCharsets.UTF_8);
+        return connectionHandler.sendQuery(queryUtf8);
     }
 
     @Override
     public CompletableFuture<QueryResult> sendQuery(String query, List<Object> values) {
-        return connectionHandler.sendQuery(query, values);
+        ByteBuf queryUtf8WithValues = Unpooled.buffer(query.length() + values.size() * 20 + 10);
+
+        try {
+            SqlQueryPlaceholders.insertValuesForPlaceholders(query, values, SqlLiteralEncoders.DEFAULT, connectionHandler.codecSettings, queryUtf8WithValues);
+        } catch (Exception e) {
+            return failedFuture(e);
+        }
+
+        return connectionHandler.sendQuery(queryUtf8WithValues);
     }
 
     @Override

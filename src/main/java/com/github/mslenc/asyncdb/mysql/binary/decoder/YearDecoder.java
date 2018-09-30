@@ -16,10 +16,8 @@ public class YearDecoder implements BinaryDecoder {
     @Override
     public Year decode(ByteBuf buffer, CodecSettings settings, ColumnData columnData) {
         if (columnData.isUnsigned()) {
-            System.err.println("Yes, UNSIGNED");
             return Year.of(buffer.readUnsignedShortLE());
         } else {
-            System.err.println("No, it is not UNSIGNED");
             return Year.of(buffer.readShortLE());
         }
     }

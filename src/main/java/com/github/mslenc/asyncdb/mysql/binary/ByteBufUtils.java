@@ -149,4 +149,53 @@ public class ByteBufUtils {
 
         return out.toString();
     }
+
+    public static void appendUtf8Codepoint(int codepoint, ByteBuf out) {
+        if (codepoint <= 0x7F) {
+            out.writeByte(codepoint);
+        } else
+        if (codepoint <= 0x7FF) {
+            out.writeByte(0b1100_0000 | (codepoint >>> 6));
+            out.writeByte(0b1000_0000 | (codepoint & 0b0011_1111));
+        } else
+        if (codepoint <= 0xFFFF) {
+            out.writeByte(0b1110_0000 | (codepoint >>> 12));
+            out.writeByte(0b1000_0000 | ((codepoint >>> 6) & 0b0011_1111));
+            out.writeByte(0b1000_0000 | (codepoint & 0b0011_1111));
+        } else {
+            out.writeByte(0b1111_0000 | (codepoint >>> 18));
+            out.writeByte(0b1000_0000 | ((codepoint >>> 12) & 0b0011_1111));
+            out.writeByte(0b1000_0000 | ((codepoint >>> 6) & 0b0011_1111));
+            out.writeByte(0b1000_0000 | (codepoint & 0b0011_1111));
+        }
+    }
+
+    public static void appendUtf8String(String string, ByteBuf out) {
+        int pos = 0, len = string.length();
+        while (pos < len) {
+            int cp = string.codePointAt(pos);
+            if (cp >= Character.MIN_SUPPLEMENTARY_CODE_POINT) {
+                pos += 2;
+            } else {
+                pos += 1;
+            }
+
+            appendUtf8Codepoint(cp, out);
+        }
+    }
+
+    public static void appendAsciiString(String string, ByteBuf out) {
+        for (int i = 0, n = string.length(); i < n; i++)
+            out.writeByte(string.charAt(i));
+    }
+
+    public static void appendAsciiInteger(long value, ByteBuf out) {
+        // TODO: encode directly, skipping intermediate string
+        appendAsciiString(String.valueOf(value), out);
+    }
+
+    public static void writeByteAsHexPair(byte b, ByteBuf out) {
+        out.writeByte(HEX_CHARS[(b & 0xF0) >>> 4]);
+        out.writeByte(HEX_CHARS[b & 0x0F]);
+    }
 }

@@ -5,6 +5,7 @@ import com.github.mslenc.asyncdb.mysql.codec.CodecSettings;
 import io.netty.buffer.ByteBuf;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 
 import static com.github.mslenc.asyncdb.mysql.binary.ByteBufUtils.readLengthEncodedString;
 
@@ -17,6 +18,6 @@ public class BigDecimalDecoder implements BinaryDecoder {
 
     @Override
     public BigDecimal decode(ByteBuf buffer, CodecSettings settings, ColumnData columnData) {
-        return new BigDecimal(readLengthEncodedString(buffer, settings.charset()));
+        return new BigDecimal(readLengthEncodedString(buffer, StandardCharsets.UTF_8));
     }
 }

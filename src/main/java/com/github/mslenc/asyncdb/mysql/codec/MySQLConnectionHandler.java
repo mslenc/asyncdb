@@ -17,8 +17,6 @@ import com.github.mslenc.asyncdb.common.PreparedStatement;
 import com.github.mslenc.asyncdb.common.QueryResult;
 import com.github.mslenc.asyncdb.common.exceptions.ConnectionClosedException;
 import com.github.mslenc.asyncdb.common.exceptions.DatabaseException;
-import com.github.mslenc.asyncdb.common.sql.SqlLiteralEncoders;
-import com.github.mslenc.asyncdb.common.sql.SqlQueryPlaceholders;
 import com.github.mslenc.asyncdb.common.util.BufferDumper;
 import com.github.mslenc.asyncdb.common.util.FutureUtils;
 import com.github.mslenc.asyncdb.mysql.binary.BinaryRowEncoder;
@@ -60,7 +58,7 @@ public class MySQLConnectionHandler extends SimpleChannelInboundHandler<Object> 
     private InitialHandshakeCommand initialHandshake;
     private MySQLCommand currentCommand;
     private final ArrayDeque<MySQLCommand> commandQueue = new ArrayDeque<>();
-    private final CodecSettings codecSettings = new CodecSettings(UTF_8, ZoneId.systemDefault(), UTC);
+    public final CodecSettings codecSettings = new CodecSettings(ZoneId.systemDefault(), UTC);
 
     public MySQLConnectionHandler(Configuration configuration,
                                   EventLoopGroup group,
@@ -273,7 +271,11 @@ public class MySQLConnectionHandler extends SimpleChannelInboundHandler<Object> 
     public void sendMessage(ClientMessage message) {
         switch (this.state) {
             case STATE_RUNNING_STATE_MACHINE:
-                log.debug("Writing {}", message);
+                if (log.isTraceEnabled()) {
+                    log.trace("Writing {}", message.toString(true));
+                } else {
+                    log.debug("Writing {}", message);
+                }
 
                 this.currentContext.write(message);
                 break;
@@ -327,9 +329,9 @@ public class MySQLConnectionHandler extends SimpleChannelInboundHandler<Object> 
         });
     }
 
-    public CompletableFuture<QueryResult> sendQuery(String query) {
+    public CompletableFuture<QueryResult> sendQuery(ByteBuf queryUtf8) {
         CompletableFuture<QueryResult> promise = new CompletableFuture<>();
-        enqueueCommand(new TextBasedQueryCommand(query, promise, codecSettings));
+        enqueueCommand(new TextBasedQueryCommand(queryUtf8, promise, codecSettings));
         return promise;
     }
 
@@ -370,17 +372,5 @@ public class MySQLConnectionHandler extends SimpleChannelInboundHandler<Object> 
     private static void safelyCompleteWithNull(MySQLCommand command) {
         if (command != null)
             FutureUtils.safelyComplete(command.getPromise(), null);
-    }
-
-    public CompletableFuture<QueryResult> sendQuery(String query, List<Object> values) {
-        String queryWithValues;
-
-        try {
-            queryWithValues = SqlQueryPlaceholders.insertValuesForPlaceholders(query, values, SqlLiteralEncoders.DEFAULT, codecSettings);
-        } catch (Exception e) {
-            return failedFuture(e);
-        }
-
-        return sendQuery(queryWithValues);
     }
 }

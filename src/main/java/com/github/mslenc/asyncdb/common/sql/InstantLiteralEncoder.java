@@ -1,6 +1,7 @@
 package com.github.mslenc.asyncdb.common.sql;
 
 import com.github.mslenc.asyncdb.mysql.codec.CodecSettings;
+import io.netty.buffer.ByteBuf;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -15,7 +16,7 @@ public class InstantLiteralEncoder implements SqlLiteralEncoder {
     }
 
     @Override
-    public void encode(Object value, StringBuilder out, CodecSettings settings) {
+    public void encode(Object value, ByteBuf out, CodecSettings settings) {
         Instant instant = (Instant) value;
         ZonedDateTime dateTime = ZonedDateTime.ofInstant(instant, settings.serverTimezone());
         LocalDateTimeLiteralEncoder.instance().encode(dateTime.toLocalDateTime(), out, settings);

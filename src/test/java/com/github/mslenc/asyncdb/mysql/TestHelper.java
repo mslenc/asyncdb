@@ -17,11 +17,6 @@ public class TestHelper {
     private AtomicInteger futureCounter = new AtomicInteger(0);
     private LinkedBlockingDeque<Integer> backQueue = new LinkedBlockingDeque<>();
 
-    static final String[] connInit = {
-        "SET SESSION sql_mode = 'STRICT_ALL_TABLES'",
-        "SET time_zone = 'UTC'"
-    };
-
     interface TestContents {
         void start(Connection conn, TestHelper helper, CompletableFuture<Void> testFinished);
     }
@@ -58,7 +53,7 @@ public class TestHelper {
         long deadline = System.currentTimeMillis() + timeoutMillis;
 
         MySQLConnection connection = new MySQLConnection(config, null);
-        connection.connectAndInit(connInit).whenCompleteAsync((conn, error) -> {
+        connection.connect().whenComplete((conn, error) -> {
             if (error != null) {
                 testHelper.errors.add(error);
                 testHelper.futureCounter.incrementAndGet();
@@ -119,7 +114,7 @@ public class TestHelper {
     }
 
     public void expectSuccess(CompletableFuture<?> future) {
-        futureStarting(future).whenCompleteAsync((result, error) -> {
+        futureStarting(future).whenComplete((result, error) -> {
             try {
                 if (error != null) {
                     error.printStackTrace();
@@ -135,7 +130,7 @@ public class TestHelper {
         Exception potentialFailure = new Exception("Expected failure");
         potentialFailure.fillInStackTrace();
 
-        futureStarting(future).whenCompleteAsync((result, error) -> {
+        futureStarting(future).whenComplete((result, error) -> {
             try {
                 if (error == null) {
                     errors.add(potentialFailure);
@@ -147,7 +142,7 @@ public class TestHelper {
     }
 
     public <T> void expectSuccess(CompletableFuture<T> future, Consumer<T> onResult) {
-        futureStarting(future).whenCompleteAsync((result, error) -> {
+        futureStarting(future).whenComplete((result, error) -> {
             try {
                 if (error != null) {
                     error.printStackTrace();
@@ -170,7 +165,7 @@ public class TestHelper {
         Exception potentialFailure = new Exception("Expected failure");
         potentialFailure.fillInStackTrace();
 
-        futureStarting(future).whenCompleteAsync((result, error) -> {
+        futureStarting(future).whenComplete((result, error) -> {
             try {
                 if (error == null) {
                     errors.add(potentialFailure);

@@ -1,6 +1,8 @@
 package com.github.mslenc.asyncdb.common.sql;
 
+import com.github.mslenc.asyncdb.mysql.binary.ByteBufUtils;
 import com.github.mslenc.asyncdb.mysql.codec.CodecSettings;
+import io.netty.buffer.ByteBuf;
 
 import java.math.BigInteger;
 import java.util.Collections;
@@ -14,8 +16,8 @@ public class BigIntegerLiteralEncoder implements SqlLiteralEncoder {
     }
 
     @Override
-    public void encode(Object value, StringBuilder out, CodecSettings settings) {
-        out.append(value);
+    public void encode(Object value, ByteBuf out, CodecSettings settings) {
+        ByteBufUtils.appendAsciiString(value.toString(), out);
     }
 
     @Override

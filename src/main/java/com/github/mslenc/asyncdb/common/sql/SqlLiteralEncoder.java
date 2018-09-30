@@ -1,6 +1,7 @@
 package com.github.mslenc.asyncdb.common.sql;
 
 import com.github.mslenc.asyncdb.mysql.codec.CodecSettings;
+import io.netty.buffer.ByteBuf;
 
 import java.util.Set;
 
@@ -13,7 +14,7 @@ public interface SqlLiteralEncoder {
      * @param out container for the output
      * @param settings settings (note that charset can be ignored)
      */
-    void encode(Object value, StringBuilder out, CodecSettings settings);
+    void encode(Object value, ByteBuf out, CodecSettings settings);
 
     /**
      * Returns a set of classes that this encoder can encode. The encode function will only

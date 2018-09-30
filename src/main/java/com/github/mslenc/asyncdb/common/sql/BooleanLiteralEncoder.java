@@ -1,6 +1,7 @@
 package com.github.mslenc.asyncdb.common.sql;
 
 import com.github.mslenc.asyncdb.mysql.codec.CodecSettings;
+import io.netty.buffer.ByteBuf;
 
 import java.util.Collections;
 import java.util.Set;
@@ -13,13 +14,13 @@ public class BooleanLiteralEncoder implements SqlLiteralEncoder {
     }
 
     @Override
-    public void encode(Object value, StringBuilder out, CodecSettings settings) {
+    public void encode(Object value, ByteBuf out, CodecSettings settings) {
         Boolean bool = (Boolean) value;
 
         if (bool) {
-            out.append(1);
+            out.writeByte('1');
         } else {
-            out.append(0);
+            out.writeByte('0');
         }
     }
 

@@ -68,7 +68,8 @@ public class SqlLiteralEncoders {
             .add(StringLiteralEncoder.instance())
             .add(BigDecimalLiteralEncoder.instance())
             .add(BigIntegerLiteralEncoder.instance())
-            .add(NumberLiteralEncoder.instance())
+            .add(IntegralNumberLiteralEncoder.instance())
+            .add(ULongLiteralEncoder.instance())
             .add(BooleanLiteralEncoder.instance())
             .add(ByteArrayLiteralEncoder.instance())
             .add(ByteBufLiteralEncoder.instance())
@@ -79,5 +80,6 @@ public class SqlLiteralEncoders {
             .add(LocalDateTimeLiteralEncoder.instance())
             .add(LocalTimeLiteralEncoder.instance())
             .add(YearLiteralEncoder.instance())
+            .add(OtherNumberLiteralEncoder.instance())
             .build();
 }

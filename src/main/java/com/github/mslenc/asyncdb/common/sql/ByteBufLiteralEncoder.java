@@ -1,5 +1,6 @@
 package com.github.mslenc.asyncdb.common.sql;
 
+import com.github.mslenc.asyncdb.mysql.binary.ByteBufUtils;
 import com.github.mslenc.asyncdb.mysql.codec.CodecSettings;
 import io.netty.buffer.ByteBuf;
 
@@ -13,21 +14,18 @@ public class ByteBufLiteralEncoder implements SqlLiteralEncoder {
         return instance;
     }
 
-    private static final char[] HEX_CHARS = "0123456789ABCDEF".toCharArray();
-
     @Override
-    public void encode(Object value, StringBuilder out, CodecSettings settings) {
+    public void encode(Object value, ByteBuf out, CodecSettings settings) {
         ByteBuf bytes = (ByteBuf) value;
 
-        out.append("x'");
+        out.writeBytes(ByteArrayLiteralEncoder.PROLOG);
 
         for (int remain = bytes.readableBytes(); remain > 0; remain--) {
             byte b = bytes.readByte();
-
-            out.append(HEX_CHARS[(b & 0xF0) >>> 4]);
-            out.append(HEX_CHARS[b & 0x0F]);
+            ByteBufUtils.writeByteAsHexPair(b, out);
         }
-        out.append("'");
+
+        out.writeBytes(ByteArrayLiteralEncoder.EPILOG);
     }
 
     @Override

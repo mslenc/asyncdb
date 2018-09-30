@@ -1,6 +1,8 @@
 package com.github.mslenc.asyncdb.common.sql;
 
+import com.github.mslenc.asyncdb.mysql.binary.ByteBufUtils;
 import com.github.mslenc.asyncdb.mysql.codec.CodecSettings;
+import io.netty.buffer.ByteBuf;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -12,59 +14,59 @@ public class StringLiteralEncoder implements SqlLiteralEncoder {
         return instance;
     }
 
+    private static final int BACKSLASH = '\\' << 8;
+
     @Override
-    public void encode(Object value, StringBuilder out, CodecSettings settings) {
-        String string = value.toString();
+    public void encode(Object value, ByteBuf out, CodecSettings settings) {
+        CharSequence string = (CharSequence)value;
 
-        out.ensureCapacity(out.length() + string.length() + 10);
+        out.writeByte('\'');
+        string.codePoints().forEachOrdered(cp -> appendWithEscaping(cp, out));
+        out.writeByte('\'');
+    }
 
-        out.append("'");
+    static void appendWithEscaping(int codepoint, ByteBuf out) {
+        switch (codepoint) {
+            case 0:
+                out.writeShort(BACKSLASH | '0');
+                break;
 
-        string.codePoints().forEachOrdered(cp -> {
-            switch (cp) {
-                case 0:
-                    out.append("\\0");
-                    break;
+            case 26:
+                out.writeShort(BACKSLASH | 'Z');
+                break;
 
-                case 26:
-                    out.append("\\Z");
-                    break;
+            case '\b':
+                out.writeShort(BACKSLASH | 'b');
+                break;
 
-                case '\b':
-                    out.append("\\b");
-                    break;
+            case '\t':
+                out.writeShort(BACKSLASH | 't');
+                break;
 
-                case '\t':
-                    out.append("\\t");
-                    break;
+            case '\n':
+                out.writeShort(BACKSLASH | 'n');
+                break;
 
-                case '\n':
-                    out.append("\\n");
-                    break;
+            case '\r':
+                out.writeShort(BACKSLASH | 'r');
+                break;
 
-                case '\r':
-                    out.append("\\r");
-                    break;
+            case '"':
+                out.writeShort(BACKSLASH | '"');
+                break;
 
-                case '"':
-                    out.append("\\\"");
-                    break;
+            case '\\':
+                out.writeShort(BACKSLASH | '\\');
+                break;
 
-                case '\\':
-                    out.append("\\\\");
-                    break;
+            case '\'':
+                out.writeShort(BACKSLASH | '\'');
+                break;
 
-                case '\'':
-                    out.append("\\'");
-                    break;
-
-                default:
-                    out.appendCodePoint(cp);
-                    break;
-            }
-        });
-
-        out.append("'");
+            default:
+                ByteBufUtils.appendUtf8Codepoint(codepoint, out);
+                break;
+        }
     }
 
     @Override

@@ -48,7 +48,6 @@ public class HandshakeV10Decoder {
             int lengthOfAuthPluginData = 0;
             if ((capabilityFlags & CLIENT_PLUGIN_AUTH) != 0) {
                 lengthOfAuthPluginData = packet.readUnsignedByte();
-                System.err.println("Length of auth Plugin DATA = " + lengthOfAuthPluginData);
             } else {
                 packet.skipBytes(1);
             }

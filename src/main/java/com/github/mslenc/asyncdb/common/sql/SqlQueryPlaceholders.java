@@ -1,22 +1,30 @@
 package com.github.mslenc.asyncdb.common.sql;
 
 import com.github.mslenc.asyncdb.mysql.codec.CodecSettings;
+import io.netty.buffer.ByteBuf;
 
 import java.util.List;
 
-public class SqlQueryPlaceholders {
-    public static String insertValuesForPlaceholders(String query, List<Object> values, SqlLiteralEncoders literalEncoders, CodecSettings settings) {
-        StringBuilder out = new StringBuilder(query.length() + values.size() * 20 + 10);
+import static com.github.mslenc.asyncdb.mysql.binary.ByteBufUtils.appendUtf8Codepoint;
 
+public class SqlQueryPlaceholders {
+    public static void insertValuesForPlaceholders(String query, List<Object> values, SqlLiteralEncoders literalEncoders, CodecSettings settings, ByteBuf out) {
         int mode = 0; // 1 = inside ', 2 = inside ", 3 = inside `, 16 = after \
 
         int parameterCount = 0;
 
-        for (int i = 0, len = query.length(); i < len; i++) {
-            char c = query.charAt(i);
+        int len = query.length();
+        int i = 0;
+        while (i < len) {
+            int c = query.codePointAt(i);
+            if (c >= Character.MIN_SUPPLEMENTARY_CODE_POINT) {
+                i += 2;
+            } else {
+                i += 1;
+            }
 
             if (c != '?')
-                out.append(c);
+                appendUtf8Codepoint(c, out);
 
             if ((mode & 16) == 16) { // after backslash
                 mode ^= 16;
@@ -73,7 +81,7 @@ public class SqlQueryPlaceholders {
 
                         parameterCount++;
                     } else {
-                        out.append(c);
+                        out.writeByte('?');
                     }
                     break;
             }
@@ -81,7 +89,5 @@ public class SqlQueryPlaceholders {
 
         if (parameterCount < values.size())
             throw new IllegalArgumentException("Too many ? values provided");
-
-        return out.toString();
     }
 }

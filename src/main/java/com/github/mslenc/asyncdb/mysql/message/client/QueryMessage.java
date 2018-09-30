@@ -5,30 +5,34 @@ import com.github.mslenc.asyncdb.mysql.util.MySQLIO;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
+import java.nio.charset.StandardCharsets;
+
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class QueryMessage extends ClientMessage {
-    public final String query;
+    public final ByteBuf queryUtf8;
 
-    public QueryMessage(MySQLCommand command, String query) {
+    public QueryMessage(MySQLCommand command, ByteBuf queryUtf8) {
         super(command);
         
-        this.query = query;
+        this.queryUtf8 = queryUtf8;
     }
 
     @Override
     public ByteBuf getPacketContents() {
-        ByteBuf contents = Unpooled.buffer(query.length() + 25);
-        contents.writeByte(MySQLIO.PACKET_HEDAER_COM_QUERY);
-        contents.writeCharSequence(query, UTF_8);
-        return contents;
+        ByteBuf header = Unpooled.buffer(1);
+        header.writeByte(MySQLIO.PACKET_HEDAER_COM_QUERY);
+
+        return Unpooled.wrappedBuffer(header, queryUtf8);
     }
 
     public String toString(boolean fullDetails) {
+        CharSequence query = queryUtf8.getCharSequence(queryUtf8.readerIndex(), queryUtf8.readableBytes(), StandardCharsets.UTF_8);
+
         if (fullDetails || query.length() <= 100) {
             return "COM_QUERY(query=\"" + query + "\")";
         } else {
-            return "COM_QUERY(query=\"" + query.substring(0, 50) + "[...]" + query.substring(query.length() - 50) + "\")";
+            return "COM_QUERY(query=\"" + query.subSequence(0, 50) + "[...]" + query.subSequence(query.length() - 50, query.length()) + "\")";
         }
     }
 }
