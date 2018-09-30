@@ -329,7 +329,7 @@ public class MySQLConnectionHandler extends SimpleChannelInboundHandler<Object> 
 
     public CompletableFuture<QueryResult> sendQuery(String query) {
         CompletableFuture<QueryResult> promise = new CompletableFuture<>();
-        enqueueCommand(new TextBasedQueryCommand(query, promise));
+        enqueueCommand(new TextBasedQueryCommand(query, promise, codecSettings));
         return promise;
     }
 

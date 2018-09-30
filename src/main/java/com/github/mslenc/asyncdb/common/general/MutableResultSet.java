@@ -45,4 +45,8 @@ public class MutableResultSet<T extends ColumnData> extends AbstractList<RowData
     public List<String> getColumnNames() {
         return columnNames;
     }
+
+    public int getNumColumns() {
+        return columnTypes.size();
+    }
 }

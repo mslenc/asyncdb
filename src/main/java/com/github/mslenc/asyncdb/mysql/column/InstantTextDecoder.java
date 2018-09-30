@@ -1,6 +1,9 @@
 package com.github.mslenc.asyncdb.mysql.column;
 
-import java.time.Instant;
+import com.github.mslenc.asyncdb.common.general.ColumnData;
+import com.github.mslenc.asyncdb.mysql.codec.CodecSettings;
+import io.netty.buffer.ByteBuf;
+
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
@@ -12,8 +15,8 @@ public class InstantTextDecoder implements TextValueDecoder {
     }
 
     @Override
-    public Instant decode(String value) {
-        LocalDateTime ldt = LocalDateTimeTextDecoder.instance().decode(value);
+    public Object decode(ColumnData kind, ByteBuf packet, int byteLength, CodecSettings codecSettings) {
+        LocalDateTime ldt = LocalDateTimeTextDecoder.instance().decode(kind, packet, byteLength, codecSettings);
         if (ldt == null)
             return null;
 

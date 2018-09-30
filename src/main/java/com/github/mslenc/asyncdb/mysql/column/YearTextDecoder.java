@@ -1,5 +1,9 @@
 package com.github.mslenc.asyncdb.mysql.column;
 
+import com.github.mslenc.asyncdb.common.general.ColumnData;
+import com.github.mslenc.asyncdb.mysql.codec.CodecSettings;
+import io.netty.buffer.ByteBuf;
+
 import java.time.Year;
 
 public class YearTextDecoder implements TextValueDecoder {
@@ -10,7 +14,8 @@ public class YearTextDecoder implements TextValueDecoder {
     }
 
     @Override
-    public Year decode(String value) {
-        return Year.of(Integer.parseInt(value));
+    public Object decode(ColumnData kind, ByteBuf packet, int byteLength, CodecSettings codecSettings) {
+        int year = TextValueDecoderUtils.readBytesIntoInt(packet, byteLength);
+        return Year.of(year);
     }
 }

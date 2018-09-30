@@ -1,8 +1,8 @@
 package com.github.mslenc.asyncdb.mysql.column;
 
 import com.github.mslenc.asyncdb.common.general.ColumnData;
+import com.github.mslenc.asyncdb.mysql.codec.CodecSettings;
 import io.netty.buffer.ByteBuf;
-import java.nio.charset.Charset;
 
 public class ByteArrayTextDecoder implements TextValueDecoder {
     private static final ByteArrayTextDecoder instance = new ByteArrayTextDecoder();
@@ -12,14 +12,9 @@ public class ByteArrayTextDecoder implements TextValueDecoder {
     }
 
     @Override
-    public Object decode(ColumnData kind, ByteBuf value, Charset charset) {
-        byte[] bytes = new byte[value.readableBytes()];
-        value.readBytes(bytes);
+    public byte[] decode(ColumnData kind, ByteBuf packet, int byteLength, CodecSettings codecSettings) {
+        byte[] bytes = new byte[byteLength];
+        packet.readBytes(bytes);
         return bytes;
-    }
-
-    @Override
-    public Object decode(String value) {
-        throw new UnsupportedOperationException("This method should never be called for byte arrays");
     }
 }

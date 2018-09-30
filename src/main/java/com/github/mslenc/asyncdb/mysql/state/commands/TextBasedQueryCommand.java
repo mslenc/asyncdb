@@ -1,13 +1,16 @@
 package com.github.mslenc.asyncdb.mysql.state.commands;
 
 import com.github.mslenc.asyncdb.common.QueryResult;
+import com.github.mslenc.asyncdb.common.exceptions.BufferNotFullyConsumedException;
+import com.github.mslenc.asyncdb.common.exceptions.ProtocolException;
 import com.github.mslenc.asyncdb.common.general.MutableResultSet;
 import com.github.mslenc.asyncdb.mysql.MySQLQueryResult;
 import com.github.mslenc.asyncdb.mysql.binary.ByteBufUtils;
+import com.github.mslenc.asyncdb.mysql.codec.CodecSettings;
 import com.github.mslenc.asyncdb.mysql.decoder.ColumnDefinitionDecoder;
 import com.github.mslenc.asyncdb.mysql.decoder.EOFMessageDecoder;
 import com.github.mslenc.asyncdb.mysql.decoder.OkDecoder;
-import com.github.mslenc.asyncdb.mysql.decoder.ResultSetRowDecoder;
+import com.github.mslenc.asyncdb.mysql.ex.DecodingException;
 import com.github.mslenc.asyncdb.mysql.message.server.*;
 import com.github.mslenc.asyncdb.mysql.ex.MySQLException;
 import com.github.mslenc.asyncdb.mysql.message.client.QueryMessage;
@@ -28,14 +31,17 @@ public class TextBasedQueryCommand extends MySQLCommand {
 
     private final String query;
     private final CompletableFuture<QueryResult> promise;
+    private final CodecSettings codecSettings;
+
     private int state = STATE_AWAITING_FIELD_COUNT;
     private int expectedFieldCount;
     private final ArrayList<ColumnDefinitionMessage> columnDefs = new ArrayList<>();
     private MutableResultSet<ColumnDefinitionMessage> resultSet;
 
-    public TextBasedQueryCommand(String query, CompletableFuture<QueryResult> promise) {
+    public TextBasedQueryCommand(String query, CompletableFuture<QueryResult> promise, CodecSettings codecSettings) {
         this.query = query;
         this.promise = promise;
+        this.codecSettings = codecSettings;
     }
 
     @Override
@@ -144,28 +150,43 @@ public class TextBasedQueryCommand extends MySQLCommand {
             return Result.stateMachineFinished();
         }
 
-        ResultSetRowMessage rowMsg = ResultSetRowDecoder.decode(packet);
-        resultSet.addRow(remapRow(rowMsg));
-        ResultSetRowDecoder.releaseBufs(rowMsg);
-
-
-        return Result.expectingMorePackets();
+        return readRow(packet, resultSet);
     }
 
-    private Object[] remapRow(ResultSetRowMessage rowMsg) {
-        Object[] items = new Object[rowMsg.size()];
+    private Result readRow(ByteBuf rowPacket, MutableResultSet<ColumnDefinitionMessage> resultSet) {
+        int numColumns = columnDefs.size();
+        Object[] values = new Object[numColumns];
 
-        int x = 0;
-        while (x < rowMsg.size()) {
-            if (rowMsg.get(x) == null) {
-                items[x] = null;
-            } else {
-                ColumnDefinitionMessage colDef = columnDefs.get(x);
-                items[x] = colDef.textDecoder.decode(colDef, rowMsg.get(x), UTF_8);
+        for (int i = 0; i < numColumns; i++) {
+            if (rowPacket.readableBytes() < 1)
+                return Result.protocolErrorAbortEverything(new ProtocolException("Incomplete row data"));
+
+            int firstByte = rowPacket.readUnsignedByte();
+
+            if (firstByte == TEXT_RESULTSET_NULL) {
+                values[i] = null;
+                continue;
             }
-            x++;
+
+            long longLength = ByteBufUtils.readBinaryLength(firstByte, rowPacket);
+            if (longLength < 0 || longLength > rowPacket.readableBytes())
+                return Result.protocolErrorAbortEverything(new ProtocolException("Value length negative or exceeds packet size"));
+
+            int length = (int)longLength;
+
+            ColumnDefinitionMessage colDef = columnDefs.get(i);
+            int expectReadableAfter = rowPacket.readableBytes() - length;
+            values[i] = colDef.textDecoder.decode(colDef, rowPacket, length, codecSettings);
+            if (rowPacket.readableBytes() != expectReadableAfter) {
+                return Result.protocolErrorAbortEverything(new DecodingException("Parser of type " + colDef.textDecoder.getClass().getCanonicalName() + " failed to read all the bytes it should have."));
+            }
         }
 
-        return items;
+        if (rowPacket.readableBytes() > 0)
+            return Result.protocolErrorAbortEverything(new BufferNotFullyConsumedException(rowPacket));
+
+        resultSet.addRow(values);
+
+        return Result.expectingMorePackets();
     }
 }

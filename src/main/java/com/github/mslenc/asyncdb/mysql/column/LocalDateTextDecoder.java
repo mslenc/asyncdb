@@ -1,5 +1,9 @@
 package com.github.mslenc.asyncdb.mysql.column;
 
+import com.github.mslenc.asyncdb.common.general.ColumnData;
+import com.github.mslenc.asyncdb.mysql.codec.CodecSettings;
+import io.netty.buffer.ByteBuf;
+
 import java.time.LocalDate;
 
 public class LocalDateTextDecoder implements TextValueDecoder {
@@ -9,14 +13,14 @@ public class LocalDateTextDecoder implements TextValueDecoder {
         return instance;
     }
 
-    private static final String ZeroedDate = "0000-00-00";
-
     @Override
-    public LocalDate decode(String value) {
-        if (ZeroedDate.equals(value)) {
+    public LocalDate decode(ColumnData kind, ByteBuf packet, int byteLength, CodecSettings codecSettings) {
+        String str = TextValueDecoderUtils.readKnownASCII(packet, byteLength);
+
+        if (str.equals("0000-00-00")) {
             return null;
         } else {
-            return LocalDate.parse(value);
+            return LocalDate.parse(str);
         }
     }
 }

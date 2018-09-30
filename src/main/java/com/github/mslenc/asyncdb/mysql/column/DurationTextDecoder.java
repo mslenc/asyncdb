@@ -1,5 +1,9 @@
 package com.github.mslenc.asyncdb.mysql.column;
 
+import com.github.mslenc.asyncdb.common.general.ColumnData;
+import com.github.mslenc.asyncdb.mysql.codec.CodecSettings;
+import io.netty.buffer.ByteBuf;
+
 import java.time.Duration;
 
 public class DurationTextDecoder implements TextValueDecoder {
@@ -10,50 +14,64 @@ public class DurationTextDecoder implements TextValueDecoder {
     }
 
     @Override
-    public Object decode(String value) {
-        String[] parts = value.split("[.:]");
+    public Object decode(ColumnData kind, ByteBuf packet, int byteLength, CodecSettings codecSettings) {
+        int part = 0;
+        boolean negative = false;
+        int hours = 0, minutes = 0, seconds = 0, nanos = 0;
+        int nanoLength = 0;
+        int remain = byteLength;
 
-        boolean negative = value.startsWith("-");
+        while (remain-- > 0) {
+            int c = packet.readUnsignedByte();
 
-        int hours = Integer.parseInt(parts[0]);
-        int minutes = Integer.parseInt(parts[1]);
-        int seconds = Integer.parseInt(parts[2]);
+            switch (part) {
+                case 0: // hours
+                    if (c == '-') {
+                        negative = true;
+                    } else
+                    if (c == ':') {
+                        part = 1;
+                    } else {
+                        hours = 10 * hours + (c - '0');
+                    }
+                    break;
 
-        if (negative) {
-            minutes *= -1;
-            seconds *= -1;
+                case 1: // minutes
+                    if (c == ':') {
+                        part = 2;
+                    } else {
+                        minutes = 10 * minutes + (c - '0');
+                    }
+                    break;
+
+                case 2: // seconds
+                    if (c == '.') {
+                        part = 3;
+                    } else {
+                        seconds = 10 * seconds + (c - '0');
+                    }
+                    break;
+
+                case 3: // nanos
+                    nanos = 10 * nanos + (c - '0');
+                    nanoLength++;
+                    break;
+            }
         }
 
-        Duration hms = Duration.ofSeconds(3600L * hours + 60L * minutes + seconds);
-
-        if (parts.length > 3) {
-            String last = parts[3];
-            int multiplier;
-
-            switch (last.length()) {
-                case 1: multiplier = 100000000; break;
-                case 2: multiplier = 10000000; break;
-                case 3: multiplier = 1000000; break;
-                case 4: multiplier = 100000; break;
-                case 5: multiplier = 10000; break;
-                case 6: multiplier = 1000; break;
-                case 7: multiplier = 100; break;
-                case 8: multiplier = 10; break;
-                case 9: multiplier = 1; break;
-
-                default: // ???
-                    return hms;
+        if (nanoLength > 0) {
+            while (nanoLength < 9) {
+                nanos *= 10;
+                nanoLength++;
             }
+        }
 
-            long nanos = Long.parseLong(last) * multiplier;
+        long totalSeconds = 3600L * hours + 60L * minutes + seconds;
 
-            if (negative) {
-                return hms.minusNanos(nanos);
-            } else {
-                return hms.plusNanos(nanos);
-            }
+        if (negative) {
+            return Duration.ofSeconds(-totalSeconds, -nanos);
         } else {
-            return hms;
+            return Duration.ofSeconds(totalSeconds, nanos);
         }
     }
 }
