@@ -31,8 +31,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import static com.github.mslenc.asyncdb.mysql.binary.ByteBufUtils.setNullBit;
-import static com.github.mslenc.asyncdb.mysql.column.ColumnType.FIELD_TYPE_LONG_BLOB;
-import static com.github.mslenc.asyncdb.mysql.column.ColumnType.FIELD_TYPE_NULL;
 import static com.github.mslenc.asyncdb.mysql.util.MySQLIO.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
 

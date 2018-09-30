@@ -1,12 +1,11 @@
 package com.github.mslenc.asyncdb.mysql.binary.encoder;
 
 import com.github.mslenc.asyncdb.mysql.codec.CodecSettings;
-import com.github.mslenc.asyncdb.mysql.column.ColumnType;
+import com.github.mslenc.asyncdb.mysql.util.MySQLIO;
 import io.netty.buffer.ByteBuf;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 
 public class InstantEncoder implements BinaryEncoder {
     private static final InstantEncoder instance = new InstantEncoder();
@@ -24,6 +23,6 @@ public class InstantEncoder implements BinaryEncoder {
 
     @Override
     public int encodesTo() {
-        return ColumnType.FIELD_TYPE_TIMESTAMP;
+        return MySQLIO.FIELD_TYPE_TIMESTAMP;
     }
 }

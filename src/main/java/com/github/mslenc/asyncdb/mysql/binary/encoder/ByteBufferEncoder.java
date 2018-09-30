@@ -2,7 +2,7 @@ package com.github.mslenc.asyncdb.mysql.binary.encoder;
 
 import com.github.mslenc.asyncdb.mysql.binary.ByteBufUtils;
 import com.github.mslenc.asyncdb.mysql.codec.CodecSettings;
-import com.github.mslenc.asyncdb.mysql.column.ColumnType;
+import com.github.mslenc.asyncdb.mysql.util.MySQLIO;
 import io.netty.buffer.ByteBuf;
 
 import java.nio.ByteBuffer;
@@ -24,6 +24,6 @@ public class ByteBufferEncoder implements BinaryEncoder {
 
     @Override
     public int encodesTo() {
-        return ColumnType.FIELD_TYPE_BLOB;
+        return MySQLIO.FIELD_TYPE_BLOB;
     }
 }

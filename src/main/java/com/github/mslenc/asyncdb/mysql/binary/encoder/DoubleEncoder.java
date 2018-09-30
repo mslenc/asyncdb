@@ -1,7 +1,7 @@
 package com.github.mslenc.asyncdb.mysql.binary.encoder;
 
 import com.github.mslenc.asyncdb.mysql.codec.CodecSettings;
-import com.github.mslenc.asyncdb.mysql.column.ColumnType;
+import com.github.mslenc.asyncdb.mysql.util.MySQLIO;
 import io.netty.buffer.ByteBuf;
 
 public class DoubleEncoder implements BinaryEncoder {
@@ -18,6 +18,6 @@ public class DoubleEncoder implements BinaryEncoder {
 
     @Override
     public int encodesTo() {
-        return ColumnType.FIELD_TYPE_DOUBLE;
+        return MySQLIO.FIELD_TYPE_DOUBLE;
     }
 }

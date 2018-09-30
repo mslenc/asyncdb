@@ -1,7 +1,7 @@
 package com.github.mslenc.asyncdb.mysql.binary.encoder;
 
 import com.github.mslenc.asyncdb.mysql.codec.CodecSettings;
-import com.github.mslenc.asyncdb.mysql.column.ColumnType;
+import com.github.mslenc.asyncdb.mysql.util.MySQLIO;
 import io.netty.buffer.ByteBuf;
 
 import java.time.LocalDate;
@@ -25,6 +25,6 @@ public class LocalDateEncoder implements BinaryEncoder {
 
     @Override
     public int encodesTo() {
-        return ColumnType.FIELD_TYPE_DATE;
+        return MySQLIO.FIELD_TYPE_DATE;
     }
 }
