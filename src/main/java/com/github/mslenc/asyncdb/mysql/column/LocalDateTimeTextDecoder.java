@@ -1,13 +1,13 @@
-package com.github.mslenc.asyncdb.common.column;
+package com.github.mslenc.asyncdb.mysql.column;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 
-public class LocalDateTimeEncoderDecoder implements ColumnDecoder {
-    private static final LocalDateTimeEncoderDecoder instance = new LocalDateTimeEncoderDecoder();
+public class LocalDateTimeTextDecoder implements TextValueDecoder {
+    private static final LocalDateTimeTextDecoder instance = new LocalDateTimeTextDecoder();
 
-    public static LocalDateTimeEncoderDecoder instance() {
+    public static LocalDateTimeTextDecoder instance() {
         return instance;
     }
 

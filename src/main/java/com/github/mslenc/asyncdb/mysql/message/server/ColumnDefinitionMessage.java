@@ -2,8 +2,8 @@ package com.github.mslenc.asyncdb.mysql.message.server;
 
 import com.github.mslenc.asyncdb.common.general.ColumnData;
 import com.github.mslenc.asyncdb.mysql.binary.decoder.BinaryDecoder;
+import com.github.mslenc.asyncdb.mysql.column.TextValueDecoder;
 import com.github.mslenc.asyncdb.mysql.util.MySQLIO;
-import com.github.mslenc.asyncdb.common.column.ColumnDecoder;
 
 public class ColumnDefinitionMessage implements ServerMessage, ColumnData {
     public final String catalog;
@@ -18,9 +18,9 @@ public class ColumnDefinitionMessage implements ServerMessage, ColumnData {
     public final int flags;
     public final byte decimals;
     public final BinaryDecoder binaryDecoder;
-    public final ColumnDecoder textDecoder;
+    public final TextValueDecoder textDecoder;
 
-    public ColumnDefinitionMessage(String catalog, String schema, String table, String originalTable, String name, String originalName, int characterSet, long columnLength, int columnType, int flags, byte decimals, BinaryDecoder binaryDecoder, ColumnDecoder textDecoder) {
+    public ColumnDefinitionMessage(String catalog, String schema, String table, String originalTable, String name, String originalName, int characterSet, long columnLength, int columnType, int flags, byte decimals, BinaryDecoder binaryDecoder, TextValueDecoder textDecoder) {
         this.catalog = catalog;
         this.schema = schema;
         this.table = table;

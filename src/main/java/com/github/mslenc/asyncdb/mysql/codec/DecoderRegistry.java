@@ -1,10 +1,7 @@
 package com.github.mslenc.asyncdb.mysql.codec;
 
-import com.github.mslenc.asyncdb.common.column.*;
-import com.github.mslenc.asyncdb.common.column.ByteDecoder;
+import com.github.mslenc.asyncdb.mysql.column.*;
 import com.github.mslenc.asyncdb.mysql.binary.decoder.*;
-import com.github.mslenc.asyncdb.mysql.column.ByteArrayColumnDecoder;
-import com.github.mslenc.asyncdb.mysql.column.DurationDecoder;
 
 import static com.github.mslenc.asyncdb.mysql.util.MySQLIO.*;
 
@@ -95,85 +92,86 @@ public class DecoderRegistry {
         }
     }
 
-    public ColumnDecoder textDecoderFor(int columnType, int charsetCode, int flags) {
+    public TextValueDecoder textDecoderFor(int columnType, int charsetCode, int flags) {
         boolean unsigned = (flags & FIELD_FLAG_UNSIGNED) != 0;
 
         switch (columnType) {
             case FIELD_TYPE_DATE:
-                return DateEncoderDecoder.instance();
+                return LocalDateTextDecoder.instance();
 
             case FIELD_TYPE_DATETIME:
-                return LocalDateTimeEncoderDecoder.instance();
+                return LocalDateTimeTextDecoder.instance();
 
             case FIELD_TYPE_TIMESTAMP:
-                return InstantEncoderDecoder.instance();
+                return InstantTextDecoder.instance();
 
             case FIELD_TYPE_DECIMAL:
             case FIELD_TYPE_NEW_DECIMAL:
-                return BigDecimalEncoderDecoder.instance();
+                return BigDecimalTextDecoder.instance();
 
             case FIELD_TYPE_DOUBLE:
-                return DoubleEncoderDecoder.instance();
+                return DoubleTextDecoder.instance();
 
             case FIELD_TYPE_FLOAT:
-                return FloatEncoderDecoder.instance();
+                return FloatTextDecoder.instance();
 
             case FIELD_TYPE_INT24:
-                return IntegerEncoderDecoder.instance();
+                return IntegerTextDecoder.instance();
 
             case FIELD_TYPE_LONG:
                 if (unsigned) {
-                    return LongEncoderDecoder.instance();
+                    return LongTextDecoder.instance();
                 } else {
-                    return IntegerEncoderDecoder.instance();
+                    return IntegerTextDecoder.instance();
                 }
 
             case FIELD_TYPE_LONGLONG:
                 if (unsigned) {
-                    return UnsignedLongEncoderDecoder.instance();
+                    return ULongTextDecoder.instance();
                 } else {
-                    return LongEncoderDecoder.instance();
+                    return LongTextDecoder.instance();
                 }
 
             case FIELD_TYPE_SHORT:
                 if (unsigned) {
-                    return IntegerEncoderDecoder.instance();
+                    return IntegerTextDecoder.instance();
                 } else {
-                    return ShortEncoderDecoder.instance();
+                    return ShortTextDecoder.instance();
                 }
 
             case FIELD_TYPE_TIME:
-                return DurationDecoder.instance();
+                return DurationTextDecoder.instance();
 
             case FIELD_TYPE_TINY:
                 if (unsigned) {
-                    return ShortEncoderDecoder.instance();
+                    return ShortTextDecoder.instance();
                 } else {
-                    return ByteDecoder.instance();
+                    return ByteTextDecoder.instance();
                 }
 
             case FIELD_TYPE_VARCHAR:
             case FIELD_TYPE_ENUM:
-                return StringEncoderDecoder.instance();
+            case FIELD_TYPE_SET:
+                return StringTextDecoder.instance();
 
             case FIELD_TYPE_YEAR:
-                return YearEncoderDecoder.instance();
+                return YearTextDecoder.instance();
 
             case FIELD_TYPE_BIT:
-                return ByteArrayColumnDecoder.instance();
+                return ByteArrayTextDecoder.instance();
 
             case FIELD_TYPE_BLOB:
             case FIELD_TYPE_VAR_STRING:
             case FIELD_TYPE_STRING: {
                 if (charsetCode == CHARSET_ID_BINARY) {
-                    return ByteArrayColumnDecoder.instance();
+                    return ByteArrayTextDecoder.instance();
                 } else {
-                    return StringEncoderDecoder.instance();
+                    return StringTextDecoder.instance();
                 }
             }
 
             default:
-                return StringEncoderDecoder.instance();
+                return StringTextDecoder.instance();
         }
     }
 }

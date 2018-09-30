@@ -1,13 +1,11 @@
 package com.github.mslenc.asyncdb.mysql.column;
 
-import com.github.mslenc.asyncdb.common.column.ColumnDecoder;
-
 import java.time.Duration;
 
-public class DurationDecoder implements ColumnDecoder {
-    private static final DurationDecoder instance = new DurationDecoder();
+public class DurationTextDecoder implements TextValueDecoder {
+    private static final DurationTextDecoder instance = new DurationTextDecoder();
 
-    public static DurationDecoder instance() {
+    public static DurationTextDecoder instance() {
         return instance;
     }
 

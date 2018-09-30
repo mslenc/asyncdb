@@ -1,14 +1,13 @@
 package com.github.mslenc.asyncdb.mysql.column;
 
-import com.github.mslenc.asyncdb.common.column.ColumnDecoder;
 import com.github.mslenc.asyncdb.common.general.ColumnData;
 import io.netty.buffer.ByteBuf;
 import java.nio.charset.Charset;
 
-public class ByteArrayColumnDecoder implements ColumnDecoder {
-    private static final ByteArrayColumnDecoder instance = new ByteArrayColumnDecoder();
+public class ByteArrayTextDecoder implements TextValueDecoder {
+    private static final ByteArrayTextDecoder instance = new ByteArrayTextDecoder();
 
-    public static ByteArrayColumnDecoder instance() {
+    public static ByteArrayTextDecoder instance() {
         return instance;
     }
 

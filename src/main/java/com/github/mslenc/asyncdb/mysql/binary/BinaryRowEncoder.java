@@ -1,7 +1,6 @@
 package com.github.mslenc.asyncdb.mysql.binary;
 
 import com.github.mslenc.asyncdb.common.ULong;
-import com.github.mslenc.asyncdb.common.column.YearEncoderDecoder;
 import com.github.mslenc.asyncdb.mysql.binary.encoder.*;
 import io.netty.buffer.ByteBuf;
 
@@ -9,8 +8,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
-import java.sql.Time;
-import java.sql.Timestamp;
 import java.time.*;
 import java.util.*;
 
