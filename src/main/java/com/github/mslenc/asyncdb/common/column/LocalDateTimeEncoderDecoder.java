@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 
-public class LocalDateTimeEncoderDecoder implements ColumnEncoderDecoder {
+public class LocalDateTimeEncoderDecoder implements ColumnDecoder {
     private static final LocalDateTimeEncoderDecoder instance = new LocalDateTimeEncoderDecoder();
 
     public static LocalDateTimeEncoderDecoder instance() {
@@ -25,13 +25,8 @@ public class LocalDateTimeEncoderDecoder implements ColumnEncoderDecoder {
             toFormatter();
 
     @Override
-    public String encode(Object value) {
-        return format.format((LocalDateTime)value);
-    }
-
-    @Override
     public LocalDateTime decode(String value) {
-        if (value.equals(ZeroedTimestamp)) {
+        if (value.startsWith(ZeroedTimestamp)) {
             return null;
         } else {
             return LocalDateTime.parse(value, format);

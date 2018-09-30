@@ -2,7 +2,7 @@ package com.github.mslenc.asyncdb.common.column;
 
 import com.github.mslenc.asyncdb.common.ULong;
 
-public class UnsignedLongEncoderDecoder implements ColumnEncoderDecoder {
+public class UnsignedLongEncoderDecoder implements ColumnDecoder {
     private static final UnsignedLongEncoderDecoder instance = new UnsignedLongEncoderDecoder();
 
     public static UnsignedLongEncoderDecoder instance() {

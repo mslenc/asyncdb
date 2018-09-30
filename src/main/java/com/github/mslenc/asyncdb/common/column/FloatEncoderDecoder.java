@@ -1,6 +1,6 @@
 package com.github.mslenc.asyncdb.common.column;
 
-public class FloatEncoderDecoder implements ColumnEncoderDecoder {
+public class FloatEncoderDecoder implements ColumnDecoder {
     private static final FloatEncoderDecoder instance = new FloatEncoderDecoder();
 
     public static FloatEncoderDecoder instance() {
@@ -9,7 +9,6 @@ public class FloatEncoderDecoder implements ColumnEncoderDecoder {
 
     @Override
     public Float decode(String value) {
-        System.err.println("Decoding " + value);
         return Float.valueOf(value);
     }
 }

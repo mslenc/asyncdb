@@ -2,7 +2,7 @@ package com.github.mslenc.asyncdb.common.column;
 
 import java.math.BigDecimal;
 
-public class BigDecimalEncoderDecoder implements ColumnEncoderDecoder {
+public class BigDecimalEncoderDecoder implements ColumnDecoder {
     private static final BigDecimalEncoderDecoder instance = new BigDecimalEncoderDecoder();
 
     public static BigDecimalEncoderDecoder instance() {

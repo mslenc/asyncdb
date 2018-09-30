@@ -13,8 +13,4 @@ public interface ColumnDecoder {
     }
 
     Object decode(String value);
-
-    default boolean supportsStringDecoding() {
-        return true;
-    }
 }

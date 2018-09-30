@@ -1,6 +1,6 @@
 package com.github.mslenc.asyncdb.common.column;
 
-public class StringEncoderDecoder implements ColumnEncoderDecoder {
+public class StringEncoderDecoder implements ColumnDecoder {
     private static final StringEncoderDecoder instance = new StringEncoderDecoder();
 
     public static StringEncoderDecoder instance() {
