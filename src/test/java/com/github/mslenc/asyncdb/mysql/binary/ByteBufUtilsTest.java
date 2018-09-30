@@ -1,5 +1,6 @@
 package com.github.mslenc.asyncdb.mysql.binary;
 
+import com.github.mslenc.asyncdb.mysql.TextQueriesTest;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import org.junit.Assert;
@@ -448,6 +449,32 @@ public class ByteBufUtilsTest {
             String actual = ByteBufUtils.readLengthEncodedString(buf, ISO_8859_1);
 
             assertEquals(expected, actual);
+        }
+    }
+
+    @Test
+    public void testAppendUtf8Codepoint() {
+        Random rnd = new Random();
+        int[] validCps = TextQueriesTest.validCodepoints;
+
+        int first = 0;
+        while (first < validCps.length) {
+            int num = Math.min(1 + rnd.nextInt(10), validCps.length - first);
+
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < num; i++)
+                sb.appendCodePoint(validCps[first + i]);
+            byte[] expected = sb.toString().getBytes(UTF_8);
+
+            ByteBuf buf = Unpooled.buffer();
+            for (int i = 0; i < num; i++)
+                ByteBufUtils.appendUtf8Codepoint(validCps[first + i], buf);
+            byte[] actual = new byte[buf.readableBytes()];
+            buf.readBytes(actual);
+
+            assertArrayEquals(expected, actual);
+
+            first += num;
         }
     }
 }

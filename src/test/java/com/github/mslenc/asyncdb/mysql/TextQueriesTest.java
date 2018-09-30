@@ -287,7 +287,7 @@ public class TextQueriesTest {
         return 4;
     }
 
-    private static final int[] validCodepoints;
+    public static final int[] validCodepoints;
     static {
         ArrayList<Integer> cps = new ArrayList<>();
         for (int cp = 0; cp <= Character.MAX_CODE_POINT; cp++) {

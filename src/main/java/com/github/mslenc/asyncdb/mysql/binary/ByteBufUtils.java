@@ -170,20 +170,6 @@ public class ByteBufUtils {
         }
     }
 
-    public static void appendUtf8String(String string, ByteBuf out) {
-        int pos = 0, len = string.length();
-        while (pos < len) {
-            int cp = string.codePointAt(pos);
-            if (cp >= Character.MIN_SUPPLEMENTARY_CODE_POINT) {
-                pos += 2;
-            } else {
-                pos += 1;
-            }
-
-            appendUtf8Codepoint(cp, out);
-        }
-    }
-
     public static void appendAsciiString(String string, ByteBuf out) {
         for (int i = 0, n = string.length(); i < n; i++)
             out.writeByte(string.charAt(i));
