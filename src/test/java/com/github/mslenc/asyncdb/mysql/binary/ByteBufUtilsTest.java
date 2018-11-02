@@ -1,6 +1,7 @@
 package com.github.mslenc.asyncdb.mysql.binary;
 
 import com.github.mslenc.asyncdb.mysql.TextQueriesTest;
+import com.github.mslenc.asyncdb.util.ByteBufUtils;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import org.junit.Assert;

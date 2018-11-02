@@ -1,9 +1,12 @@
 package com.github.mslenc.asyncdb.mysql;
 
-import com.github.mslenc.asyncdb.common.Configuration;
-import com.github.mslenc.asyncdb.common.Connection;
-import com.github.mslenc.asyncdb.common.QueryResult;
-import com.github.mslenc.asyncdb.common.ResultSet;
+import com.github.mslenc.asyncdb.DbConnection;
+import com.github.mslenc.asyncdb.DbDataSource;
+import com.github.mslenc.asyncdb.DbQueryResult;
+import com.github.mslenc.asyncdb.DbResultSet;
+import com.github.mslenc.asyncdb.conf.Configuration;
+import com.github.mslenc.asyncdb.impl.my.MyDbDataSource;
+import com.github.mslenc.asyncdb.my.MyConfiguration;
 
 import java.util.Arrays;
 import java.util.concurrent.*;
@@ -18,21 +21,23 @@ public class TestHelper {
     private LinkedBlockingDeque<Integer> backQueue = new LinkedBlockingDeque<>();
 
     interface TestContents {
-        void start(Connection conn, TestHelper helper, CompletableFuture<Void> testFinished);
+        void start(DbConnection conn, TestHelper helper, CompletableFuture<Void> testFinished);
     }
 
+    static final MyConfiguration CONFIG =
+        MyConfiguration.newBuilder(
+            Configuration.newMySQLBuilder().
+                setPort(3356).
+                setDefaultUsername("asyncdb").
+                setDefaultPassword("asyncdb").
+                setDefaultDatabase("asyncdb").
+            build()
+        ).build();
 
-    static Configuration config(boolean rootUser, String database) {
-        return Configuration.newMySQLBuilder().
-            setPort(3356).
-            setUsername(rootUser ? "root" : "asyncdb").
-            setPassword(rootUser ? "testpassword": "asyncdb").
-            setDatabase(database).
-            build();
-    }
+    static final DbDataSource db = new MyDbDataSource(CONFIG);
 
     public static void runTest(TestContents test) {
-        runTest(10000L, test);
+        runTest(3000L, test);
     }
 
     private static Integer pollWithDeadline(BlockingDeque<Integer> queue, long deadline) throws InterruptedException {
@@ -44,16 +49,13 @@ public class TestHelper {
     }
 
     public static void runTest(long timeoutMillis, TestContents test) {
-        Configuration config = config(false, "asyncdb");
-
         assertTrue(timeoutMillis > 0 && timeoutMillis <= 300000);
 
         TestHelper testHelper = new TestHelper();
 
         long deadline = System.currentTimeMillis() + timeoutMillis;
 
-        MySQLConnection connection = new MySQLConnection(config, null);
-        connection.connect().whenComplete((conn, error) -> {
+        db.connect().whenComplete((conn, error) -> {
             if (error != null) {
                 testHelper.errors.add(error);
                 testHelper.futureCounter.incrementAndGet();
@@ -182,17 +184,17 @@ public class TestHelper {
         });
     }
 
-    public void expectResultSet(CompletableFuture<QueryResult> future) {
+    public void expectResultSet(CompletableFuture<DbQueryResult> future) {
         expectResultSet(future, ignored -> {});
     }
 
-    public void expectResultSet(CompletableFuture<QueryResult> future, Consumer<ResultSet> onResult) {
+    public void expectResultSet(CompletableFuture<DbQueryResult> future, Consumer<DbResultSet> onResult) {
         expectSuccess(future, queryResult -> {
             CompletableFuture<Void> successPromise = new CompletableFuture<>();
             expectSuccess(successPromise);
 
             try {
-                ResultSet resultSet = queryResult.resultSet();
+                DbResultSet resultSet = queryResult.getResultSet();
                 assertNotNull(resultSet);
                 onResult.accept(resultSet);
 
@@ -203,11 +205,11 @@ public class TestHelper {
         });
     }
 
-    public void expectResultSetValues(CompletableFuture<QueryResult> sendQuery, Object[][] rows) {
+    public void expectResultSetValues(CompletableFuture<DbQueryResult> sendQuery, Object[][] rows) {
         expectResultSetValues(sendQuery, rows, ignored -> { });
     }
 
-    public void expectResultSetValues(CompletableFuture<QueryResult> sendQuery, Object[][] rows, Consumer<ResultSet> onResult) {
+    public void expectResultSetValues(CompletableFuture<DbQueryResult> sendQuery, Object[][] rows, Consumer<DbResultSet> onResult) {
         expectResultSet(sendQuery, resultSet -> {
             CompletableFuture<Void> successPromise = new CompletableFuture<>();
             expectSuccess(successPromise);
@@ -215,7 +217,7 @@ public class TestHelper {
             try {
                 assertEquals(rows.length, resultSet.size());
 
-                int numCols = resultSet.getColumnNames().size();
+                int numCols = resultSet.getColumns().size();
 
                 for (int r = 0; r < rows.length; r++) {
                     assertEquals(rows[r].length, numCols);

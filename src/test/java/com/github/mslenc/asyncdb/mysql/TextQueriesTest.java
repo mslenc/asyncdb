@@ -1,6 +1,6 @@
 package com.github.mslenc.asyncdb.mysql;
 
-import com.github.mslenc.asyncdb.mysql.binary.ByteBufUtils;
+import com.github.mslenc.asyncdb.util.ByteBufUtils;
 import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
@@ -79,7 +79,7 @@ public class TextQueriesTest {
 
             helper.expectSuccess(conn.sendQuery("DROP TABLE texties"));
 
-            helper.expectSuccess(conn.disconnect());
+            helper.expectSuccess(conn.close());
 
             testFinished.complete(null);
         });
@@ -162,7 +162,7 @@ public class TextQueriesTest {
 
                         helper.expectSuccess(readPs.close(), ignored2 -> {
                             helper.expectSuccess(conn.sendQuery("DROP TABLE texties_ps"));
-                            helper.expectSuccess(conn.disconnect());
+                            helper.expectSuccess(conn.close());
                             testFinished.complete(null);
                         });
                     });
@@ -213,7 +213,7 @@ public class TextQueriesTest {
 
             helper.expectSuccess(conn.sendQuery("DROP TABLE textoobles"));
 
-            helper.expectSuccess(conn.disconnect());
+            helper.expectSuccess(conn.close());
 
             testFinished.complete(null);
         });
@@ -271,7 +271,7 @@ public class TextQueriesTest {
 
                         helper.expectSuccess(readPs.close(), ignored2 -> {
                             helper.expectSuccess(conn.sendQuery("DROP TABLE textoobles_ps"));
-                            helper.expectSuccess(conn.disconnect());
+                            helper.expectSuccess(conn.close());
                             testFinished.complete(null);
                         });
                     });

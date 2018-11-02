@@ -1,13 +1,12 @@
 package com.github.mslenc.asyncdb.mysql;
 
-import com.github.mslenc.asyncdb.mysql.binary.ByteBufUtils;
+import com.github.mslenc.asyncdb.util.ByteBufUtils;
 import org.junit.Test;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
 import java.util.Random;
-import java.util.concurrent.CompletableFuture;
 
 import static java.util.Arrays.asList;
 
@@ -70,7 +69,7 @@ public class BlobQueriesTest {
 
             helper.expectSuccess(conn.sendQuery("DROP TABLE blobbies"));
 
-            helper.expectSuccess(conn.disconnect());
+            helper.expectSuccess(conn.close());
 
             testFinished.complete(null);
         });
@@ -139,7 +138,7 @@ public class BlobQueriesTest {
 
                     helper.expectSuccess(ps.close());
 
-                    helper.expectSuccess(conn.disconnect());
+                    helper.expectSuccess(conn.close());
 
                     testFinished.complete(null);
                 });
@@ -189,7 +188,7 @@ public class BlobQueriesTest {
 
             helper.expectSuccess(conn.sendQuery("DROP TABLE bloobs"));
 
-            helper.expectSuccess(conn.disconnect());
+            helper.expectSuccess(conn.close());
 
             testFinished.complete(null);
         });
@@ -245,7 +244,7 @@ public class BlobQueriesTest {
                     helper.expectSuccess(conn.sendQuery("DROP TABLE blobbers"));
                     helper.expectSuccess(ps.close());
 
-                    helper.expectSuccess(conn.disconnect());
+                    helper.expectSuccess(conn.close());
 
                     testFinished.complete(null);
                 });

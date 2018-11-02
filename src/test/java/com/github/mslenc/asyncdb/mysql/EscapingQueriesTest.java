@@ -38,9 +38,9 @@ public class EscapingQueriesTest {
             };
 
             Object[][] expect = {
-                { 1, (byte)1, null,     "true, or is it??" },
-                { 2, (byte)0, "abc???", "true, or is it??" },
-                { 3, (byte)1, "",       "true, or is it??" }
+                { 1, 1, null,     "true, or is it??" },
+                { 2, 0, "abc???", "true, or is it??" },
+                { 3, 1, "",       "true, or is it??" }
             };
 
             helper.expectSuccess(conn.sendQuery(dropIfExistsSql));
@@ -52,7 +52,7 @@ public class EscapingQueriesTest {
 
             helper.expectResultSetValues(conn.sendQuery(selectSql, singletonList(10)), expect);
             helper.expectSuccess(conn.sendQuery(dropSql));
-            helper.expectSuccess(conn.disconnect());
+            helper.expectSuccess(conn.close());
             testFinished.complete(null);
         });
     }

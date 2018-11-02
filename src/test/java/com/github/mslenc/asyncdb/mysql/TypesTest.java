@@ -1,6 +1,6 @@
 package com.github.mslenc.asyncdb.mysql;
 
-import com.github.mslenc.asyncdb.common.ULong;
+import com.github.mslenc.asyncdb.util.ULong;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -48,29 +48,29 @@ public class TypesTest {
         LocalDate nowDate = nowDateTime.toLocalDate();
 
         Object[][] data = {
-            { "TINYINT", -128, (byte) -128 },
-            { "TINYINT",   -1, (byte)   -1 },
-            { "TINYINT",    0, (byte)    0 },
-            { "TINYINT",    1, (byte)    1 },
-            { "TINYINT",  127, (byte)  127 },
+            { "TINYINT", -128, -128 },
+            { "TINYINT",   -1,   -1 },
+            { "TINYINT",    0,    0 },
+            { "TINYINT",    1,    1 },
+            { "TINYINT",  127,  127 },
 
-            { "TINYINT UNSIGNED",   0, (short)   0 },
-            { "TINYINT UNSIGNED",   1, (short)   1 },
-            { "TINYINT UNSIGNED", 127, (short) 127 },
-            { "TINYINT UNSIGNED", 128, (short) 128 },
-            { "TINYINT UNSIGNED", 255, (short) 255 },
+            { "TINYINT UNSIGNED",   0,   0 },
+            { "TINYINT UNSIGNED",   1,   1 },
+            { "TINYINT UNSIGNED", 127, 127 },
+            { "TINYINT UNSIGNED", 128, 128 },
+            { "TINYINT UNSIGNED", 255, 255 },
 
-            { "SMALLINT", -32768, (short) -32768 },
-            { "SMALLINT", "-256", (short) -256 },
-            { "SMALLINT", new BigDecimal(-255), (short) -255 },
-            { "SMALLINT", new BigInteger("-128"), (short) -128 },
-            { "SMALLINT", -127, (short) -127 },
-            { "SMALLINT", -1, (short) -1 },
-            { "SMALLINT", 0, (short) 0 },
-            { "SMALLINT", 1, (short) 1 },
-            { "SMALLINT", 127, (short) 127 },
-            { "SMALLINT", 128, (short) 128 },
-            { "SMALLINT", 32767, (short) 32767 },
+            { "SMALLINT", -32768, -32768 },
+            { "SMALLINT", "-256", -256 },
+            { "SMALLINT", new BigDecimal(-255), -255 },
+            { "SMALLINT", new BigInteger("-128"), -128 },
+            { "SMALLINT", -127, -127 },
+            { "SMALLINT", -1, -1 },
+            { "SMALLINT", 0, 0 },
+            { "SMALLINT", 1, 1 },
+            { "SMALLINT", 127, 127 },
+            { "SMALLINT", 128, 128 },
+            { "SMALLINT", 32767, 32767 },
 
             { "SMALLINT UNSIGNED", 0,  0 },
             { "SMALLINT UNSIGNED", 1,  1 },
@@ -187,13 +187,6 @@ public class TypesTest {
         return Arrays.asList(data);
     }
 
-    public static void main(String[] args) {
-        Timestamp ts = Timestamp.valueOf("2016-05-19 21:44:51");
-        System.out.println(ts);
-
-        Timestamp ts2 = new Timestamp(System.currentTimeMillis());
-        System.out.println(ts2);
-    }
 
     final String mySqlType;
     final Object outgoingValue;
@@ -235,7 +228,7 @@ public class TypesTest {
             helper.expectSuccess(conn.sendQuery(insertSql, Arrays.asList(outgoingValue)), ignored3 ->
             helper.expectResultSetValues(conn.sendQuery(selectSql), new Object[][] { { expectedValueBack } }, ignored5 ->
             helper.expectSuccess(conn.sendQuery(dropSql), ignored6 ->
-            helper.expectSuccess(conn.disconnect(), ignored7 ->
+            helper.expectSuccess(conn.close(), ignored7 ->
             testFinished.complete(null)
         )))))));
     }
@@ -272,7 +265,7 @@ public class TypesTest {
             helper.expectResultSetValues(ps2.execute(emptyList()), new Object[][] { { expectedValueBack } }, ignored5 ->
             helper.expectSuccess(ps2.close(), ignored6 ->
             helper.expectSuccess(conn.sendQuery(dropSql), ignored7 ->
-            helper.expectSuccess(conn.disconnect(), ignored8 ->
+            helper.expectSuccess(conn.close(), ignored8 ->
             testFinished.complete(null)
         )))))))))));
     }

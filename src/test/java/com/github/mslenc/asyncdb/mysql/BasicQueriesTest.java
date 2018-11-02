@@ -17,7 +17,7 @@ public class BasicQueriesTest {
             };
 
             helper.expectResultSetValues(conn.sendQuery("SELECT 1 + 2, 3.1 + 0.4"), expect);
-            helper.expectSuccess(conn.disconnect());
+            helper.expectSuccess(conn.close());
             testFinished.complete(null);
         });
     }
@@ -56,7 +56,7 @@ public class BasicQueriesTest {
                 assertEquals(0, BigDecimal.ONE.compareTo((BigDecimal) resultSet.get(1).get(2)));
                 assertEquals(0, new BigDecimal("1234567890.0987654321").compareTo((BigDecimal) resultSet.get(2).get(2)));
 
-                helper.expectSuccess(conn.disconnect());
+                helper.expectSuccess(conn.close());
 
                 testFinished.complete(null);
             });
