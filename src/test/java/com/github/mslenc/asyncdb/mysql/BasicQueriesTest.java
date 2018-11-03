@@ -6,7 +6,6 @@ import java.math.BigDecimal;
 
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class BasicQueriesTest {
     @Test
@@ -16,7 +15,7 @@ public class BasicQueriesTest {
                 { 3L, new BigDecimal("3.5") }
             };
 
-            helper.expectResultSetValues(conn.sendQuery("SELECT 1 + 2, 3.1 + 0.4"), expect);
+            helper.expectResultSetValues(conn.executeQuery("SELECT 1 + 2, 3.1 + 0.4"), expect);
             helper.expectSuccess(conn.close());
             testFinished.complete(null);
         });
@@ -25,11 +24,11 @@ public class BasicQueriesTest {
     @Test
     public void testMySQLCanRememberStuff() {
         TestHelper.runTest((conn, helper, testFinished) -> {
-            helper.expectSuccess(conn.sendQuery(
+            helper.expectSuccess(conn.execute(
                 "DROP TABLE IF EXISTS first_table"
             ));
 
-            helper.expectSuccess(conn.sendQuery(
+            helper.expectSuccess(conn.execute(
                 "CREATE TABLE first_table(" +
                     "id INT NOT NULL PRIMARY KEY," +
                     "name VARCHAR(255) NOT NULL," +
@@ -37,11 +36,11 @@ public class BasicQueriesTest {
                 ")"
             ));
 
-            helper.expectSuccess(conn.sendQuery("INSERT INTO first_table VALUES(?, ?, ?)", asList(1, "Name 1",         BigDecimal.ZERO)));
-            helper.expectSuccess(conn.sendQuery("INSERT INTO first_table VALUES(?, ?, ?)", asList(2, "Another name 2", BigDecimal.ONE)));
-            helper.expectSuccess(conn.sendQuery("INSERT INTO first_table VALUES(?, ?, ?)", asList(3, "Last name 3",    new BigDecimal("1234567890.0987654321"))));
+            helper.expectSuccess(conn.executeUpdate("INSERT INTO first_table VALUES(?, ?, ?)", asList(1, "Name 1",         BigDecimal.ZERO)));
+            helper.expectSuccess(conn.executeUpdate("INSERT INTO first_table VALUES(?, ?, ?)", asList(2, "Another name 2", BigDecimal.ONE)));
+            helper.expectSuccess(conn.executeUpdate("INSERT INTO first_table VALUES(?, ?, ?)", asList(3, "Last name 3",    new BigDecimal("1234567890.0987654321"))));
 
-            helper.expectResultSet(conn.sendQuery("SELECT id, name, a_number FROM first_table ORDER BY id"), resultSet -> {
+            helper.expectResultSet(conn.executeQuery("SELECT id, name, a_number FROM first_table ORDER BY id"), resultSet -> {
                 assertEquals(3, resultSet.size());
 
                 assertEquals(1, resultSet.get(0).get(0));

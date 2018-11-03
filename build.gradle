@@ -32,5 +32,6 @@ tasks.withType(JavaCompile) {
 }
 
 test {
-    maxHeapSize = '2048m'
+    minHeapSize = '1024m'
+    maxHeapSize = '1024m'
 }

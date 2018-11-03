@@ -7,9 +7,9 @@ import com.github.mslenc.asyncdb.my.resultset.MyResultSetBuilder;
 import com.github.mslenc.asyncdb.my.resultset.MyResultSetBuilderFactory;
 
 class MyStreamingRSBFactory implements MyResultSetBuilderFactory<Void> {
-    private final DbResultObserver streamHandler;
+    private final DbQueryResultObserver streamHandler;
 
-    MyStreamingRSBFactory(DbResultObserver streamHandler) {
+    MyStreamingRSBFactory(DbQueryResultObserver streamHandler) {
         this.streamHandler = streamHandler;
     }
 

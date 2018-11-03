@@ -1,12 +1,12 @@
 package com.github.mslenc.asyncdb.impl;
 
-import com.github.mslenc.asyncdb.DbQueryResult;
+import com.github.mslenc.asyncdb.DbExecResult;
 import com.github.mslenc.asyncdb.DbResultSet;
 
 import java.util.Collections;
 import java.util.List;
 
-public class DbQueryResultImpl implements DbQueryResult {
+public class DbQueryResultImpl implements DbExecResult {
     private final long rowsAffected;
     private final String statusMessage;
     private final DbResultSet resultSet;

@@ -1,7 +1,7 @@
 package com.github.mslenc.asyncdb.mysql;
 
 import com.github.mslenc.asyncdb.DbColumns;
-import com.github.mslenc.asyncdb.DbResultObserver;
+import com.github.mslenc.asyncdb.DbQueryResultObserver;
 import com.github.mslenc.asyncdb.DbResultSet;
 import com.github.mslenc.asyncdb.DbRow;
 import org.junit.Test;
@@ -45,17 +45,17 @@ public class StreamingTest {
             Arrays.sort(nums);
             int last = nums.length - 1;
 
-            helper.expectSuccess(conn.sendQuery("DROP TABLE IF EXISTS some_nums"), ignored -> {
-                helper.expectSuccess(conn.sendQuery("CREATE TABLE some_nums(id INT NOT NULL PRIMARY KEY, as_text VARCHAR(50) NOT NULL)"), ignored2 -> {
+            helper.expectSuccess(conn.execute("DROP TABLE IF EXISTS some_nums"), ignored -> {
+                helper.expectSuccess(conn.execute("CREATE TABLE some_nums(id INT NOT NULL PRIMARY KEY, as_text VARCHAR(50) NOT NULL)"), ignored2 -> {
                     for (int a = 0; a < last; a++)
-                        helper.expectSuccess(conn.sendQuery("INSERT INTO some_nums(id, as_text) VALUES(?, ?)", nums[a], "bubu" + nums[a]));
+                        helper.expectSuccess(conn.execute("INSERT INTO some_nums(id, as_text) VALUES(?, ?)", nums[a], "bubu" + nums[a]));
 
-                    helper.expectSuccess(conn.sendQuery("INSERT INTO some_nums(id, as_text) VALUES(?, ?)", nums[last], "bubu" + nums[last]), ignored3 -> {
-                        helper.expectSuccess(conn.sendQuery("SELECT id, as_text FROM some_nums ORDER BY id"), queryResult -> {
+                    helper.expectSuccess(conn.execute("INSERT INTO some_nums(id, as_text) VALUES(?, ?)", nums[last], "bubu" + nums[last]), ignored3 -> {
+                        helper.expectSuccess(conn.execute("SELECT id, as_text FROM some_nums ORDER BY id"), queryResult -> {
                             DbResultSet expect = queryResult.getResultSet();
                             assertNotNull(expect);
 
-                            conn.streamQuery("SELECT id, as_text FROM some_nums ORDER BY id", new DbResultObserver() {
+                            conn.streamQuery("SELECT id, as_text FROM some_nums ORDER BY id", new DbQueryResultObserver() {
                                 int rowCount = 0;
 
                                 @Override

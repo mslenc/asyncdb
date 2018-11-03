@@ -7,9 +7,9 @@ import com.github.mslenc.asyncdb.my.encoders.MyEncoders;
 import com.github.mslenc.asyncdb.my.resultset.MyDbRowResultSetBuilder;
 
 class MyStreamingRSBuilder extends MyDbRowResultSetBuilder<Void> {
-    private final DbResultObserver streamHandler;
+    private final DbQueryResultObserver streamHandler;
 
-    MyStreamingRSBuilder(DbResultObserver streamHandler, MyEncoders encoders, MyDbColumns columns) {
+    MyStreamingRSBuilder(DbQueryResultObserver streamHandler, MyEncoders encoders, MyDbColumns columns) {
         super(encoders, columns);
         this.streamHandler = streamHandler;
     }

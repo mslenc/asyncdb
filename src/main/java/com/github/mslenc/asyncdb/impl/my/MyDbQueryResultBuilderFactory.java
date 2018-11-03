@@ -13,16 +13,16 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
 
-class MyDbQueryResultBuilderFactory implements MyResultSetBuilderFactory<DbQueryResult> {
+class MyDbQueryResultBuilderFactory implements MyResultSetBuilderFactory<DbExecResult> {
     static final MyDbQueryResultBuilderFactory instance = new MyDbQueryResultBuilderFactory();
 
     @Override
-    public MyResultSetBuilder<DbQueryResult> makeResultSetBuilder(MyEncoders encoders, MyDbColumns columns) {
+    public MyResultSetBuilder<DbExecResult> makeResultSetBuilder(MyEncoders encoders, MyDbColumns columns) {
         return new MyDbQueryResultBuilder(encoders, columns);
     }
 
     @Override
-    public DbQueryResult makeQueryResultWithNoRows(long rowsAffected, String message, long lastInsertId, int statusFlags, int warnings) {
+    public DbExecResult makeQueryResultWithNoRows(long rowsAffected, String message, long lastInsertId, int statusFlags, int warnings) {
         List<Long> ids = lastInsertId > 0 ? singletonList(lastInsertId) : emptyList();
         return new DbQueryResultImpl(rowsAffected, message, null, ids);
     }

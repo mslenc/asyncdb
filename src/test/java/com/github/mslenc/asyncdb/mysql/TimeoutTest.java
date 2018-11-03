@@ -62,14 +62,14 @@ public class TimeoutTest {
             }
 
             // first we try a tiny query which should complete well within 500 millis
-            conn.sendQuery(SHORT_QUERY).whenComplete((query1res, error1) -> {
+            conn.executeQuery(SHORT_QUERY).whenComplete((query1res, error1) -> {
                 if (error1 != null) {
                     result.completeExceptionally(error1);
                     return;
                 }
 
                 // and then we try a really long running query, and expect to get a timeout
-                conn.sendQuery(LONG_QUERY).whenComplete((query2res, error2) -> {
+                conn.executeQuery(LONG_QUERY).whenComplete((query2res, error2) -> {
                     try {
                         if (error2 instanceof ConnectionTimeoutException) {
                             result.complete(null);

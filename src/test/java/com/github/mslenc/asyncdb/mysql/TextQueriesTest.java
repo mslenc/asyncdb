@@ -16,11 +16,11 @@ public class TextQueriesTest {
     @Test
     public void testSmallTexts() {
         TestHelper.runTest((conn, helper, testFinished) -> {
-            helper.expectSuccess(conn.sendQuery(
+            helper.expectSuccess(conn.execute(
                 "DROP TABLE IF EXISTS texties"
             ));
 
-            helper.expectSuccess(conn.sendQuery(
+            helper.expectSuccess(conn.execute(
                 "CREATE TABLE texties(" +
                     "id INT NOT NULL PRIMARY KEY," +
                     "varchar_one VARCHAR(200)," +
@@ -66,18 +66,18 @@ public class TextQueriesTest {
                     { 7, sha1(varChars2), sha1(tinyChars2), sha1(textChars2), sha1(mediumChars2), sha1(longChars2), sha1(chars2) }
             };
 
-            helper.expectSuccess(conn.sendQuery("INSERT INTO texties VALUES(?, ?, ?, ?, ?, ?, ?)", asList(expectChars[0])));
-            helper.expectSuccess(conn.sendQuery("INSERT INTO texties VALUES(?, ?, ?, ?, ?, ?, ?)", asList(expectChars[1])));
-            helper.expectSuccess(conn.sendQuery("INSERT INTO texties VALUES(?, ?, ?, ?, ?, ?, ?)", asList(expectChars[2])));
-            helper.expectSuccess(conn.sendQuery("INSERT INTO texties VALUES(?, ?, ?, ?, ?, ?, ?)", asList(expectChars[3])));
-            helper.expectSuccess(conn.sendQuery("INSERT INTO texties VALUES(?, ?, ?, ?, ?, ?, ?)", asList(expectChars[4])));
-            helper.expectSuccess(conn.sendQuery("INSERT INTO texties VALUES(?, ?, ?, ?, ?, ?, ?)", asList(expectChars[5])));
-            helper.expectSuccess(conn.sendQuery("INSERT INTO texties VALUES(?, ?, ?, ?, ?, ?, ?)", asList(expectChars[6])));
+            helper.expectSuccess(conn.execute("INSERT INTO texties VALUES(?, ?, ?, ?, ?, ?, ?)", asList(expectChars[0])));
+            helper.expectSuccess(conn.execute("INSERT INTO texties VALUES(?, ?, ?, ?, ?, ?, ?)", asList(expectChars[1])));
+            helper.expectSuccess(conn.execute("INSERT INTO texties VALUES(?, ?, ?, ?, ?, ?, ?)", asList(expectChars[2])));
+            helper.expectSuccess(conn.execute("INSERT INTO texties VALUES(?, ?, ?, ?, ?, ?, ?)", asList(expectChars[3])));
+            helper.expectSuccess(conn.execute("INSERT INTO texties VALUES(?, ?, ?, ?, ?, ?, ?)", asList(expectChars[4])));
+            helper.expectSuccess(conn.execute("INSERT INTO texties VALUES(?, ?, ?, ?, ?, ?, ?)", asList(expectChars[5])));
+            helper.expectSuccess(conn.execute("INSERT INTO texties VALUES(?, ?, ?, ?, ?, ?, ?)", asList(expectChars[6])));
 
-            helper.expectResultSetValues(conn.sendQuery("SELECT id, sha1(varchar_one), sha1(tiny_one), sha1(text_one), sha1(medium_one), sha1(long_one), sha1(char_one) FROM texties ORDER BY id"), expectHashes);
-            helper.expectResultSetValues(conn.sendQuery("SELECT id, varchar_one, tiny_one, text_one, medium_one, long_one, char_one FROM texties ORDER BY id"), expectChars);
+            helper.expectResultSetValues(conn.executeQuery("SELECT id, sha1(varchar_one), sha1(tiny_one), sha1(text_one), sha1(medium_one), sha1(long_one), sha1(char_one) FROM texties ORDER BY id"), expectHashes);
+            helper.expectResultSetValues(conn.executeQuery("SELECT id, varchar_one, tiny_one, text_one, medium_one, long_one, char_one FROM texties ORDER BY id"), expectChars);
 
-            helper.expectSuccess(conn.sendQuery("DROP TABLE texties"));
+            helper.expectSuccess(conn.execute("DROP TABLE texties"));
 
             helper.expectSuccess(conn.close());
 
@@ -88,11 +88,11 @@ public class TextQueriesTest {
     @Test
     public void testSmallTextsWithPS() {
         TestHelper.runTest((conn, helper, testFinished) -> {
-            helper.expectSuccess(conn.sendQuery(
+            helper.expectSuccess(conn.execute(
                 "DROP TABLE IF EXISTS texties_ps"
             ));
 
-            helper.expectSuccess(conn.sendQuery(
+            helper.expectSuccess(conn.execute(
                 "CREATE TABLE texties_ps(" +
                     "id INT NOT NULL PRIMARY KEY," +
                     "varchar_one VARCHAR(200)," +
@@ -139,29 +139,29 @@ public class TextQueriesTest {
             };
 
             helper.expectSuccess(conn.prepareStatement("INSERT INTO texties_ps VALUES(?, ?, ?, ?, ?, ?, ?)"), ps -> {
-                helper.expectSuccess(ps.execute(asList(expectChars[0])));
-                helper.expectSuccess(ps.execute(asList(expectChars[1])));
-                helper.expectSuccess(ps.execute(asList(expectChars[2])));
-                helper.expectSuccess(ps.execute(asList(expectChars[3])));
-                helper.expectSuccess(ps.execute(asList(expectChars[4])));
-                helper.expectSuccess(ps.execute(asList(expectChars[5])));
-                helper.expectSuccess(ps.execute(asList(expectChars[6])));
+                helper.expectSuccess(ps.executeUpdate(asList(expectChars[0])));
+                helper.expectSuccess(ps.executeUpdate(asList(expectChars[1])));
+                helper.expectSuccess(ps.executeUpdate(asList(expectChars[2])));
+                helper.expectSuccess(ps.executeUpdate(asList(expectChars[3])));
+                helper.expectSuccess(ps.executeUpdate(asList(expectChars[4])));
+                helper.expectSuccess(ps.executeUpdate(asList(expectChars[5])));
+                helper.expectSuccess(ps.executeUpdate(asList(expectChars[6])));
                 helper.expectSuccess(ps.close(), ignored -> {
 
-                    helper.expectResultSetValues(conn.sendQuery("SELECT id, sha1(varchar_one), sha1(tiny_one), sha1(text_one), sha1(medium_one), sha1(long_one), sha1(char_one) FROM texties_ps ORDER BY id"), expectHashes);
+                    helper.expectResultSetValues(conn.executeQuery("SELECT id, sha1(varchar_one), sha1(tiny_one), sha1(text_one), sha1(medium_one), sha1(long_one), sha1(char_one) FROM texties_ps ORDER BY id"), expectHashes);
 
                     helper.expectSuccess(conn.prepareStatement("SELECT id, varchar_one, tiny_one, text_one, medium_one, long_one, char_one FROM texties_ps WHERE id=?"), readPs -> {
 
-                        helper.expectResultSetValues(readPs.execute(singletonList(1)), new Object[][] { expectChars[0] });
-                        helper.expectResultSetValues(readPs.execute(singletonList(2)), new Object[][] { expectChars[1] });
-                        helper.expectResultSetValues(readPs.execute(singletonList(3)), new Object[][] { expectChars[2] });
-                        helper.expectResultSetValues(readPs.execute(singletonList(4)), new Object[][] { expectChars[3] });
-                        helper.expectResultSetValues(readPs.execute(singletonList(5)), new Object[][] { expectChars[4] });
-                        helper.expectResultSetValues(readPs.execute(singletonList(6)), new Object[][] { expectChars[5] });
-                        helper.expectResultSetValues(readPs.execute(singletonList(7)), new Object[][] { expectChars[6] });
+                        helper.expectResultSetValues(readPs.executeQuery(singletonList(1)), new Object[][] { expectChars[0] });
+                        helper.expectResultSetValues(readPs.executeQuery(singletonList(2)), new Object[][] { expectChars[1] });
+                        helper.expectResultSetValues(readPs.executeQuery(singletonList(3)), new Object[][] { expectChars[2] });
+                        helper.expectResultSetValues(readPs.executeQuery(singletonList(4)), new Object[][] { expectChars[3] });
+                        helper.expectResultSetValues(readPs.executeQuery(singletonList(5)), new Object[][] { expectChars[4] });
+                        helper.expectResultSetValues(readPs.executeQuery(singletonList(6)), new Object[][] { expectChars[5] });
+                        helper.expectResultSetValues(readPs.executeQuery(singletonList(7)), new Object[][] { expectChars[6] });
 
                         helper.expectSuccess(readPs.close(), ignored2 -> {
-                            helper.expectSuccess(conn.sendQuery("DROP TABLE texties_ps"));
+                            helper.expectSuccess(conn.execute("DROP TABLE texties_ps"));
                             helper.expectSuccess(conn.close());
                             testFinished.complete(null);
                         });
@@ -174,11 +174,11 @@ public class TextQueriesTest {
     @Test
     public void testLargeTexts() {
         TestHelper.runTest(60000, (conn, helper, testFinished) -> {
-            helper.expectSuccess(conn.sendQuery(
+            helper.expectSuccess(conn.execute(
                 "DROP TABLE IF EXISTS textoobles"
             ));
 
-            helper.expectSuccess(conn.sendQuery(
+            helper.expectSuccess(conn.execute(
                 "CREATE TABLE textoobles(" +
                     "id INT NOT NULL PRIMARY KEY," +
                     "medium_one MEDIUMTEXT," +
@@ -204,14 +204,14 @@ public class TextQueriesTest {
                 { 3, sha1(mediumChars2), sha1(longChars2) }
             };
 
-            helper.expectSuccess(conn.sendQuery("INSERT INTO textoobles VALUES(?, ?, ?)", asList(expectChars[0])));
-            helper.expectSuccess(conn.sendQuery("INSERT INTO textoobles VALUES(?, ?, ?)", asList(expectChars[1])));
-            helper.expectSuccess(conn.sendQuery("INSERT INTO textoobles VALUES(?, ?, ?)", asList(expectChars[2])));
+            helper.expectSuccess(conn.executeUpdate("INSERT INTO textoobles VALUES(?, ?, ?)", asList(expectChars[0])));
+            helper.expectSuccess(conn.executeUpdate("INSERT INTO textoobles VALUES(?, ?, ?)", asList(expectChars[1])));
+            helper.expectSuccess(conn.executeUpdate("INSERT INTO textoobles VALUES(?, ?, ?)", asList(expectChars[2])));
 
-            helper.expectResultSetValues(conn.sendQuery("SELECT id, sha1(medium_one), sha1(long_one) FROM textoobles ORDER BY id"), expectHashes);
-            helper.expectResultSetValues(conn.sendQuery("SELECT id, medium_one, long_one FROM textoobles ORDER BY id"), expectChars);
+            helper.expectResultSetValues(conn.executeQuery("SELECT id, sha1(medium_one), sha1(long_one) FROM textoobles ORDER BY id"), expectHashes);
+            helper.expectResultSetValues(conn.executeQuery("SELECT id, medium_one, long_one FROM textoobles ORDER BY id"), expectChars);
 
-            helper.expectSuccess(conn.sendQuery("DROP TABLE textoobles"));
+            helper.expectSuccess(conn.execute("DROP TABLE textoobles"));
 
             helper.expectSuccess(conn.close());
 
@@ -222,11 +222,11 @@ public class TextQueriesTest {
     @Test
     public void testLargeTextsWithPS() {
         TestHelper.runTest(60000, (conn, helper, testFinished) -> {
-            helper.expectSuccess(conn.sendQuery(
+            helper.expectSuccess(conn.execute(
                 "DROP TABLE IF EXISTS textoobles_ps"
             ));
 
-            helper.expectSuccess(conn.sendQuery(
+            helper.expectSuccess(conn.execute(
                 "CREATE TABLE textoobles_ps(" +
                     "id INT NOT NULL PRIMARY KEY," +
                     "medium_one MEDIUMTEXT," +
@@ -256,21 +256,21 @@ public class TextQueriesTest {
             };
 
             helper.expectSuccess(conn.prepareStatement("INSERT INTO textoobles_ps VALUES(?, ?, ?)"), ps -> {
-                helper.expectSuccess(ps.execute(asList(expectChars[0])));
-                helper.expectSuccess(ps.execute(asList(expectChars[1])));
-                helper.expectSuccess(ps.execute(asList(expectChars[2])));
+                helper.expectSuccess(ps.executeUpdate(asList(expectChars[0])));
+                helper.expectSuccess(ps.executeUpdate(asList(expectChars[1])));
+                helper.expectSuccess(ps.executeUpdate(asList(expectChars[2])));
                 helper.expectSuccess(ps.close(), ignored -> {
 
-                    helper.expectResultSetValues(conn.sendQuery("SELECT id, sha1(medium_one), sha1(long_one) FROM textoobles_ps ORDER BY id"), expectHashes);
+                    helper.expectResultSetValues(conn.executeQuery("SELECT id, sha1(medium_one), sha1(long_one) FROM textoobles_ps ORDER BY id"), expectHashes);
 
                     helper.expectSuccess(conn.prepareStatement("SELECT id, medium_one, long_one FROM textoobles_ps WHERE id=?"), readPs -> {
 
-                        helper.expectResultSetValues(readPs.execute(singletonList(1)), new Object[][] { expectChars[0] });
-                        helper.expectResultSetValues(readPs.execute(singletonList(2)), new Object[][] { expectChars[1] });
-                        helper.expectResultSetValues(readPs.execute(singletonList(3)), new Object[][] { expectChars[2] });
+                        helper.expectResultSetValues(readPs.executeQuery(singletonList(1)), new Object[][] { expectChars[0] });
+                        helper.expectResultSetValues(readPs.executeQuery(singletonList(2)), new Object[][] { expectChars[1] });
+                        helper.expectResultSetValues(readPs.executeQuery(singletonList(3)), new Object[][] { expectChars[2] });
 
                         helper.expectSuccess(readPs.close(), ignored2 -> {
-                            helper.expectSuccess(conn.sendQuery("DROP TABLE textoobles_ps"));
+                            helper.expectSuccess(conn.execute("DROP TABLE textoobles_ps"));
                             helper.expectSuccess(conn.close());
                             testFinished.complete(null);
                         });

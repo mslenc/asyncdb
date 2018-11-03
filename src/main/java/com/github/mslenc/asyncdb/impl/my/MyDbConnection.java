@@ -72,7 +72,7 @@ public class MyDbConnection implements DbConnection {
     }
 
     @Override
-    public CompletableFuture<DbQueryResult> sendQuery(String sql) {
+    public CompletableFuture<DbExecResult> execute(String sql) {
         MyConnection myConn = this.myConn;
         if (myConn == null)
             return failedFuture(new ConnectionClosedException());
@@ -82,7 +82,7 @@ public class MyDbConnection implements DbConnection {
     }
 
     @Override
-    public CompletableFuture<DbQueryResult> sendQuery(String sql, List<Object> values) {
+    public CompletableFuture<DbExecResult> execute(String sql, List<Object> values) {
         MyConnection myConn = this.myConn;
         if (myConn == null)
             return failedFuture(new ConnectionClosedException());
@@ -98,7 +98,7 @@ public class MyDbConnection implements DbConnection {
     }
 
     @Override
-    public void streamQuery(String sql, DbResultObserver streamHandler) {
+    public void streamQuery(String sql, DbQueryResultObserver streamHandler) {
         MyConnection myConn = this.myConn;
         if (myConn == null) {
             streamHandler.onError(new ConnectionClosedException());
@@ -110,7 +110,7 @@ public class MyDbConnection implements DbConnection {
     }
 
     @Override
-    public void streamQuery(String sql, DbResultObserver streamHandler, List<Object> values) {
+    public void streamQuery(String sql, DbQueryResultObserver streamHandler, List<Object> values) {
         MyConnection myConn = this.myConn;
         if (myConn == null) {
             streamHandler.onError(new ConnectionClosedException());
@@ -164,7 +164,7 @@ public class MyDbConnection implements DbConnection {
         });
     }
 
-    static void forwardError(CompletableFuture<Void> future, DbResultObserver streamHandler) {
+    static void forwardError(CompletableFuture<Void> future, DbQueryResultObserver streamHandler) {
         future.whenComplete((result, error) -> {
             if (error != null) {
                 streamHandler.onError(error);

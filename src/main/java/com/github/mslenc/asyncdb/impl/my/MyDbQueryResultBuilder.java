@@ -1,6 +1,6 @@
 package com.github.mslenc.asyncdb.impl.my;
 
-import com.github.mslenc.asyncdb.DbQueryResult;
+import com.github.mslenc.asyncdb.DbExecResult;
 import com.github.mslenc.asyncdb.DbRow;
 import com.github.mslenc.asyncdb.impl.DbColumnsImpl;
 import com.github.mslenc.asyncdb.impl.DbQueryResultImpl;
@@ -14,7 +14,7 @@ import java.util.ArrayList;
 
 import static java.util.Collections.emptyList;
 
-class MyDbQueryResultBuilder extends MyDbRowResultSetBuilder<DbQueryResult> {
+class MyDbQueryResultBuilder extends MyDbRowResultSetBuilder<DbExecResult> {
     private ArrayList<DbRow> rows = new ArrayList<>();
 
     public MyDbQueryResultBuilder(MyEncoders encoders, MyDbColumns columns) {
@@ -27,7 +27,7 @@ class MyDbQueryResultBuilder extends MyDbRowResultSetBuilder<DbQueryResult> {
     }
 
     @Override
-    public DbQueryResult build(int statusFlags, int warnings) {
+    public DbExecResult build(int statusFlags, int warnings) {
         DbResultSetImpl queryResult = new DbResultSetImpl(new DbColumnsImpl(columns()), rows);
         return new DbQueryResultImpl(0, null, queryResult, emptyList());
     }

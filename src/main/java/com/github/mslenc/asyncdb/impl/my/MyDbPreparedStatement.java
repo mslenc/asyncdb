@@ -25,12 +25,12 @@ class MyDbPreparedStatement implements DbPreparedStatement {
     }
 
     @Override
-    public CompletableFuture<DbQueryResult> execute(List<Object> values) {
+    public CompletableFuture<DbExecResult> execute(List<Object> values) {
         return ps.execute(values, MyDbQueryResultBuilderFactory.instance);
     }
 
     @Override
-    public void stream(DbResultObserver streamHandler, List<Object> values) {
+    public void streamQuery(DbQueryResultObserver streamHandler, List<Object> values) {
         CompletableFuture<Void> future = ps.execute(values, new MyStreamingRSBFactory(streamHandler));
         MyDbConnection.forwardError(future, streamHandler);
     }

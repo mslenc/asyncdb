@@ -2,7 +2,6 @@ package com.github.mslenc.asyncdb.mysql;
 
 import com.github.mslenc.asyncdb.DbConnection;
 import com.github.mslenc.asyncdb.DbDataSource;
-import com.github.mslenc.asyncdb.DbQueryResult;
 import com.github.mslenc.asyncdb.DbResultSet;
 import com.github.mslenc.asyncdb.DbConfig;
 
@@ -34,7 +33,7 @@ public class TestHelper {
     private static final DbDataSource db = config.makeDataSource();
 
     public static void runTest(TestContents test) {
-        runTest(3000L, test);
+        runTest(20000L, test);
     }
 
     private static Integer pollWithDeadline(BlockingDeque<Integer> queue, long deadline) throws InterruptedException {
@@ -63,6 +62,7 @@ public class TestHelper {
             try {
                 CompletableFuture<Void> testFinished = new CompletableFuture<>();
                 testHelper.expectSuccess(testFinished);
+                testFinished.thenRun(conn::close);
 
                 test.start(conn, testHelper, testFinished);
             } catch (Throwable t) {
@@ -181,17 +181,16 @@ public class TestHelper {
         });
     }
 
-    public void expectResultSet(CompletableFuture<DbQueryResult> future) {
+    public void expectResultSet(CompletableFuture<DbResultSet> future) {
         expectResultSet(future, ignored -> {});
     }
 
-    public void expectResultSet(CompletableFuture<DbQueryResult> future, Consumer<DbResultSet> onResult) {
-        expectSuccess(future, queryResult -> {
+    public void expectResultSet(CompletableFuture<DbResultSet> future, Consumer<DbResultSet> onResult) {
+        expectSuccess(future, resultSet -> {
             CompletableFuture<Void> successPromise = new CompletableFuture<>();
             expectSuccess(successPromise);
 
             try {
-                DbResultSet resultSet = queryResult.getResultSet();
                 assertNotNull(resultSet);
                 onResult.accept(resultSet);
 
@@ -202,11 +201,11 @@ public class TestHelper {
         });
     }
 
-    public void expectResultSetValues(CompletableFuture<DbQueryResult> sendQuery, Object[][] rows) {
+    public void expectResultSetValues(CompletableFuture<DbResultSet> sendQuery, Object[][] rows) {
         expectResultSetValues(sendQuery, rows, ignored -> { });
     }
 
-    public void expectResultSetValues(CompletableFuture<DbQueryResult> sendQuery, Object[][] rows, Consumer<DbResultSet> onResult) {
+    public void expectResultSetValues(CompletableFuture<DbResultSet> sendQuery, Object[][] rows, Consumer<DbResultSet> onResult) {
         expectResultSet(sendQuery, resultSet -> {
             CompletableFuture<Void> successPromise = new CompletableFuture<>();
             expectSuccess(successPromise);

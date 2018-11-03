@@ -5,7 +5,6 @@ import org.junit.Test;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Collections;
 import java.util.Random;
 
 import static java.util.Arrays.asList;
@@ -14,11 +13,11 @@ public class BlobQueriesTest {
     @Test
     public void testSmallBlobs() {
         TestHelper.runTest((conn, helper, testFinished) -> {
-            helper.expectSuccess(conn.sendQuery(
+            helper.expectSuccess(conn.execute(
                 "DROP TABLE IF EXISTS blobbies"
             ));
 
-            helper.expectSuccess(conn.sendQuery(
+            helper.expectSuccess(conn.execute(
                 "CREATE TABLE blobbies(" +
                     "id INT NOT NULL PRIMARY KEY," +
                     "tiny_one TINYBLOB," +
@@ -58,16 +57,16 @@ public class BlobQueriesTest {
                 { 5, sha1(tinyBytes2), sha1(blobBytes2), sha1(mediumBytes2), sha1(longBytes2) }
             };
 
-            helper.expectSuccess(conn.sendQuery("INSERT INTO blobbies VALUES(?, ?, ?, ?, ?)", asList(expectBlobs[0])));
-            helper.expectSuccess(conn.sendQuery("INSERT INTO blobbies VALUES(?, ?, ?, ?, ?)", asList(expectBlobs[1])));
-            helper.expectSuccess(conn.sendQuery("INSERT INTO blobbies VALUES(?, ?, ?, ?, ?)", asList(expectBlobs[2])));
-            helper.expectSuccess(conn.sendQuery("INSERT INTO blobbies VALUES(?, ?, ?, ?, ?)", asList(expectBlobs[3])));
-            helper.expectSuccess(conn.sendQuery("INSERT INTO blobbies VALUES(?, ?, ?, ?, ?)", asList(expectBlobs[4])));
+            helper.expectSuccess(conn.execute("INSERT INTO blobbies VALUES(?, ?, ?, ?, ?)", asList(expectBlobs[0])));
+            helper.expectSuccess(conn.execute("INSERT INTO blobbies VALUES(?, ?, ?, ?, ?)", asList(expectBlobs[1])));
+            helper.expectSuccess(conn.execute("INSERT INTO blobbies VALUES(?, ?, ?, ?, ?)", asList(expectBlobs[2])));
+            helper.expectSuccess(conn.execute("INSERT INTO blobbies VALUES(?, ?, ?, ?, ?)", asList(expectBlobs[3])));
+            helper.expectSuccess(conn.execute("INSERT INTO blobbies VALUES(?, ?, ?, ?, ?)", asList(expectBlobs[4])));
 
-            helper.expectResultSetValues(conn.sendQuery("SELECT id, sha1(tiny_one), sha1(blob_one), sha1(medium_one), sha1(long_one) FROM blobbies ORDER BY id"), expectHashes);
-            helper.expectResultSetValues(conn.sendQuery("SELECT id, tiny_one, blob_one, medium_one, long_one FROM blobbies ORDER BY id"), expectBlobs);
+            helper.expectResultSetValues(conn.executeQuery("SELECT id, sha1(tiny_one), sha1(blob_one), sha1(medium_one), sha1(long_one) FROM blobbies ORDER BY id"), expectHashes);
+            helper.expectResultSetValues(conn.executeQuery("SELECT id, tiny_one, blob_one, medium_one, long_one FROM blobbies ORDER BY id"), expectBlobs);
 
-            helper.expectSuccess(conn.sendQuery("DROP TABLE blobbies"));
+            helper.expectSuccess(conn.execute("DROP TABLE blobbies"));
 
             helper.expectSuccess(conn.close());
 
@@ -78,11 +77,11 @@ public class BlobQueriesTest {
     @Test
     public void testSmallBlobsWithPS() {
         TestHelper.runTest((conn, helper, testFinished) -> {
-            helper.expectSuccess(conn.sendQuery(
+            helper.expectSuccess(conn.execute(
                 "DROP TABLE IF EXISTS blobbies_ps"
             ));
 
-            helper.expectSuccess(conn.sendQuery(
+            helper.expectSuccess(conn.execute(
                 "CREATE TABLE blobbies_ps(" +
                     "id INT NOT NULL PRIMARY KEY," +
                     "tiny_one TINYBLOB," +
@@ -119,22 +118,22 @@ public class BlobQueriesTest {
             };
 
             helper.expectSuccess(conn.prepareStatement("INSERT INTO blobbies_ps VALUES(?, ?, ?, ?, ?)"), ps -> {
-                helper.expectSuccess(ps.execute(asList(expectBlobs[0])));
-                helper.expectSuccess(ps.execute(asList(expectBlobs[1])));
-                helper.expectSuccess(ps.execute(asList(expectBlobs[2])));
-                helper.expectSuccess(ps.execute(asList(expectBlobs[3])));
-                helper.expectSuccess(ps.execute(asList(expectBlobs[4])));
+                helper.expectSuccess(ps.executeUpdate(asList(expectBlobs[0])));
+                helper.expectSuccess(ps.executeUpdate(asList(expectBlobs[1])));
+                helper.expectSuccess(ps.executeUpdate(asList(expectBlobs[2])));
+                helper.expectSuccess(ps.executeUpdate(asList(expectBlobs[3])));
+                helper.expectSuccess(ps.executeUpdate(asList(expectBlobs[4])));
 
                 helper.expectSuccess(conn.prepareStatement("SELECT id, sha1(tiny_one), sha1(blob_one), sha1(medium_one), sha1(long_one) FROM blobbies_ps ORDER BY id"), selectShaPs -> {
-                    helper.expectResultSetValues(selectShaPs.execute(Collections.emptyList()), expectHashes);
+                    helper.expectResultSetValues(selectShaPs.executeQuery(), expectHashes);
                     helper.expectSuccess(selectShaPs.close());
                 });
 
                 helper.expectSuccess(conn.prepareStatement("SELECT id, tiny_one, blob_one, medium_one, long_one FROM blobbies_ps ORDER BY id"), selectPs -> {
-                    helper.expectResultSetValues(selectPs.execute(Collections.emptyList()), expectBlobs);
+                    helper.expectResultSetValues(selectPs.executeQuery(), expectBlobs);
                     helper.expectSuccess(selectPs.close());
 
-                    helper.expectSuccess(conn.sendQuery("DROP TABLE blobbies_ps"));
+                    helper.expectSuccess(conn.execute("DROP TABLE blobbies_ps"));
 
                     helper.expectSuccess(ps.close());
 
@@ -149,11 +148,11 @@ public class BlobQueriesTest {
     @Test
     public void testLargeBlobs() {
         TestHelper.runTest(60000, (conn, helper, testFinished) -> {
-            helper.expectSuccess(conn.sendQuery(
+            helper.expectSuccess(conn.execute(
                 "DROP TABLE IF EXISTS bloobs"
             ));
 
-            helper.expectSuccess(conn.sendQuery(
+            helper.expectSuccess(conn.execute(
                 "CREATE TABLE bloobs(" +
                     "id INT NOT NULL PRIMARY KEY," +
                     "medium_one MEDIUMBLOB," +
@@ -179,14 +178,14 @@ public class BlobQueriesTest {
                 { 3, sha1(mediumBytes2), sha1(longBytes2) }
             };
 
-            helper.expectSuccess(conn.sendQuery("INSERT INTO bloobs VALUES(?, ?, ?)", asList(expectBlobs[0])));
-            helper.expectSuccess(conn.sendQuery("INSERT INTO bloobs VALUES(?, ?, ?)", asList(expectBlobs[1])));
-            helper.expectSuccess(conn.sendQuery("INSERT INTO bloobs VALUES(?, ?, ?)", asList(expectBlobs[2])));
+            helper.expectSuccess(conn.execute("INSERT INTO bloobs VALUES(?, ?, ?)", asList(expectBlobs[0])));
+            helper.expectSuccess(conn.execute("INSERT INTO bloobs VALUES(?, ?, ?)", asList(expectBlobs[1])));
+            helper.expectSuccess(conn.execute("INSERT INTO bloobs VALUES(?, ?, ?)", asList(expectBlobs[2])));
 
-            helper.expectResultSetValues(conn.sendQuery("SELECT id, sha1(medium_one), sha1(long_one) FROM bloobs ORDER BY id"), expectHashes);
-            helper.expectResultSetValues(conn.sendQuery("SELECT id, medium_one, long_one FROM bloobs ORDER BY id"), expectBlobs);
+            helper.expectResultSetValues(conn.executeQuery("SELECT id, sha1(medium_one), sha1(long_one) FROM bloobs ORDER BY id"), expectHashes);
+            helper.expectResultSetValues(conn.executeQuery("SELECT id, medium_one, long_one FROM bloobs ORDER BY id"), expectBlobs);
 
-            helper.expectSuccess(conn.sendQuery("DROP TABLE bloobs"));
+            helper.expectSuccess(conn.execute("DROP TABLE bloobs"));
 
             helper.expectSuccess(conn.close());
 
@@ -197,11 +196,11 @@ public class BlobQueriesTest {
     @Test
     public void testLargeBlobsWithPS() {
         TestHelper.runTest(60000, (conn, helper, testFinished) -> {
-            helper.expectSuccess(conn.sendQuery(
+            helper.expectSuccess(conn.execute(
                 "DROP TABLE IF EXISTS blobbers"
             ));
 
-            helper.expectSuccess(conn.sendQuery(
+            helper.expectSuccess(conn.execute(
                 "CREATE TABLE blobbers(" +
                     "id INT NOT NULL PRIMARY KEY," +
                     "medium_one MEDIUMBLOB," +
@@ -228,20 +227,20 @@ public class BlobQueriesTest {
             };
 
             helper.expectSuccess(conn.prepareStatement("INSERT INTO blobbers VALUES(?, ?, ?)"), ps -> {
-                helper.expectSuccess(ps.execute(asList(expectBlobs[0])));
-                helper.expectSuccess(ps.execute(asList(expectBlobs[1])));
-                helper.expectSuccess(ps.execute(asList(expectBlobs[2])));
+                helper.expectSuccess(ps.executeUpdate(asList(expectBlobs[0])));
+                helper.expectSuccess(ps.executeUpdate(asList(expectBlobs[1])));
+                helper.expectSuccess(ps.executeUpdate(asList(expectBlobs[2])));
 
                 helper.expectSuccess(conn.prepareStatement("SELECT id, sha1(medium_one), sha1(long_one) FROM blobbers ORDER BY id"), selectShaPs -> {
-                    helper.expectResultSetValues(selectShaPs.execute(Collections.emptyList()), expectHashes);
+                    helper.expectResultSetValues(selectShaPs.executeQuery(), expectHashes);
                     helper.expectSuccess(selectShaPs.close());
                 });
 
                 helper.expectSuccess(conn.prepareStatement("SELECT id, medium_one, long_one FROM blobbers ORDER BY id"), selectPs -> {
-                    helper.expectResultSetValues(selectPs.execute(Collections.emptyList()), expectBlobs);
+                    helper.expectResultSetValues(selectPs.executeQuery(), expectBlobs);
                     helper.expectSuccess(selectPs.close());
 
-                    helper.expectSuccess(conn.sendQuery("DROP TABLE blobbers"));
+                    helper.expectSuccess(conn.execute("DROP TABLE blobbers"));
                     helper.expectSuccess(ps.close());
 
                     helper.expectSuccess(conn.close());

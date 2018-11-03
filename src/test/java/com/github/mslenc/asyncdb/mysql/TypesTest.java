@@ -8,7 +8,6 @@ import org.junit.runners.Parameterized.Parameters;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.sql.Timestamp;
 import java.time.*;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -223,11 +222,11 @@ public class TypesTest {
             "DROP TABLE " + tableName;
 
         TestHelper.runTest((conn, helper, testFinished) ->
-            helper.expectSuccess(conn.sendQuery(dropIfExistsSql), ignored ->
-            helper.expectSuccess(conn.sendQuery(createSql), ignored2 ->
-            helper.expectSuccess(conn.sendQuery(insertSql, Arrays.asList(outgoingValue)), ignored3 ->
-            helper.expectResultSetValues(conn.sendQuery(selectSql), new Object[][] { { expectedValueBack } }, ignored5 ->
-            helper.expectSuccess(conn.sendQuery(dropSql), ignored6 ->
+            helper.expectSuccess(conn.execute(dropIfExistsSql), ignored ->
+            helper.expectSuccess(conn.execute(createSql), ignored2 ->
+            helper.expectSuccess(conn.execute(insertSql, outgoingValue), ignored3 ->
+            helper.expectResultSetValues(conn.executeQuery(selectSql), new Object[][] { { expectedValueBack } }, ignored5 ->
+            helper.expectSuccess(conn.execute(dropSql), ignored6 ->
             helper.expectSuccess(conn.close(), ignored7 ->
             testFinished.complete(null)
         )))))));
@@ -256,15 +255,15 @@ public class TypesTest {
                 "DROP TABLE " + tableName;
 
         TestHelper.runTest((conn, helper, testFinished) ->
-            helper.expectSuccess(conn.sendQuery(dropIfExistsSql), ignored ->
-            helper.expectSuccess(conn.sendQuery(createSql), ignored2 ->
+            helper.expectSuccess(conn.execute(dropIfExistsSql), ignored ->
+            helper.expectSuccess(conn.execute(createSql), ignored2 ->
             helper.expectSuccess(conn.prepareStatement(insertSql), ps ->
-            helper.expectSuccess(ps.execute(singletonList(outgoingValue)), ignored3 ->
+            helper.expectSuccess(ps.executeUpdate(singletonList(outgoingValue)), ignored3 ->
             helper.expectSuccess(ps.close(), ignored4 ->
             helper.expectSuccess(conn.prepareStatement(selectSql), ps2 ->
-            helper.expectResultSetValues(ps2.execute(emptyList()), new Object[][] { { expectedValueBack } }, ignored5 ->
+            helper.expectResultSetValues(ps2.executeQuery(emptyList()), new Object[][] { { expectedValueBack } }, ignored5 ->
             helper.expectSuccess(ps2.close(), ignored6 ->
-            helper.expectSuccess(conn.sendQuery(dropSql), ignored7 ->
+            helper.expectSuccess(conn.execute(dropSql), ignored7 ->
             helper.expectSuccess(conn.close(), ignored8 ->
             testFinished.complete(null)
         )))))))))));

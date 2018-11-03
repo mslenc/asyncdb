@@ -1,6 +1,6 @@
 package com.github.mslenc.asyncdb;
 
-public interface DbResultObserver {
+public interface DbQueryResultObserver {
     /**
      * Called in turn for each row in the query result.
      */

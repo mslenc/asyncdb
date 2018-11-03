@@ -43,15 +43,15 @@ public class EscapingQueriesTest {
                 { 3, 1, "",       "true, or is it??" }
             };
 
-            helper.expectSuccess(conn.sendQuery(dropIfExistsSql));
-            helper.expectSuccess(conn.sendQuery(createSql));
+            helper.expectSuccess(conn.execute(dropIfExistsSql));
+            helper.expectSuccess(conn.execute(createSql));
 
-            helper.expectSuccess(conn.sendQuery(insertSql, asList(toSend[0])));
-            helper.expectSuccess(conn.sendQuery(insertSql, asList(toSend[1])));
-            helper.expectSuccess(conn.sendQuery(insertSql, asList(toSend[2])));
+            helper.expectSuccess(conn.execute(insertSql, asList(toSend[0])));
+            helper.expectSuccess(conn.execute(insertSql, asList(toSend[1])));
+            helper.expectSuccess(conn.execute(insertSql, asList(toSend[2])));
 
-            helper.expectResultSetValues(conn.sendQuery(selectSql, singletonList(10)), expect);
-            helper.expectSuccess(conn.sendQuery(dropSql));
+            helper.expectResultSetValues(conn.executeQuery(selectSql, singletonList(10)), expect);
+            helper.expectSuccess(conn.execute(dropSql));
             helper.expectSuccess(conn.close());
             testFinished.complete(null);
         });
