@@ -149,12 +149,12 @@ public class MyDbDataSource implements DbDataSource {
         String connName = CONN_NAME_PREFIX + ++connCounter;
 
         ConnInfo connInfo = new ConnInfo();
-        MyConnection conn = new MyConnection(config.eventLoopGroup(), serverAddress, connName, config.mySqlEncoders(), () -> onDisconnect(connInfo));
+        MyConnection conn = new MyConnection(config.eventLoopGroup(), serverAddress, connName, config.mySqlEncoders(), () -> onDisconnect(connInfo), config.queryTimeout());
         connInfo.setUserPass(username, password);
         connInfo.setDatabase(database);
         connInfo.setConn(conn);
 
-        conn.connect(username, password, database).whenComplete((myConn, error) -> {
+        conn.connect(username, password, database, config.connectTimeout()).whenComplete((myConn, error) -> {
             if (error != null) {
                 onDisconnect(connInfo);
                 promise.completeExceptionally(error);

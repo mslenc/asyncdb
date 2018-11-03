@@ -8,4 +8,8 @@ public class ConnectionClosedException extends DatabaseException {
     public ConnectionClosedException(Throwable cause) {
         super("The connection was closed", cause);
     }
+
+    public ConnectionClosedException(String message) {
+        super(message);
+    }
 }

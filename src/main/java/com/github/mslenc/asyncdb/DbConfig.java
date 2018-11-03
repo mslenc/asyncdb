@@ -176,6 +176,23 @@ public class DbConfig {
         return provided;
     }
 
+    public Builder toBuilder() {
+        Builder builder = new Builder(dbType, port, this.initStatements.toArray(new String[0]));
+        builder.username = this.defaultUsername;
+        builder.host = this.host;
+        builder.password = this.defaultPassword;
+        builder.database = this.defaultDatabase;
+        builder.connectTimeout = this.connectTimeout;
+        builder.queryTimeout = this.queryTimeout;
+        builder.eventLoopGroup = this.eventLoopGroup;
+        builder.maxIdleConnections = this.maxIdleConnections;
+        builder.maxTotalConnections = this.maxTotalConnections;
+        builder.mySqlEncoders = this.mySqlEncoders;
+        builder.sslMode = this.sslMode;
+        builder.rootCertFile = this.rootCertFile;
+        return builder;
+    }
+
     public static class Builder {
         private final DbType dbType;
         private String username;

@@ -23,7 +23,7 @@ public class TestHelper {
         void start(DbConnection conn, TestHelper helper, CompletableFuture<Void> testFinished);
     }
 
-    private static final DbConfig config =
+    public static final DbConfig config =
         DbConfig.newBuilder(MYSQL).
             setPort(3356).
             setDefaultUsername("asyncdb").

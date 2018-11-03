@@ -7,6 +7,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
+import com.github.mslenc.asyncdb.ex.ConnectionTimeoutException;
 import com.github.mslenc.asyncdb.ex.SqlServerException;
 import com.github.mslenc.asyncdb.my.commands.*;
 import com.github.mslenc.asyncdb.my.encoders.MyEncoders;
@@ -27,6 +28,7 @@ import io.netty.channel.*;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.CodecException;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+import io.netty.util.concurrent.ScheduledFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,6 +50,7 @@ public class MyConnection extends SimpleChannelInboundHandler<Object> {
     private final SocketAddress remoteAddress;
     private final Runnable onDisconnect;
     public final MyEncoders encoders;
+    private final Duration queryTimeout;
 
     private ChannelHandlerContext channel;
 
@@ -59,17 +62,7 @@ public class MyConnection extends SimpleChannelInboundHandler<Object> {
     private MyCommand currentCommand;
     private final ArrayDeque<MyCommand> commandQueue = new ArrayDeque<>();
 
-    public MyConnection(EventLoopGroup eventLoopGroup, SocketAddress remoteAddress, String connectionId, MyEncoders encoders, Runnable onDisconnect) {
-        super(Object.class);
-
-        this.group = requireNonNull(eventLoopGroup);
-        this.encoders = requireNonNull(encoders);
-        this.log = LoggerFactory.getLogger("[connection-handler]" + connectionId);
-        this.remoteAddress = requireNonNull(remoteAddress);
-        this.onDisconnect = onDisconnect;
-    }
-
-    public CompletableFuture<MyConnection> connect(String username, String password, String database) {
+    public CompletableFuture<MyConnection> connect(String username, String password, String database, Duration connectTimeout) {
         if (state != STATE_AWAITING_CONNECT_CALL)
             return failedFuture(new DatabaseException("connect() was already called"));
 
@@ -79,6 +72,9 @@ public class MyConnection extends SimpleChannelInboundHandler<Object> {
         bootstrap.group(group);
         bootstrap.channel(NioSocketChannel.class);
         bootstrap.option(ChannelOption.SO_KEEPALIVE, true);
+
+        if (connectTimeout != null)
+            bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, Math.toIntExact(connectTimeout.toMillis()));
 
         bootstrap.handler(new ChannelInitializer<Channel>() {
             protected void initChannel(Channel channel) {
@@ -108,6 +104,17 @@ public class MyConnection extends SimpleChannelInboundHandler<Object> {
         });
 
         return promise;
+    }
+
+    public MyConnection(EventLoopGroup eventLoopGroup, SocketAddress remoteAddress, String connectionId, MyEncoders encoders, Runnable onDisconnect, Duration queryTimeout) {
+        super(Object.class);
+
+        this.group = requireNonNull(eventLoopGroup);
+        this.encoders = requireNonNull(encoders);
+        this.log = LoggerFactory.getLogger("[connection-handler]" + connectionId);
+        this.remoteAddress = requireNonNull(remoteAddress);
+        this.onDisconnect = onDisconnect;
+        this.queryTimeout = queryTimeout;
     }
 
     @Override
@@ -208,6 +215,11 @@ public class MyConnection extends SimpleChannelInboundHandler<Object> {
 
         if (state == STATE_IDLE)
             handleStateMachineResult(MyCommand.Result.stateMachineFinished());
+
+        if (queryTimeout != null) {
+            ScheduledFuture<?> future = group.schedule(this::disconnectNowDueToTimeout, queryTimeout.toMillis(), TimeUnit.MILLISECONDS);
+            command.getPromise().whenComplete((result, error) -> future.cancel(false));
+        }
     }
 
     @Override
@@ -247,6 +259,10 @@ public class MyConnection extends SimpleChannelInboundHandler<Object> {
         CompletableFuture<Void> promise = new CompletableFuture<>();
         enqueueCommand(new MyDisconnectCmd(this, promise));
         return promise;
+    }
+
+    private void disconnectNowDueToTimeout() {
+        doCloseCleanUp(new ConnectionTimeoutException(queryTimeout));
     }
 
     boolean isConnected() {
