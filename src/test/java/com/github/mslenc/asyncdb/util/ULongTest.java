@@ -1,6 +1,5 @@
-package com.github.mslenc.asyncdb.common;
+package com.github.mslenc.asyncdb.util;
 
-import com.github.mslenc.asyncdb.util.ULong;
 import org.junit.Test;
 
 import java.util.HashSet;
