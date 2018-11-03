@@ -2,7 +2,7 @@ package com.github.mslenc.asyncdb.impl.my;
 
 import com.github.mslenc.asyncdb.DbConnection;
 import com.github.mslenc.asyncdb.DbDataSource;
-import com.github.mslenc.asyncdb.my.MyConfiguration;
+import com.github.mslenc.asyncdb.DbConfig;
 import com.github.mslenc.asyncdb.my.MyConnection;
 
 import java.net.InetSocketAddress;
@@ -84,7 +84,7 @@ public class MyDbDataSource implements DbDataSource {
 
     private static final String CONN_NAME_PREFIX = "mysql-conn-";
 
-    private final MyConfiguration config;
+    private final DbConfig config;
     private long connCounter = 0;
 
     private int totalConnections = 0;
@@ -93,20 +93,20 @@ public class MyDbDataSource implements DbDataSource {
     private final ReentrantLock lock = new ReentrantLock(true);
     private final SocketAddress serverAddress;
 
-    public MyDbDataSource(MyConfiguration config) {
+    public MyDbDataSource(DbConfig config) {
         this.config = requireNonNull(config);
 
-        serverAddress = new InetSocketAddress(config.generalConfig().host, config.generalConfig().port);
+        serverAddress = new InetSocketAddress(config.host(), config.port());
     }
 
     @Override
     public CompletableFuture<DbConnection> connect() {
-        return connect(config.generalConfig().defaultUsername, config.generalConfig().defaultPassword, config.generalConfig().defaultDatabase);
+        return connect(config.defaultUsername(), config.defaultPassword(), config.defaultDatabase());
     }
 
     @Override
     public CompletableFuture<DbConnection> connect(String database) {
-        return connect(config.generalConfig().defaultUsername, config.generalConfig().defaultPassword, database);
+        return connect(config.defaultUsername(), config.defaultPassword(), database);
     }
 
     @Override
@@ -149,7 +149,7 @@ public class MyDbDataSource implements DbDataSource {
         String connName = CONN_NAME_PREFIX + ++connCounter;
 
         ConnInfo connInfo = new ConnInfo();
-        MyConnection conn = new MyConnection(config.generalConfig().eventLoopGroup, serverAddress, connName, config.encoders(), () -> onDisconnect(connInfo));
+        MyConnection conn = new MyConnection(config.eventLoopGroup(), serverAddress, connName, config.mySqlEncoders(), () -> onDisconnect(connInfo));
         connInfo.setUserPass(username, password);
         connInfo.setDatabase(database);
         connInfo.setConn(conn);

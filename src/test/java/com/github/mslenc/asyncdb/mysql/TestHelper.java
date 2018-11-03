@@ -4,15 +4,14 @@ import com.github.mslenc.asyncdb.DbConnection;
 import com.github.mslenc.asyncdb.DbDataSource;
 import com.github.mslenc.asyncdb.DbQueryResult;
 import com.github.mslenc.asyncdb.DbResultSet;
-import com.github.mslenc.asyncdb.conf.Configuration;
-import com.github.mslenc.asyncdb.impl.my.MyDbDataSource;
-import com.github.mslenc.asyncdb.my.MyConfiguration;
+import com.github.mslenc.asyncdb.DbConfig;
 
 import java.util.Arrays;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
+import static com.github.mslenc.asyncdb.DbConfig.DbType.MYSQL;
 import static org.junit.Assert.*;
 
 public class TestHelper {
@@ -24,17 +23,15 @@ public class TestHelper {
         void start(DbConnection conn, TestHelper helper, CompletableFuture<Void> testFinished);
     }
 
-    static final MyConfiguration CONFIG =
-        MyConfiguration.newBuilder(
-            Configuration.newMySQLBuilder().
-                setPort(3356).
-                setDefaultUsername("asyncdb").
-                setDefaultPassword("asyncdb").
-                setDefaultDatabase("asyncdb").
-            build()
-        ).build();
+    private static final DbConfig config =
+        DbConfig.newBuilder(MYSQL).
+            setPort(3356).
+            setDefaultUsername("asyncdb").
+            setDefaultPassword("asyncdb").
+            setDefaultDatabase("asyncdb").
+        build();
 
-    static final DbDataSource db = new MyDbDataSource(CONFIG);
+    private static final DbDataSource db = config.makeDataSource();
 
     public static void runTest(TestContents test) {
         runTest(3000L, test);
