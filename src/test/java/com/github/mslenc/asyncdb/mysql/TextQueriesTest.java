@@ -173,7 +173,7 @@ public class TextQueriesTest {
 
     @Test
     public void testLargeTexts() {
-        TestHelper.runTest(60000, (conn, helper, testFinished) -> {
+        TestHelper.runTest(120000, (conn, helper, testFinished) -> {
             helper.expectSuccess(conn.execute(
                 "DROP TABLE IF EXISTS textoobles"
             ));

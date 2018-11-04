@@ -14,8 +14,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class PoolingTest {
-    static final int N_DATABASES = 20;
-    static final int N_RUNS = 300;
+    static final int N_DATABASES = 8;
+    static final int N_RUNS = 128;
 
     final AtomicInteger successes = new AtomicInteger(0);
     final AtomicInteger failures = new AtomicInteger(0);
@@ -29,7 +29,8 @@ public class PoolingTest {
     @Test
     public void testWithDifferentCredentials() {
         // We will make a bunch of databases, with corresponding users; we will also "forget" to make some of them,
-        // to test behavior with login errors.
+        // to test behavior with login errors. In addition, we make two databases per user, to see if we succeed
+        // in just switching the default database without re-authenticating (INIT_DB vs CHANGE_USER).
         // Then, we will randomly connect to a bunch of them, and count successes and failures.
 
         TestHelper.runTest(300000, "root", "testpassword",
@@ -71,20 +72,21 @@ public class PoolingTest {
     private CompletableFuture<?> runUserTest(int id, boolean expectSuccess, TestHelper helper) {
         String userName = "user" + id;
         String userPass = "pass" + id;
-        String dbName = "testDb" + id;
+        String dbName = (ThreadLocalRandom.current().nextBoolean() ? "testDb" : "testDbb") + id;
         String tableName = "testTable" + id;
 
         CompletableFuture<Object> promise = new CompletableFuture<>();
 
         if (expectSuccess) {
             helper.expectSuccess(TestHelper.db.connect(userName, userPass, dbName), conn -> {
-                helper.expectSuccess(conn.executeQuery("SELECT USER(), CURRENT_USER(), COUNT(*) FROM " + tableName), resultSet -> {
+                helper.expectSuccess(conn.executeQuery("SELECT USER(), CURRENT_USER(), DATABASE(), COUNT(*) FROM " + tableName), resultSet -> {
                     try {
                         assertEquals(1, resultSet.size());
                         DbRow row = resultSet.get(0);
                         assertTrue(row.getString(0).startsWith(userName + "@"));
                         assertTrue(row.getString(1).startsWith(userName + "@"));
-                        assertEquals(0, row.getInt(2));
+                        assertEquals(dbName, row.getString(2));
+                        assertEquals(0, row.getInt(3));
                         successes.incrementAndGet();
                     } finally {
                         conn.close();
@@ -108,17 +110,21 @@ public class PoolingTest {
 
         for (int a = 0; a < N_DATABASES; a++) {
             promises.add(conn.execute("DROP DATABASE IF EXISTS testDb" + a));
+            promises.add(conn.execute("DROP DATABASE IF EXISTS testDbb" + a));
         }
 
         while (tableIds.isEmpty()) {
             for (int a = 0; a < N_DATABASES; a++) {
                 if (ThreadLocalRandom.current().nextBoolean()) {
                     tableIds.add(a);
-                    String dbName = "testDb" + a;
+                    String dbName1 = "testDb" + a;
+                    String dbName2 = "testDbb" + a;
                     String tableName = "testTable" + a;
 
-                    promises.add(conn.execute("CREATE DATABASE " + dbName));
-                    promises.add(conn.execute("CREATE TABLE " + dbName + "." + tableName + "(id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255))"));
+                    promises.add(conn.execute("CREATE DATABASE " + dbName1));
+                    promises.add(conn.execute("CREATE DATABASE " + dbName2));
+                    promises.add(conn.execute("CREATE TABLE " + dbName1 + "." + tableName + "(id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255))"));
+                    promises.add(conn.execute("CREATE TABLE " + dbName2 + "." + tableName + "(id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255))"));
                 }
             }
         }
@@ -143,7 +149,8 @@ public class PoolingTest {
         for (int id = 0; id < N_DATABASES; id++) {
             String userName = "user" + id;
             String userPass = "pass" + id;
-            String dbName = "testDb" + id;
+            String dbName1 = "testDb" + id;
+            String dbName2 = "testDbb" + id;
             String tableName = "testTable" + id;
 
             String user = "'" + userName + "'@'%'";
@@ -151,7 +158,8 @@ public class PoolingTest {
             promises.add(conn.execute("DROP USER IF EXISTS " + user));
             if (tableIds.contains(id)) {
                 promises.add(conn.execute("CREATE USER " + user + " IDENTIFIED BY '" + userPass + "'"));
-                promises.add(conn.execute("GRANT SELECT, INSERT, UPDATE, DELETE ON " + dbName + "." + tableName + " TO " + user));
+                promises.add(conn.execute("GRANT SELECT, INSERT, UPDATE, DELETE ON " + dbName1 + "." + tableName + " TO " + user));
+                promises.add(conn.execute("GRANT SELECT, INSERT, UPDATE, DELETE ON " + dbName2 + "." + tableName + " TO " + user));
             }
         }
         promises.forEach(helper::expectSuccess);
