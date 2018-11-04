@@ -16,7 +16,7 @@ public class MyDurationEncoder extends MyValueEncoder<Duration> {
     private static final Duration MAX_DURATION = Duration.ofSeconds( 838 * 3600 + 59 * 60 + 59);
     private static final Duration MIN_DURATION = Duration.ofSeconds(-838 * 3600 - 59 * 60 - 59);
 
-    private static int adjustedSeconds(Duration value) {
+    public static int adjustedSeconds(Duration value) {
         int totalSeconds = (int) value.getSeconds();
 
         if (totalSeconds < 0) {
@@ -30,7 +30,7 @@ public class MyDurationEncoder extends MyValueEncoder<Duration> {
         }
     }
 
-    private static int adjustedMicros(Duration value) {
+    public static int adjustedMicros(Duration value) {
         if (value.isNegative()) {
             int nanos = value.getNano();
             if (nanos != 0) {

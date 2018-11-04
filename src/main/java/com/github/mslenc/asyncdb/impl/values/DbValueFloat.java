@@ -1,5 +1,7 @@
 package com.github.mslenc.asyncdb.impl.values;
 
+import com.github.mslenc.asyncdb.ex.ValueConversionException;
+
 import java.math.BigDecimal;
 
 public class DbValueFloat extends AbstractDbValue {
@@ -31,12 +33,18 @@ public class DbValueFloat extends AbstractDbValue {
 
     @Override
     public int asInt() {
-        return (int)value;
+        int result = (int)value;
+        if (result == value)
+            return result;
+        throw new ValueConversionException("Value " + value + " does not fit into an int");
     }
 
     @Override
     public long asLong() {
-        return (long)value;
+        long result = (long)value;
+        if (result == value)
+            return result;
+        throw new ValueConversionException("Value " + value + " does not fit into a long");
     }
 
     @Override

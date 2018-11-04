@@ -1,10 +1,15 @@
 package com.github.mslenc.asyncdb.impl.values;
 
 import com.github.mslenc.asyncdb.ex.ValueConversionException;
+import com.github.mslenc.asyncdb.my.encoders.EncUtils;
+import com.github.mslenc.asyncdb.my.encoders.MyDurationEncoder;
 
 import java.time.Duration;
 import java.time.LocalTime;
 import java.util.Objects;
+
+import static com.github.mslenc.asyncdb.my.encoders.MyDurationEncoder.adjustedMicros;
+import static com.github.mslenc.asyncdb.my.encoders.MyDurationEncoder.adjustedSeconds;
 
 public class DbValueDuration extends AbstractDbValue {
     private static final Duration FIRST_INVALID_TIME = Duration.ofSeconds(24 * 3600);
@@ -42,5 +47,31 @@ public class DbValueDuration extends AbstractDbValue {
 
         int s = (int) value.getSeconds();
         return LocalTime.of(s / 3600, (s / 60) % 60, s % 60, value.getNano());
+    }
+
+    @Override
+    public String asString() {
+        int totalSeconds = adjustedSeconds(value);
+        int micros = adjustedMicros(value);
+
+        int seconds = totalSeconds % 60;
+        int minutes = (totalSeconds / 60) % 60;
+        int hours = totalSeconds / 3600;
+
+        StringBuilder out = new StringBuilder(20);
+
+        if (value.isNegative())
+            out.append('-');
+
+        if (hours < 10)
+            out.append('0');
+        out.append(hours);
+
+        out.append(minutes < 10 ? ":0" : ":").append(minutes);
+        out.append(seconds < 10 ? ":0" : ":").append(seconds);
+
+        EncUtils.writeMicros(micros, out);
+
+        return out.toString();
     }
 }

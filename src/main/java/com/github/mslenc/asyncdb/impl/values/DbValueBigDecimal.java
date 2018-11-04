@@ -1,5 +1,7 @@
 package com.github.mslenc.asyncdb.impl.values;
 
+import com.github.mslenc.asyncdb.ex.ValueConversionException;
+
 import java.math.BigDecimal;
 import java.util.Objects;
 
@@ -21,7 +23,7 @@ public class DbValueBigDecimal extends AbstractDbValue {
     }
 
     @Override
-    public String toString() {
+    public String asString() {
         return value.toPlainString();
     }
 
@@ -37,32 +39,54 @@ public class DbValueBigDecimal extends AbstractDbValue {
 
     @Override
     public byte asByte() {
-        return value.byteValue();
+        try {
+            return value.byteValueExact();
+        } catch (ArithmeticException e) {
+            throw new ValueConversionException(e);
+        }
     }
 
     @Override
     public short asShort() {
-        return value.shortValue();
+        try {
+            return value.shortValueExact();
+        } catch (ArithmeticException e) {
+            throw new ValueConversionException(e);
+        }
     }
 
     @Override
     public int asInt() {
-        return value.intValue();
+        try {
+            return value.intValueExact();
+        } catch (ArithmeticException e) {
+            throw new ValueConversionException(e);
+        }
     }
 
     @Override
     public long asLong() {
-        return value.longValue();
+        try {
+            return value.longValueExact();
+        } catch (ArithmeticException e) {
+            throw new ValueConversionException(e);
+        }
     }
 
     @Override
     public float asFloat() {
-        return value.floatValue();
+        float result = value.floatValue();
+        if (Float.isInfinite(result))
+            throw new ValueConversionException("Value " + value + " is out of range for float");
+        return result;
     }
 
     @Override
     public double asDouble() {
-        return value.doubleValue();
+        double result = value.doubleValue();
+        if (Double.isInfinite(result))
+            throw new ValueConversionException("Value " + value + " is out of range for double");
+        return result;
     }
 
     @Override

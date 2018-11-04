@@ -19,7 +19,7 @@ public class DbValueULong extends AbstractDbValue {
     }
 
     @Override
-    public String toString() {
+    public String asString() {
         return value.toString();
     }
 

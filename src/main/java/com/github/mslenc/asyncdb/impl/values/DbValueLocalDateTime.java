@@ -1,5 +1,7 @@
 package com.github.mslenc.asyncdb.impl.values;
 
+import com.github.mslenc.asyncdb.my.encoders.EncUtils;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -68,15 +70,7 @@ public class DbValueLocalDateTime extends AbstractDbValue {
            append(second < 10 ? ":0" : ":").
            append(second);
 
-        if (micro > 0) {
-            sb.append('.');
-            if (micro <= 99999) sb.append('0');
-            if (micro <=  9999) sb.append('0');
-            if (micro <=   999) sb.append('0');
-            if (micro <=    99) sb.append('0');
-            if (micro <=     9) sb.append('0');
-            sb.append(micro);
-        }
+        EncUtils.writeMicros(micro, sb);
 
         return sb.toString();
     }

@@ -51,4 +51,9 @@ public class DbValueInstant extends AbstractDbValue {
     public Year asYear() {
         return Year.of(sourceLocalDateTime.getYear());
     }
+
+    @Override
+    public String asString() {
+        return sourceLocalDateTime.toLocalDate() + " " + sourceLocalDateTime.toLocalTime();
+    }
 }
