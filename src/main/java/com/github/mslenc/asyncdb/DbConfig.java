@@ -333,5 +333,15 @@ public class DbConfig {
             this.rootCertFile = rootCertFile;
             return this;
         }
+
+        public Builder setMaxIdleConnections(int maxIdleConnections) {
+            this.maxIdleConnections = maxIdleConnections;
+            return this;
+        }
+
+        public Builder setMaxTotalConnections(int maxTotalConnections) {
+            this.maxTotalConnections = maxTotalConnections;
+            return this;
+        }
     }
 }

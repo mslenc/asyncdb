@@ -33,6 +33,7 @@ public class MyHandshakeCmd extends MyCommand {
     private final String database;
 
     private int state;
+    private int authSwitchSeqNumber;
 
     public MyHandshakeCmd(MyConnection conn, String username, String password, String database, boolean changeUser, CompletableFuture<MyConnection> promise) {
         super(conn);
@@ -44,8 +45,10 @@ public class MyHandshakeCmd extends MyCommand {
 
         if (changeUser) {
             state = STATE_CHANGE_USER;
+            authSwitchSeqNumber = 2;
         } else {
             state = STATE_INITIAL;
+            authSwitchSeqNumber = 2;
         }
     }
 
@@ -131,7 +134,7 @@ public class MyHandshakeCmd extends MyCommand {
         if (auth == null) {
             return Result.protocolErrorAbortEverything("Unsupported authentication mechanism ("+pluginName+") requested by server");
         } else {
-            conn.sendMessage(new AuthenticationSwitchResponse(auth));
+            conn.sendMessage(new AuthenticationSwitchResponse(authSwitchSeqNumber++, auth));
             return Result.expectingMorePackets();
         }
     }

@@ -28,9 +28,11 @@ public class TestHelper {
             setDefaultUsername("asyncdb").
             setDefaultPassword("asyncdb").
             setDefaultDatabase("asyncdb").
+            setMaxTotalConnections(10).
+            setMaxIdleConnections(8).
         build();
 
-    private static final DbDataSource db = config.makeDataSource();
+    public static final DbDataSource db = config.makeDataSource();
 
     public static void runTest(TestContents test) {
         runTest(20000L, test);
@@ -45,13 +47,17 @@ public class TestHelper {
     }
 
     public static void runTest(long timeoutMillis, TestContents test) {
+        runTest(timeoutMillis, config.defaultUsername(), config.defaultPassword(), test);
+    }
+
+    public static void runTest(long timeoutMillis, String username, String password, TestContents test) {
         assertTrue(timeoutMillis > 0 && timeoutMillis <= 300000);
 
         TestHelper testHelper = new TestHelper();
 
         long deadline = System.currentTimeMillis() + timeoutMillis;
 
-        db.connect().whenComplete((conn, error) -> {
+        db.connect(username, password, config.defaultDatabase()).whenComplete((conn, error) -> {
             if (error != null) {
                 testHelper.errors.add(error);
                 testHelper.futureCounter.incrementAndGet();

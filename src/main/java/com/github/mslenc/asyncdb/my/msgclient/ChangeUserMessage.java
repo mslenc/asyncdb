@@ -7,7 +7,6 @@ import io.netty.buffer.Unpooled;
 import java.util.Objects;
 
 import static com.github.mslenc.asyncdb.util.ByteBufUtils.writeCString;
-import static com.github.mslenc.asyncdb.util.ByteBufUtils.writeLengthEncodedString;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class ChangeUserMessage extends ClientMessage {
@@ -54,7 +53,7 @@ public class ChangeUserMessage extends ClientMessage {
         writeCString(packet, username, UTF_8);
         packet.writeByte(authData.length);
         packet.writeBytes(authData);
-        writeLengthEncodedString(database != null ? database : "", UTF_8, packet);
+        writeCString(packet, database != null ? database : "", UTF_8);
         packet.writeShortLE(MyConstants.CHARSET_ID_UTF8MB4);
         writeCString(packet, authMethod, UTF_8);
 
