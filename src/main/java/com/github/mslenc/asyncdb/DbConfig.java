@@ -343,5 +343,11 @@ public class DbConfig {
             this.maxTotalConnections = maxTotalConnections;
             return this;
         }
+
+        public Builder setHost(String host, int port) {
+            setHost(host);
+            setPort(port);
+            return this;
+        }
     }
 }
