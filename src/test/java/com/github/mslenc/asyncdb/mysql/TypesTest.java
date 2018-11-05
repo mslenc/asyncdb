@@ -181,11 +181,12 @@ public class TypesTest {
 
             { "YEAR", "2018", Year.of(2018) },
             { "YEAR", Year.of(2018), Year.of(2018) },
+
+            { "JSON", "[ 1, 2, 3 ]", "[1, 2, 3]" }
         };
 
         return Arrays.asList(data);
     }
-
 
     final String mySqlType;
     final Object outgoingValue;
