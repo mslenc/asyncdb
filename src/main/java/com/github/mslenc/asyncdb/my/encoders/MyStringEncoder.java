@@ -17,7 +17,7 @@ public class MyStringEncoder extends MyValueEncoder<String> {
 
     @Override
     public int binaryFieldType(String value, MyEncoders encoders) {
-        return MyConstants.FIELD_TYPE_LONG_BLOB;
+        return MyConstants.FIELD_TYPE_STRING;
     }
 
     @Override

@@ -25,6 +25,7 @@ public class MyConstants {
     public static final int PACKET_HEADER_STMT_SEND_LONG_DATA = 0x18;
     public static final int PACKET_HEADER_STMT_CLOSE = 0x19;
     public static final int PACKET_HEADER_STMT_RESET = 0x1A;
+    public static final int PACKET_HEADER_RESET_CONNECTION = 0x1F;
     public static final int PACKET_HEADER_EOF = 0xFE;
     public static final int PACKET_HEADER_ERR = 0xFF;
     public static final int PACKET_HEADER_GET_MORE_CLIENT_DATA = 0xFB;

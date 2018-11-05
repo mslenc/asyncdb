@@ -8,6 +8,7 @@ import com.github.mslenc.asyncdb.my.MyConnection;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.ArrayDeque;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -34,20 +35,15 @@ public class MyDbDataSource implements DbDataSource {
             this.conn = conn;
         }
 
-        boolean matchesUserPass(String username, String password) {
-            return username.equals(this.username) && password.equals(this.password);
+        boolean matchesUserPassDb(String username, String password, String database) {
+            return Objects.equals(username, this.username) &&
+                   Objects.equals(password, this.password) &&
+                   Objects.equals(database, this.database);
         }
 
-        void setUserPass(String username, String password) {
+        void setUserPassDb(String username, String password, String database) {
             this.username = username;
             this.password = password;
-        }
-
-        boolean matchesDatabase(String database) {
-            return database.equals(this.database);
-        }
-
-        void setDatabase(String database) {
             this.database = database;
         }
 
@@ -150,8 +146,7 @@ public class MyDbDataSource implements DbDataSource {
 
         ConnInfo connInfo = new ConnInfo();
         MyConnection conn = new MyConnection(config.eventLoopGroup(), serverAddress, connName, config.mySqlEncoders(), () -> onDisconnect(connInfo), config.queryTimeout());
-        connInfo.setUserPass(username, password);
-        connInfo.setDatabase(database);
+        connInfo.setUserPassDb(username, password, database);
         connInfo.setConn(conn);
 
         conn.connect(username, password, database, config.connectTimeout()).whenComplete((myConn, error) -> {
@@ -168,34 +163,22 @@ public class MyDbDataSource implements DbDataSource {
     }
 
     CompletableFuture<DbConnection> updateUserPassDb(String username, String password, String database, CompletableFuture<DbConnection> promise, ConnInfo connInfo) {
-        if (connInfo.matchesUserPass(username, password)) {
-            if (connInfo.matchesDatabase(database)) {
-                complete(promise, connInfo);
-                return promise;
-            }
+        CompletableFuture<?> future;
 
-            connInfo.conn.setDefaultDatabase(database).whenComplete((result, error) -> {
-                if (error != null) {
-                    safelyFail(promise, error);
-                    connInfo.conn.disconnect();
-                    return;
-                }
-
-                connInfo.setDatabase(database);
-                complete(promise, connInfo);
-            });
-            return promise;
+        if (connInfo.matchesUserPassDb(username, password, database)) {
+            future = connInfo.conn.resetConnection();
+        } else {
+            future = connInfo.conn.changeUser(username, password, database);
         }
 
-        connInfo.conn.changeUser(username, password, database).whenComplete((result, error) -> {
+        future.whenComplete((result, error) -> {
             if (error != null) {
                 safelyFail(promise, error);
                 connInfo.conn.disconnect();
                 return;
             }
 
-            connInfo.setUserPass(username, password);
-            connInfo.setDatabase(database);
+            connInfo.setUserPassDb(username, password, database);
             complete(promise, connInfo);
         });
 

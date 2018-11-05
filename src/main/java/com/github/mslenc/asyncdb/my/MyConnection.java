@@ -368,6 +368,12 @@ public class MyConnection extends SimpleChannelInboundHandler<Object> {
         return promise;
     }
 
+    public CompletableFuture<Void> resetConnection() {
+        CompletableFuture<Void> promise = new CompletableFuture<>();
+        enqueueCommand(new MyResetConnectionCmd(this, promise));
+        return promise;
+    }
+
     public ErrorMessage decodeErrorAfterHeader(ByteBuf packet) {
         return ErrorMessage.decodeAfterHeader(packet, UTF_8, serverInfo.serverCapabilities);
     }

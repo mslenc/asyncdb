@@ -214,9 +214,10 @@ public class DbConfig {
         }
 
         builder.defaultUsername = this.defaultUsername;
-        builder.host = this.host;
         builder.defaultPassword = this.defaultPassword;
-        builder.database = this.defaultDatabase;
+        builder.defaultDatabase = this.defaultDatabase;
+        builder.host = this.host;
+        builder.port = this.port;
         builder.connectTimeout = this.connectTimeout;
         builder.queryTimeout = this.queryTimeout;
         builder.eventLoopGroup = this.eventLoopGroup;
@@ -235,7 +236,7 @@ public class DbConfig {
         private final DbType dbType;
         private String defaultUsername = "asyncdb";
         private String defaultPassword = null;
-        private String database = null;
+        private String defaultDatabase = null;
         private String host = DEFAULT_HOST;
         private int port;
         private Duration connectTimeout = DEFAULT_CONNECT_TIMEOUT;
@@ -264,7 +265,7 @@ public class DbConfig {
                 host,
                 port,
                 defaultPassword,
-                database,
+                defaultDatabase,
                 connectTimeout,
                 queryTimeout,
                 eventLoopGroup != null ? eventLoopGroup : NettyUtils.getDefaultEventLoopGroup(),
@@ -312,7 +313,7 @@ public class DbConfig {
         }
 
         public Builder setDefaultDatabase(String database) {
-            this.database = database;
+            this.defaultDatabase = database;
             return this;
         }
 

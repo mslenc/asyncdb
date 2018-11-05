@@ -25,9 +25,17 @@ public class TransactionsTest {
                                     helper.expectSuccess(conn2.commitAndChain());
                                     helper.expectSuccess(conn2.executeUpdate(INSERT, 4, "qsa"), (ignored6) -> {
                                         helper.expectResultSetValues(conn.executeQuery(SELECT_MAX), singleVal(3), (ignored7) -> {
-                                            helper.expectSuccess(conn.close());
                                             helper.expectSuccess(conn2.close(), (ignored8) -> {
-                                                testFinished.complete(null);
+                                                helper.expectSuccess(TestHelper.db.connect(), (conn3) -> {
+                                                    helper.expectSuccess(conn3.startTransaction(), (ignored9) -> {
+                                                        helper.expectResultSetValues(conn.executeQuery(SELECT_MAX), singleVal(3), (ignored10) -> {
+                                                            helper.expectSuccess(conn.close());
+                                                            helper.expectSuccess(conn3.close(), (ignored11) -> {
+                                                                testFinished.complete(null);
+                                                            });
+                                                        });
+                                                    });
+                                                });
                                             });
                                         });
                                     });
