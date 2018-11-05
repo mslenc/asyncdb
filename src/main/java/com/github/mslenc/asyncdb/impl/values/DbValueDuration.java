@@ -2,7 +2,6 @@ package com.github.mslenc.asyncdb.impl.values;
 
 import com.github.mslenc.asyncdb.ex.ValueConversionException;
 import com.github.mslenc.asyncdb.my.encoders.EncUtils;
-import com.github.mslenc.asyncdb.my.encoders.MyDurationEncoder;
 
 import java.time.Duration;
 import java.time.LocalTime;
