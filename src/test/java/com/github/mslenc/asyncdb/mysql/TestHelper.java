@@ -4,6 +4,7 @@ import com.github.mslenc.asyncdb.DbConnection;
 import com.github.mslenc.asyncdb.DbDataSource;
 import com.github.mslenc.asyncdb.DbResultSet;
 import com.github.mslenc.asyncdb.DbConfig;
+import io.netty.util.ResourceLeakDetector;
 
 import java.util.Arrays;
 import java.util.concurrent.*;
@@ -20,6 +21,10 @@ public class TestHelper {
 
     interface TestContents {
         void start(DbConnection conn, TestHelper helper, CompletableFuture<Void> testFinished);
+    }
+
+    static {
+        ResourceLeakDetector.setLevel(ResourceLeakDetector.Level.PARANOID);
     }
 
     public static final DbConfig config =
