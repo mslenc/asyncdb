@@ -7,11 +7,9 @@ import io.netty.channel.EventLoopGroup;
 
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
-import static java.util.Arrays.asList;
+import static java.util.Collections.unmodifiableList;
 import static java.util.Objects.requireNonNull;
 
 public class DbConfig {
@@ -33,7 +31,7 @@ public class DbConfig {
         MYSQL
     }
 
-    public static final String DEFAULT_MYSQL_INIT_SQL = "set session time_zone='+00:00', sql_mode='STRICT_ALL_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO,ANSI_QUOTES', autocommit=1";
+    public static final String DEFAULT_MYSQL_INIT_SQL = "SET SESSION time_zone='+00:00', SESSION sql_mode='STRICT_ALL_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO,ANSI_QUOTES', autocommit=1";
 
     public static final Duration DEFAULT_CONNECT_TIMEOUT = Duration.ofSeconds(5);
     public static final Duration DEFAULT_QUERY_TIMEOUT = null;
@@ -57,6 +55,9 @@ public class DbConfig {
     private final MyEncoders mySqlEncoders;
     private final SslMode sslMode;
     private final Path rootCertFile;
+    private final DbTxIsolation defaultTxIsolation;
+    private final DbTxMode defaultTxMode;
+    private final boolean hasDefaultInitStatement;
 
     private DbConfig(
         DbType dbType,
@@ -73,7 +74,9 @@ public class DbConfig {
         List<String> initStatements,
         MyEncoders mySqlEncoders,
         SslMode sslMode,
-        Path rootCertFile
+        Path rootCertFile,
+        DbTxIsolation defaultTxIsolation,
+        DbTxMode defaultTxMode
     ) {
         this.dbType = dbType;
         this.defaultUsername = Objects.requireNonNull(defaultUsername, "username is required");
@@ -86,19 +89,36 @@ public class DbConfig {
         this.eventLoopGroup = eventLoopGroup;
         this.maxIdleConnections = maxIdleConnections;
         this.maxTotalConnections = maxTotalConnections;
-        this.initStatements = initStatements;
         this.mySqlEncoders = mySqlEncoders;
         this.sslMode = sslMode;
         this.rootCertFile = rootCertFile;
+        this.defaultTxIsolation = defaultTxIsolation == DbTxIsolation.DEFAULT ? DbTxIsolation.REPEATABLE_READ : defaultTxIsolation;
+        this.defaultTxMode = defaultTxMode == DbTxMode.DEFAULT ? DbTxMode.READ_WRITE : defaultTxMode;
+        this.initStatements = makeInitStatements(initStatements, dbType, this.defaultTxIsolation, this.defaultTxMode);
+        this.hasDefaultInitStatement = initStatements.stream().anyMatch(Objects::isNull);
+    }
+
+    static List<String> makeInitStatements(List<String> initStatements, DbType dbType, DbTxIsolation txIsolation, DbTxMode txMode) {
+        ArrayList<String> result = new ArrayList<>();
+
+        for (String stmt : initStatements) {
+            if (stmt != null) {
+                result.add(stmt);
+            } else {
+                makeDefaultInitStatements(dbType, txIsolation, result);
+            }
+        }
+
+        return unmodifiableList(result);
+    }
+
+    static void makeDefaultInitStatements(DbType dbType, DbTxIsolation txIsolation, List<String> out) {
+        out.add(DEFAULT_MYSQL_INIT_SQL);
+        out.add("SET SESSION TRANSACTION ISOLATION LEVEL " + txIsolation);
     }
 
     public static Builder newBuilder(DbType dbType) {
-        switch (dbType) {
-            case MYSQL:
-                return new Builder(dbType, DEFAULT_MYSQL_PORT, DEFAULT_MYSQL_INIT_SQL);
-        }
-
-        throw new AssertionError("Unreachable");
+        return new Builder(requireNonNull(dbType));
     }
 
     public DbDataSource makeDataSource() {
@@ -166,6 +186,14 @@ public class DbConfig {
         return rootCertFile;
     }
 
+    public DbTxIsolation defaultTxIsolation() {
+        return defaultTxIsolation;
+    }
+
+    public DbTxMode defaultTxMode() {
+        return defaultTxMode;
+    }
+
     private static Duration positiveOrDefault(Duration provided, Duration defaultValue) {
         if (provided == null)
             return defaultValue;
@@ -177,10 +205,17 @@ public class DbConfig {
     }
 
     public Builder toBuilder() {
-        Builder builder = new Builder(dbType, port, this.initStatements.toArray(new String[0]));
-        builder.username = this.defaultUsername;
+        Builder builder = new Builder(dbType);
+
+        builder.setInitStatements(this.initStatements);
+        if (hasDefaultInitStatement) {
+            builder.initStatements.set(0, null); // to generate them again based on new settings
+            builder.initStatements.remove(1); // we currently generate two default statements, so removing the other one
+        }
+
+        builder.defaultUsername = this.defaultUsername;
         builder.host = this.host;
-        builder.password = this.defaultPassword;
+        builder.defaultPassword = this.defaultPassword;
         builder.database = this.defaultDatabase;
         builder.connectTimeout = this.connectTimeout;
         builder.queryTimeout = this.queryTimeout;
@@ -190,16 +225,19 @@ public class DbConfig {
         builder.mySqlEncoders = this.mySqlEncoders;
         builder.sslMode = this.sslMode;
         builder.rootCertFile = this.rootCertFile;
+        builder.defaultTxIsolation = this.defaultTxIsolation;
+        builder.defaultTxMode = this.defaultTxMode;
+
         return builder;
     }
 
     public static class Builder {
         private final DbType dbType;
-        private String username;
+        private String defaultUsername = "asyncdb";
+        private String defaultPassword = null;
+        private String database = null;
         private String host = DEFAULT_HOST;
         private int port;
-        private String password = null;
-        private String database = null;
         private Duration connectTimeout = DEFAULT_CONNECT_TIMEOUT;
         private Duration queryTimeout = DEFAULT_QUERY_TIMEOUT;
         private EventLoopGroup eventLoopGroup;
@@ -209,20 +247,23 @@ public class DbConfig {
         private MyEncoders mySqlEncoders = MyEncoders.DEFAULT;
         private SslMode sslMode = SslMode.DISABLE;
         private Path rootCertFile;
+        private DbTxIsolation defaultTxIsolation = DbTxIsolation.REPEATABLE_READ;
+        private DbTxMode defaultTxMode = DbTxMode.READ_WRITE;
 
-        private Builder(DbType dbType, int port, String... initStatements) {
+        private Builder(DbType dbType) {
             this.dbType = dbType;
-            this.port = port;
-            this.initStatements.addAll(asList(initStatements));
+            this.port = DEFAULT_MYSQL_PORT;
+            this.initStatements.add(null); // null means the default init statement (but we generate it based
+                                           // on some other properties, so can't do it yet)
         }
 
         public DbConfig build() {
             return new DbConfig(
                 dbType,
-                username,
+                defaultUsername,
                 host,
                 port,
-                password,
+                defaultPassword,
                 database,
                 connectTimeout,
                 queryTimeout,
@@ -232,7 +273,9 @@ public class DbConfig {
                 initStatements,
                 mySqlEncoders,
                 sslMode,
-                rootCertFile
+                rootCertFile,
+                defaultTxIsolation,
+                defaultTxMode
             );
         }
 
@@ -242,16 +285,16 @@ public class DbConfig {
             return this;
         }
 
-        public Builder setDefaultUsername(String username) {
-            if (username == null)
+        public Builder setDefaultUsername(String defaultUsername) {
+            if (defaultUsername == null)
                 throw new IllegalArgumentException("username can't be null");
 
-            this.username = username;
+            this.defaultUsername = defaultUsername;
             return this;
         }
 
-        public Builder setDefaultPassword(String password) {
-            this.password = password;
+        public Builder setDefaultPassword(String defaultPassword) {
+            this.defaultPassword = defaultPassword;
             return this;
         }
 
@@ -312,11 +355,7 @@ public class DbConfig {
         }
 
         public Builder setInitStatements(String... initStatements) {
-            this.initStatements.clear();
-            for (String statement : initStatements) {
-                this.initStatements.add(requireNonNull(statement));
-            }
-            return this;
+            return setInitStatements(Arrays.asList(initStatements));
         }
 
         public Builder setMySqlEncoders(MyEncoders mySqlEncoders) {
@@ -347,6 +386,16 @@ public class DbConfig {
         public Builder setHost(String host, int port) {
             setHost(host);
             setPort(port);
+            return this;
+        }
+
+        public Builder setDefaultTxIsolation(DbTxIsolation isolation) {
+            this.defaultTxIsolation = isolation;
+            return this;
+        }
+
+        public Builder setDefaultTxMode(DbTxMode mode) {
+            this.defaultTxMode = mode;
             return this;
         }
     }

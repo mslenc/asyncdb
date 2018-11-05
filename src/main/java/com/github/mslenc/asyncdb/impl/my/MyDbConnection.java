@@ -19,11 +19,18 @@ import static java.util.Objects.requireNonNull;
 
 public class MyDbConnection implements DbConnection {
     private MyConnection myConn;
-    private Runnable onSuccessfulClose;
+    private final Runnable onSuccessfulClose;
+    private final DbConfig config;
 
-    MyDbConnection(MyConnection myConn, Runnable onSuccessfulClose) {
+    MyDbConnection(MyConnection myConn, DbConfig config, Runnable onSuccessfulClose) {
         this.myConn = requireNonNull(myConn);
         this.onSuccessfulClose = requireNonNull(onSuccessfulClose);
+        this.config = requireNonNull(config);
+    }
+
+    @Override
+    public DbConfig getConfig() {
+        return config;
     }
 
     void runInitStatements(List<String> initStatements, CompletableFuture<DbConnection> promise) {

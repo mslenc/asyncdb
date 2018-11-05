@@ -42,4 +42,19 @@ public class MiscUtils {
 
         return promise;
     }
+
+    public static CompletableFuture<Void> extractVoid(CompletableFuture<DbExecResult> future) {
+        CompletableFuture<Void> promise = new CompletableFuture<>();
+
+        future.whenComplete((queryResult, error) -> {
+            if (error != null) {
+                promise.completeExceptionally(error);
+                return;
+            }
+
+            promise.complete(null);
+        });
+
+        return promise;
+    }
 }

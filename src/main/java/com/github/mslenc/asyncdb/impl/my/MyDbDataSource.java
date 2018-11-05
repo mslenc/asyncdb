@@ -204,7 +204,7 @@ public class MyDbDataSource implements DbDataSource {
 
     void complete(CompletableFuture<DbConnection> promise, ConnInfo connInfo) {
         connInfo.markConnected();
-        MyDbConnection wrapper = new MyDbConnection(connInfo.conn, () -> returnConnection(connInfo));
+        MyDbConnection wrapper = new MyDbConnection(connInfo.conn, config, () -> returnConnection(connInfo));
         wrapper.runInitStatements(config.initStatements(), promise);
     }
 
