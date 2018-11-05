@@ -3,12 +3,12 @@ package com.github.mslenc.asyncdb.my.msgserver;
 import io.netty.buffer.ByteBuf;
 
 public class PreparedStatementPrepareResponse {
-    public final byte[] statementId;
+    public final int statementId;
     public final short warningCount;
     public final int paramsCount;
     public final int columnsCount;
 
-    public PreparedStatementPrepareResponse(byte[] statementId, short warningCount, int paramsCount, int columnsCount) {
+    public PreparedStatementPrepareResponse(int statementId, short warningCount, int paramsCount, int columnsCount) {
         this.statementId = statementId;
         this.warningCount = warningCount;
         this.paramsCount = paramsCount;
@@ -16,9 +16,7 @@ public class PreparedStatementPrepareResponse {
     }
 
     public static PreparedStatementPrepareResponse decodeAfterHeader(ByteBuf buffer) {
-        byte[] statementId = new byte[4];
-        buffer.readBytes(statementId);
-
+        int statementId = buffer.readIntLE();
         int columnsCount = buffer.readUnsignedShortLE();
         int paramsCount = buffer.readUnsignedShortLE();
 

@@ -1,14 +1,13 @@
 package com.github.mslenc.asyncdb.my.msgclient;
 
-import com.github.mslenc.asyncdb.util.ByteBufUtils;
 import com.github.mslenc.asyncdb.my.MyConstants;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
 public class ResetPreparedStatementMessage extends ClientMessage {
-    private final byte[] statementId;
+    private final int statementId;
 
-    public ResetPreparedStatementMessage(byte[] statementId) {
+    public ResetPreparedStatementMessage(int statementId) {
         this.statementId = statementId;
     }
 
@@ -16,12 +15,12 @@ public class ResetPreparedStatementMessage extends ClientMessage {
     public ByteBuf getPacketContents() {
         ByteBuf contents = Unpooled.buffer(5);
         contents.writeByte(MyConstants.PACKET_HEADER_STMT_RESET);
-        contents.writeBytes(statementId);
+        contents.writeIntLE(statementId);
         return contents;
     }
 
     @Override
     public String toString(boolean fullDetails) {
-        return "STMT_RESET(statement_id=" + ByteBufUtils.toHexString(statementId) + ")";
+        return "STMT_RESET(statement_id=" + statementId + ")";
     }
 }
