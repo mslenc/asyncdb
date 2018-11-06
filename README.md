@@ -16,11 +16,11 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.github.mslenc:asyncdb:1.0.0'
+    implementation 'com.github.mslenc:asyncdb:1.1.1'
 }
 ```
 
-See the [jitpack.io site](https://jitpack.io/#mslenc/asyncdb/1.0.0) for other build systems.
+See the [jitpack.io site](https://jitpack.io/#mslenc/asyncdb/1.1.1) for other build systems.
 
 ## Getting started / connecting
 
@@ -82,6 +82,7 @@ Once you have a connection, there are a few things you can do with it:
 * run updates with `executeUpdate()`
 * run whatever SQL with `execute()`
 * create prepared statements with `prepareStatement()`
+* control transactions with `startTransaction()`, `commit()` and `rollback()`
 
 All the query methods have overloads that allow you to use `?` placeholders in the SQL,
 where the values are then automatically inserted and escaped as appropriate. It is a 
@@ -149,14 +150,14 @@ So, it is perfectly fine to run multiple queries "at once", or to write updates 
 
 ```java
 CompletableFuture.allOf(
-    conn.execute("START TRANSACTION"),
-    conn.execute("UPDATE some_table ..."),
-    conn.execute("UPDATE other_table ..."),
-    conn.execute("INSERT INTO third_table ..."),
-    conn.execute("COMMIT")
+    conn.startTransaction(),
+    conn.executeUpdate("UPDATE some_table ..."),
+    conn.executeUpdate("UPDATE other_table ..."),
+    conn.executeUpdate("INSERT INTO third_table ..."),
+    conn.commit()
 ).whenComplete((result, error) -> {
     if (error != null)
-        conn.execute("ROLLBACK");
+        conn.rollback();
 });
 ```
 
