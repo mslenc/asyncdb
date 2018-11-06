@@ -10,66 +10,185 @@ public interface DbRow {
 
     int getRowIndex();
 
-    boolean isNull(int columnIndex);
-    boolean isNull(String columnName);
-
-    Object get(int columnIndex);
-    Object get(String columnName);
-
     DbValue getValue(int columnIndex);
     DbValue getValue(String columnName);
 
-    String getString(int columnIndex);
-    String getString(String columnName);
 
-    byte getByte(int columnIndex);
-    byte getByte(String columnName);
+    default boolean isNull(int columnIndex) {
+        return getValue(columnIndex).isNull();
+    }
 
-    short getShort(int columnIndex);
-    short getShort(String columnName);
+    default boolean isNull(String columnName) {
+        return getValue(columnName).isNull();
+    }
 
-    int getInt(int columnIndex);
-    int getInt(String columnName);
 
-    long getLong(int columnIndex);
-    long getLong(String columnName);
+    default Object get(int columnIndex) {
+        return getValue(columnIndex).unwrap();
+    }
 
-    ULong getULong(int columnIndex);
-    ULong getULong(String columnName);
+    default Object get(String columnName) {
+        return getValue(columnName).unwrap();
+    }
 
-    float getFloat(int columnIndex);
-    float getFloat(String columnName);
 
-    double getDouble(String columnName);
-    double getDouble(int columnIndex);
+    default String getString(int columnIndex) {
+        return getValue(columnIndex).asString();
+    }
 
-    BigDecimal getBigDecimal(int columnIndex);
-    BigDecimal getBigDecimal(String columnName);
+    default String getString(String columnName) {
+        return getValue(columnName).asString();
+    }
 
-    Number getNumber(String columnName);
-    Number getNumber(int columnIndex);
 
-    LocalDate getLocalDate(int columnIndex);
-    LocalDate getLocalDate(String columnName);
+    default byte getByte(int columnIndex) {
+        return getValue(columnIndex).asByte();
+    }
 
-    LocalTime getLocalTime(String columnName);
-    LocalTime getLocalTime(int columnIndex);
+    default byte getByte(String columnName) {
+        return getValue(columnName).asByte();
+    }
 
-    LocalDateTime getLocalDateTime(int columnIndex);
-    LocalDateTime getLocalDateTime(String columnName);
 
-    Duration getDuration(String columnName);
-    Duration getDuration(int columnIndex);
+    default short getShort(int columnIndex) {
+        return getValue(columnIndex).asShort();
+    }
 
-    Instant getInstant(int columnIndex);
-    Instant getInstant(String columnName);
+    default short getShort(String columnName) {
+        return getValue(columnName).asShort();
+    }
 
-    Year getYear(String columnName);
-    Year getYear(int columnIndex);
 
-    byte[] getByteArray(int columnIndex);
-    byte[] getByteArray(String columnName);
+    default int getInt(int columnIndex) {
+        return getValue(columnIndex).asInt();
+    }
 
-    boolean getBoolean(int columnIndex);
-    boolean getBoolean(String columnName);
+    default int getInt(String columnName) {
+        return getValue(columnName).asInt();
+    }
+
+
+    default long getLong(int columnIndex) {
+        return getValue(columnIndex).asLong();
+    }
+
+    default long getLong(String columnName) {
+        return getValue(columnName).asLong();
+    }
+
+
+    default ULong getULong(int columnIndex) {
+        return getValue(columnIndex).asULong();
+    }
+
+    default ULong getULong(String columnName) {
+        return getValue(columnName).asULong();
+    }
+
+
+    default float getFloat(int columnIndex) {
+        return getValue(columnIndex).asFloat();
+    }
+
+    default float getFloat(String columnName) {
+        return getValue(columnName).asFloat();
+    }
+
+
+    default double getDouble(int columnIndex) {
+        return getValue(columnIndex).asDouble();
+    }
+
+    default double getDouble(String columnName) {
+        return getValue(columnName).asDouble();
+    }
+
+
+    default BigDecimal getBigDecimal(int columnIndex) {
+        return getValue(columnIndex).asBigDecimal();
+    }
+
+    default BigDecimal getBigDecimal(String columnName) {
+        return getValue(columnName).asBigDecimal();
+    }
+
+
+    default Number getNumber(int columnIndex) {
+        return getValue(columnIndex).asNumber();
+    }
+
+    default Number getNumber(String columnName) {
+        return getValue(columnName).asNumber();
+    }
+
+
+    default LocalDate getLocalDate(int columnIndex) {
+        return getValue(columnIndex).asLocalDate();
+    }
+
+    default LocalDate getLocalDate(String columnName) {
+        return getValue(columnName).asLocalDate();
+    }
+
+
+    default LocalTime getLocalTime(int columnIndex) {
+        return getValue(columnIndex).asLocalTime();
+    }
+
+    default LocalTime getLocalTime(String columnName) {
+        return getValue(columnName).asLocalTime();
+    }
+
+
+    default LocalDateTime getLocalDateTime(int columnIndex) {
+        return getValue(columnIndex).asLocalDateTime();
+    }
+
+    default LocalDateTime getLocalDateTime(String columnName) {
+        return getValue(columnName).asLocalDateTime();
+    }
+
+
+    default Duration getDuration(int columnIndex) {
+        return getValue(columnIndex).asDuration();
+    }
+
+    default Duration getDuration(String columnName) {
+        return getValue(columnName).asDuration();
+    }
+
+
+    default Instant getInstant(int columnIndex) {
+        return getValue(columnIndex).asInstant();
+    }
+
+    default Instant getInstant(String columnName) {
+        return getValue(columnName).asInstant();
+    }
+
+    default Year getYear(int columnIndex) {
+        return getValue(columnIndex).asYear();
+    }
+
+    default Year getYear(String columnName) {
+        return getValue(columnName).asYear();
+    }
+
+
+    default byte[] getByteArray(int columnIndex) {
+        return getValue(columnIndex).asByteArray();
+    }
+
+    default byte[] getByteArray(String columnName) {
+        return getValue(columnName).asByteArray();
+    }
+
+
+    default boolean getBoolean(int columnIndex) {
+        return getValue(columnIndex).asBoolean();
+    }
+
+    default boolean getBoolean(String columnName) {
+        return getValue(columnName).asBoolean();
+    }
 }
