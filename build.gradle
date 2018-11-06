@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'com.github.mslenc'
-version '1.1.1'
+version '1.1.2'
 
 sourceCompatibility = 1.8
 
@@ -23,6 +23,21 @@ dependencies {
 
     // https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
     testCompile 'ch.qos.logback:logback-classic:1.2.3'
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives sourcesJar
+    archives javadocJar
 }
 
 compileJava.options.encoding = 'UTF-8'
