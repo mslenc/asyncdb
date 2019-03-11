@@ -24,6 +24,8 @@ public interface DbValue {
     LocalDate asLocalDate();
     LocalTime asLocalTime();
     LocalDateTime asLocalDateTime();
+    OffsetTime asOffsetTime();
+    OffsetDateTime asOffsetDateTime();
     Duration asDuration();
     Instant asInstant();
     Year asYear();

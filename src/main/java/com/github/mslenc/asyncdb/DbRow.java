@@ -191,4 +191,22 @@ public interface DbRow {
     default boolean getBoolean(String columnName) {
         return getValue(columnName).asBoolean();
     }
+
+
+    default OffsetDateTime getOffsetDateTime(int columnIndex) {
+        return getValue(columnIndex).asOffsetDateTime();
+    }
+
+    default OffsetDateTime getOffsetDateTime(String columnName) {
+        return getValue(columnName).asOffsetDateTime();
+    }
+
+
+    default OffsetTime getOffsetTime(int columnIndex) {
+        return getValue(columnIndex).asOffsetTime();
+    }
+
+    default OffsetTime getOffsetTime(String columnName) {
+        return getValue(columnName).asOffsetTime();
+    }
 }

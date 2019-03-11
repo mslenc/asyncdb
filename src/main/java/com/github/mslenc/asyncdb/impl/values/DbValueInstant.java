@@ -48,6 +48,16 @@ public class DbValueInstant extends AbstractDbValue {
     }
 
     @Override
+    public OffsetDateTime asOffsetDateTime() {
+        return timestamp.atOffset(ZoneOffset.UTC);
+    }
+
+    @Override
+    public OffsetTime asOffsetTime() {
+        return asOffsetDateTime().toOffsetTime();
+    }
+
+    @Override
     public Year asYear() {
         return Year.of(sourceLocalDateTime.getYear());
     }

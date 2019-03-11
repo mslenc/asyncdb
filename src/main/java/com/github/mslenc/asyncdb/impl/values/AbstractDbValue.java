@@ -138,6 +138,16 @@ public abstract class AbstractDbValue implements DbValue {
     }
 
     @Override
+    public OffsetTime asOffsetTime() {
+        throw new ValueConversionException("Can't convert " + typeName() + " into an OffsetTime");
+    }
+
+    @Override
+    public OffsetDateTime asOffsetDateTime() {
+        throw new ValueConversionException("Can't convert " + typeName() + " into an OffsetDateTime");
+    }
+
+    @Override
     public Year asYear() {
         throw new ValueConversionException("Can't convert " + typeName() + " into a Year");
     }

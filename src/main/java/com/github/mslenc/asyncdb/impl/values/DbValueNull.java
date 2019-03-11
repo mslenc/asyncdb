@@ -108,6 +108,16 @@ public class DbValueNull implements DbValue {
     }
 
     @Override
+    public OffsetTime asOffsetTime() {
+        return null;
+    }
+
+    @Override
+    public OffsetDateTime asOffsetDateTime() {
+        return null;
+    }
+
+    @Override
     public byte[] asByteArray() {
         return null;
     }

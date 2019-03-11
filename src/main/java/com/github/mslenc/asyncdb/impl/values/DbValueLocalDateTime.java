@@ -5,6 +5,7 @@ import com.github.mslenc.asyncdb.my.encoders.EncUtils;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.Year;
 import java.util.Objects;
 
 public class DbValueLocalDateTime extends AbstractDbValue {
@@ -42,6 +43,11 @@ public class DbValueLocalDateTime extends AbstractDbValue {
     @Override
     public LocalTime asLocalTime() {
         return value.toLocalTime();
+    }
+
+    @Override
+    public Year asYear() {
+        return Year.of(value.getYear());
     }
 
     @Override

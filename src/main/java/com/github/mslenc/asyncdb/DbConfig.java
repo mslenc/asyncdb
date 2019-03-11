@@ -27,17 +27,13 @@ public class DbConfig {
         }
     }
 
-    public enum DbType {
-        MYSQL
-    }
-
     public static final String DEFAULT_MYSQL_INIT_SQL = "SET SESSION time_zone='+00:00', SESSION sql_mode='STRICT_ALL_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO,ANSI_QUOTES', autocommit=1";
 
     public static final Duration DEFAULT_CONNECT_TIMEOUT = Duration.ofSeconds(5);
     public static final Duration DEFAULT_QUERY_TIMEOUT = null;
     public static final String DEFAULT_HOST = "localhost";
 
-//    public static final int DEFAULT_POSTGRES_POST = 5432;
+    public static final int DEFAULT_POSTGRES_POST = 5432;
     public static final int DEFAULT_MYSQL_PORT = 3306;
 
     private final DbType dbType;
@@ -113,8 +109,15 @@ public class DbConfig {
     }
 
     static void makeDefaultInitStatements(DbType dbType, DbTxIsolation txIsolation, List<String> out) {
-        out.add(DEFAULT_MYSQL_INIT_SQL);
-        out.add("SET SESSION TRANSACTION ISOLATION LEVEL " + txIsolation);
+        switch (dbType) {
+            case MYSQL:
+                out.add(DEFAULT_MYSQL_INIT_SQL);
+                out.add("SET SESSION TRANSACTION ISOLATION LEVEL " + txIsolation);
+
+            case POSTGRES:
+                // TODO
+                break;
+        }
     }
 
     public static Builder newBuilder(DbType dbType) {
@@ -125,6 +128,9 @@ public class DbConfig {
         switch (dbType) {
             case MYSQL:
                 return new MyDbDataSource(this);
+
+            case POSTGRES:
+                throw new UnsupportedOperationException("Postgres async driver not implemented yet"); // but we have JDBC, so it's useful to be able to tell the two apart
         }
 
         throw new AssertionError("Unreachable");
@@ -194,6 +200,10 @@ public class DbConfig {
         return defaultTxMode;
     }
 
+    public DbType type() {
+        return dbType;
+    }
+
     private static Duration positiveOrDefault(Duration provided, Duration defaultValue) {
         if (provided == null)
             return defaultValue;
@@ -253,8 +263,18 @@ public class DbConfig {
 
         private Builder(DbType dbType) {
             this.dbType = dbType;
-            this.port = DEFAULT_MYSQL_PORT;
-            this.initStatements.add(null); // null means the default init statement (but we generate it based
+
+            switch (dbType) {
+                case MYSQL:
+                    this.port = DEFAULT_MYSQL_PORT;
+                    break;
+
+                case POSTGRES:
+                    this.port = DEFAULT_POSTGRES_POST;
+                    break;
+            }
+
+            this.initStatements.add(null); // null means the default init statement(s) (but we generate it based
                                            // on some other properties, so can't do it yet)
         }
 
