@@ -5,7 +5,7 @@ import com.github.mslenc.asyncdb.DbDataSource;
 import com.github.mslenc.asyncdb.DbQueryResultObserver;
 import com.github.mslenc.asyncdb.DbRow;
 
-import static com.github.mslenc.asyncdb.DbConfig.DbType.MYSQL;
+import static com.github.mslenc.asyncdb.DbType.MYSQL;
 
 public class ShowTablesStreaming {
     public static void main(String[] args) {

@@ -2,7 +2,7 @@ package com.github.mslenc.asyncdb;
 
 import org.junit.Test;
 
-import static com.github.mslenc.asyncdb.DbConfig.DbType.MYSQL;
+import static com.github.mslenc.asyncdb.DbType.MYSQL;
 import static com.github.mslenc.asyncdb.DbTxIsolation.SERIALIZABLE;
 import static com.github.mslenc.asyncdb.DbTxMode.READ_ONLY;
 import static org.junit.Assert.*;

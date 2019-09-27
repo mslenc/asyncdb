@@ -2,6 +2,7 @@ package com.github.mslenc.asyncdb.jdbc;
 
 import com.github.mslenc.asyncdb.*;
 import com.github.mslenc.asyncdb.impl.DbQueryResultImpl;
+import com.github.mslenc.asyncdb.util.EmptyResultSet;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -11,7 +12,6 @@ import java.util.List;
 import static com.github.mslenc.asyncdb.jdbc.JdbcUtils.extractGeneratedKeys;
 import static com.github.mslenc.asyncdb.jdbc.JdbcUtils.setValues;
 import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
 
 public class JdbcSyncPreparedStatement implements AutoCloseable {
     final PreparedStatement ps;
@@ -50,7 +50,7 @@ public class JdbcSyncPreparedStatement implements AutoCloseable {
     public DbUpdateResult executeUpdate(List<Object> values) throws SQLException {
         setValues(ps, values);
         int rowsAffected = ps.executeUpdate();
-        List<Long> generatedKeys = rowsAffected > 0 ? extractGeneratedKeys(ps) : emptyList();
+        DbResultSet generatedKeys = rowsAffected > 0 ? extractGeneratedKeys(ps) : EmptyResultSet.INSTANCE;
         return new DbQueryResultImpl(rowsAffected, null, null, generatedKeys);
     }
 
@@ -65,11 +65,11 @@ public class JdbcSyncPreparedStatement implements AutoCloseable {
         if (ps.execute()) {
             try (ResultSet rs = ps.getResultSet()) {
                 DbResultSet resultSet = JdbcUtils.extractResultSet(rs);
-                return new DbQueryResultImpl(0, null, resultSet, emptyList());
+                return new DbQueryResultImpl(0, null, resultSet, null);
             }
         } else {
             int rowsAffected = ps.getUpdateCount();
-            List<Long> generatedKeys = rowsAffected > 0 ? extractGeneratedKeys(ps) : emptyList();
+            DbResultSet generatedKeys = rowsAffected > 0 ? extractGeneratedKeys(ps) : EmptyResultSet.INSTANCE;
             return new DbQueryResultImpl(rowsAffected, null, null, generatedKeys);
         }
     }

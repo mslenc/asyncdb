@@ -1,13 +1,13 @@
 package com.github.mslenc.asyncdb.jdbc;
 
+import com.github.mslenc.asyncdb.DbResultSet;
 import com.github.mslenc.asyncdb.DbRow;
+import com.github.mslenc.asyncdb.impl.DbResultSetImpl;
+import com.github.mslenc.asyncdb.util.EmptyResultSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -33,27 +33,28 @@ public class JdbcUtils {
             ps.setObject(i + 1, values.get(i));
     }
 
-    public static List<Long> extractGeneratedKeys(Statement stmt) throws SQLException {
-        // we mostly expect 0 or 1 ids, so we optimize for those two cases..
-
+    public static DbResultSet extractGeneratedKeys(Statement stmt) throws SQLException {
         try (ResultSet rs = stmt.getGeneratedKeys()) {
             if (!rs.next())
-                return Collections.emptyList();
+                return EmptyResultSet.INSTANCE;
 
-            long first = rs.getLong(1);
+            JdbcColumns columns = JdbcColumns.extractColumns(rs.getMetaData());
+
+            DbRow firstRow = columns.extractRow(rs, 0);
 
             if (!rs.next())
-                return Collections.singletonList(first);
+                return new DbResultSetImpl(columns, Collections.singletonList(firstRow));
 
-            ArrayList<Long> ids = new ArrayList<>();
-            ids.add(first);
-            ids.add(rs.getLong(1));
+            ArrayList<DbRow> rows = new ArrayList<>();
+            rows.add(firstRow);
+            rows.add(columns.extractRow(rs, 1));
 
+            int rowIndex = 2;
             while (rs.next()) {
-                ids.add(rs.getLong(1));
+                rows.add(columns.extractRow(rs, rowIndex++));
             }
 
-            return ids;
+            return new JdbcResultSet(columns, rows);
         }
     }
 

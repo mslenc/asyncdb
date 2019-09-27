@@ -9,10 +9,9 @@ import com.github.mslenc.asyncdb.impl.DbRowImpl;
 import com.github.mslenc.asyncdb.my.MyDbColumns;
 import com.github.mslenc.asyncdb.my.encoders.MyEncoders;
 import com.github.mslenc.asyncdb.my.resultset.MyDbRowResultSetBuilder;
+import com.github.mslenc.asyncdb.util.EmptyResultSet;
 
 import java.util.ArrayList;
-
-import static java.util.Collections.emptyList;
 
 class MyDbQueryResultBuilder extends MyDbRowResultSetBuilder<DbExecResult> {
     private ArrayList<DbRow> rows = new ArrayList<>();
@@ -29,6 +28,6 @@ class MyDbQueryResultBuilder extends MyDbRowResultSetBuilder<DbExecResult> {
     @Override
     public DbExecResult build(int statusFlags, int warnings) {
         DbResultSetImpl queryResult = new DbResultSetImpl(new DbColumnsImpl(columns()), rows);
-        return new DbQueryResultImpl(0, null, queryResult, emptyList());
+        return new DbQueryResultImpl(0, null, queryResult, EmptyResultSet.INSTANCE);
     }
 }

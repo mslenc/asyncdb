@@ -11,7 +11,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-import static com.github.mslenc.asyncdb.DbConfig.DbType.MYSQL;
+import static com.github.mslenc.asyncdb.DbType.MYSQL;
 import static org.junit.Assert.*;
 
 public class TestHelper {

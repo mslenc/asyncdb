@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import static com.github.mslenc.asyncdb.jdbc.JdbcUtils.extractGeneratedKeys;
-import static java.util.Collections.emptyList;
 
 public class JdbcSyncConnection {
     private final DbConfig config;
@@ -77,7 +76,7 @@ public class JdbcSyncConnection {
         try (Statement stmt = getConnectionCheckClosed().createStatement()) {
             int rowsAffected = stmt.executeUpdate(sql, Statement.RETURN_GENERATED_KEYS);
 
-            List<Long> generatedKeys = rowsAffected > 0 ? extractGeneratedKeys(stmt) : emptyList();
+            DbResultSet generatedKeys = rowsAffected > 0 ? extractGeneratedKeys(stmt) : null;
 
             return new DbQueryResultImpl(rowsAffected, null, null, generatedKeys);
         }
@@ -183,11 +182,11 @@ public class JdbcSyncConnection {
             if (stmt.execute(sql)) {
                 try (ResultSet rs = stmt.getResultSet()) {
                     DbResultSet resultSet = JdbcUtils.extractResultSet(rs);
-                    return new DbQueryResultImpl(0, null, resultSet, emptyList());
+                    return new DbQueryResultImpl(0, null, resultSet, null);
                 }
             } else {
                 int rowsAffected = stmt.getUpdateCount();
-                List<Long> generatedKeys = rowsAffected > 0 ? extractGeneratedKeys(stmt) : emptyList();
+                DbResultSet generatedKeys = rowsAffected > 0 ? extractGeneratedKeys(stmt) : null;
                 return new DbQueryResultImpl(rowsAffected, null, null, generatedKeys);
             }
         }

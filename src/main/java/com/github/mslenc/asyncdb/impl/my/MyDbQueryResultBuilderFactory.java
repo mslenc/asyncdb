@@ -6,12 +6,8 @@ import com.github.mslenc.asyncdb.my.MyDbColumns;
 import com.github.mslenc.asyncdb.my.encoders.MyEncoders;
 import com.github.mslenc.asyncdb.my.resultset.MyResultSetBuilder;
 import com.github.mslenc.asyncdb.my.resultset.MyResultSetBuilderFactory;
-
-import java.util.List;
-
-import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
-
+import com.github.mslenc.asyncdb.util.EmptyResultSet;
+import com.github.mslenc.asyncdb.util.GeneratedIdResult;
 
 class MyDbQueryResultBuilderFactory implements MyResultSetBuilderFactory<DbExecResult> {
     static final MyDbQueryResultBuilderFactory instance = new MyDbQueryResultBuilderFactory();
@@ -23,7 +19,7 @@ class MyDbQueryResultBuilderFactory implements MyResultSetBuilderFactory<DbExecR
 
     @Override
     public DbExecResult makeQueryResultWithNoRows(long rowsAffected, String message, long lastInsertId, int statusFlags, int warnings) {
-        List<Long> ids = lastInsertId > 0 ? singletonList(lastInsertId) : emptyList();
+        DbResultSet ids = lastInsertId > 0 ? new GeneratedIdResult(lastInsertId) : EmptyResultSet.INSTANCE;
         return new DbQueryResultImpl(rowsAffected, message, null, ids);
     }
 }

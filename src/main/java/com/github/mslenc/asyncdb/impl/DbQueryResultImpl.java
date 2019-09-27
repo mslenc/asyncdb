@@ -2,21 +2,19 @@ package com.github.mslenc.asyncdb.impl;
 
 import com.github.mslenc.asyncdb.DbExecResult;
 import com.github.mslenc.asyncdb.DbResultSet;
-
-import java.util.Collections;
-import java.util.List;
+import com.github.mslenc.asyncdb.util.EmptyResultSet;
 
 public class DbQueryResultImpl implements DbExecResult {
     private final long rowsAffected;
     private final String statusMessage;
     private final DbResultSet resultSet;
-    private final List<Long> generatedIds;
+    private final DbResultSet generatedIds;
 
-    public DbQueryResultImpl(long rowsAffected, String statusMessage, DbResultSet resultSet, List<Long> generatedIds) {
+    public DbQueryResultImpl(long rowsAffected, String statusMessage, DbResultSet resultSet, DbResultSet generatedIds) {
         this.rowsAffected = rowsAffected;
         this.statusMessage = statusMessage;
         this.resultSet = resultSet;
-        this.generatedIds = generatedIds != null ? generatedIds : Collections.emptyList();
+        this.generatedIds = generatedIds != null ? generatedIds : EmptyResultSet.INSTANCE;
     }
 
     @Override
@@ -35,7 +33,7 @@ public class DbQueryResultImpl implements DbExecResult {
     }
 
     @Override
-    public List<Long> getGeneratedIds() {
+    public DbResultSet getGeneratedIds() {
         return generatedIds;
     }
 }
