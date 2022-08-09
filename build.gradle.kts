@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.github.mslenc"
-version = "1.3.1"
+version = "1.4.0"
 
 repositories {
     mavenCentral()
@@ -18,18 +18,18 @@ java {
 
 dependencies {
     // https://mvnrepository.com/artifact/io.netty/netty-all
-    api("io.netty:netty-all:4.1.29.Final")
+    api("io.netty:netty-all:4.1.74.Final")
 
     // https://mvnrepository.com/artifact/org.slf4j/slf4j-api
-    implementation("org.slf4j:slf4j-api:1.7.25")
+    implementation("org.slf4j:slf4j-api:1.7.36")
 
-    testImplementation("junit:junit:4.12")
+    testImplementation("junit:junit:4.13.2")
 
     // https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
-    testImplementation("ch.qos.logback:logback-classic:1.2.3")
+    testImplementation("ch.qos.logback:logback-classic:1.2.11")
 
-    // https://mvnrepository.com/artifact/org.postgresql/postgresql/42.2.5
-    testImplementation("org.postgresql:postgresql:42.2.5")
+    // https://mvnrepository.com/artifact/org.postgresql/postgresql
+    testImplementation("org.postgresql:postgresql:42.4.1")
 }
 
 tasks.withType<JavaCompile> {
