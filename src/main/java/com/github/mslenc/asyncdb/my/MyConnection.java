@@ -22,15 +22,22 @@ import com.github.mslenc.asyncdb.ex.ConnectionClosedException;
 import com.github.mslenc.asyncdb.ex.DatabaseException;
 import com.github.mslenc.asyncdb.util.BufferDumper;
 import com.github.mslenc.asyncdb.util.FutureUtils;
+import com.github.mslenc.asyncdb.util.SslHandlerProvider;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.CodecException;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslHandler;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
 import io.netty.util.concurrent.ScheduledFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.net.ssl.SSLEngine;
 
 import static com.github.mslenc.asyncdb.util.FutureUtils.failedFuture;
 import static com.github.mslenc.asyncdb.util.FutureUtils.safelyComplete;
@@ -51,6 +58,7 @@ public class MyConnection extends SimpleChannelInboundHandler<Object> {
     private final Runnable onDisconnect;
     public final MyEncoders encoders;
     private final Duration queryTimeout;
+    private final SslHandlerProvider sslContextProvider;
 
     private ChannelHandlerContext channel;
 
@@ -61,6 +69,18 @@ public class MyConnection extends SimpleChannelInboundHandler<Object> {
     private MyHandshakeCmd initialHandshake;
     private MyCommand currentCommand;
     private final ArrayDeque<MyCommand> commandQueue = new ArrayDeque<>();
+
+    public MyConnection(EventLoopGroup eventLoopGroup, SocketAddress remoteAddress, String connectionId, MyEncoders encoders, Runnable onDisconnect, Duration queryTimeout, SslHandlerProvider sslContextProvider) {
+        super(Object.class);
+
+        this.group = requireNonNull(eventLoopGroup);
+        this.encoders = requireNonNull(encoders);
+        this.log = LoggerFactory.getLogger("[connection-handler]" + connectionId);
+        this.remoteAddress = requireNonNull(remoteAddress);
+        this.onDisconnect = onDisconnect;
+        this.queryTimeout = queryTimeout;
+        this.sslContextProvider = sslContextProvider;
+    }
 
     public CompletableFuture<MyConnection> connect(String username, String password, String database, Duration connectTimeout) {
         if (state != STATE_AWAITING_CONNECT_CALL)
@@ -106,15 +126,8 @@ public class MyConnection extends SimpleChannelInboundHandler<Object> {
         return promise;
     }
 
-    public MyConnection(EventLoopGroup eventLoopGroup, SocketAddress remoteAddress, String connectionId, MyEncoders encoders, Runnable onDisconnect, Duration queryTimeout) {
-        super(Object.class);
-
-        this.group = requireNonNull(eventLoopGroup);
-        this.encoders = requireNonNull(encoders);
-        this.log = LoggerFactory.getLogger("[connection-handler]" + connectionId);
-        this.remoteAddress = requireNonNull(remoteAddress);
-        this.onDisconnect = onDisconnect;
-        this.queryTimeout = queryTimeout;
+    public boolean isSslSupported() {
+        return sslContextProvider != null;
     }
 
     @Override
@@ -135,9 +148,7 @@ public class MyConnection extends SimpleChannelInboundHandler<Object> {
         if (currentCommand != null) {
             try {
                 result = currentCommand.processPacket(packet);
-                if (result != null) {
-                    this.channel.flush();
-                } else {
+                if (result == null) {
                     result = MyCommand.Result.protocolErrorAbortEverything("State machine returned no result");
                 }
             } catch (Exception e) {
@@ -153,7 +164,7 @@ public class MyConnection extends SimpleChannelInboundHandler<Object> {
     private void handleStateMachineResult(MyCommand.Result result) {
         switch (result.resultType) {
             case EXPECTING_MORE_PACKETS:
-                // nothing to handle here :)
+                this.channel.flush();
                 break;
 
             case STATE_MACHINE_FINISHED:
@@ -168,9 +179,7 @@ public class MyConnection extends SimpleChannelInboundHandler<Object> {
                     MyCommand.Result initResult;
                     try {
                         initResult = currentCommand.start();
-                        if (initResult != null) {
-                            channel.flush();
-                        } else {
+                        if (initResult == null) {
                             initResult = MyCommand.Result.protocolErrorAbortEverything("State machine returned no result");
                         }
                     } catch (Exception e) {
@@ -188,6 +197,32 @@ public class MyConnection extends SimpleChannelInboundHandler<Object> {
             case DISCONNECT:
                 doCloseCleanUp(null);
                 safelyComplete(result.promise, null);
+                break;
+
+            case SWITCH_TO_SSL:
+                ChannelFuture channelFuture = channel.writeAndFlush(result.message);
+                channelFuture.addListener(future -> {
+                    System.err.println("Wrote and flushed");
+
+                    if (!future.isSuccess()) {
+                        System.err.println("Failed");
+                        result.promise.completeExceptionally(future.cause());
+                        return;
+                    }
+
+                    SslHandler handler = sslContextProvider.create(channel.alloc());
+                    channel.pipeline().addFirst(handler);
+                    handler.handshakeFuture().addListener(handshakeFuture -> {
+                        System.err.println("Handshaked");
+                        if (handshakeFuture.isSuccess()) {
+                            System.err.println("Handshaked OK");
+                            result.promise.complete(null);
+                        } else {
+                            System.err.println("Handshaked NOT OK");
+                            result.promise.completeExceptionally(handshakeFuture.cause());
+                        }
+                    });
+                });
                 break;
         }
     }
@@ -243,7 +278,7 @@ public class MyConnection extends SimpleChannelInboundHandler<Object> {
         }
     }
 
-    private void handleException(Throwable cause) {
+    public void handleException(Throwable cause) {
         handleStateMachineResult(MyCommand.Result.protocolErrorAbortEverything(cause));
     }
 
@@ -277,7 +312,7 @@ public class MyConnection extends SimpleChannelInboundHandler<Object> {
         this.channel.executor().schedule(block, duration.toMillis(), TimeUnit.MILLISECONDS);
     }
 
-    public void sendMessage(ClientMessage message) {
+    public Future<Void> sendMessage(ClientMessage message) {
         switch (this.state) {
             case STATE_RUNNING_STATE_MACHINE:
                 if (log.isTraceEnabled()) {
@@ -286,8 +321,7 @@ public class MyConnection extends SimpleChannelInboundHandler<Object> {
                     log.debug("Writing {}", message);
                 }
 
-                this.channel.write(message);
-                break;
+                return this.channel.write(message);
 
             case STATE_IDLE:
                 throw new IllegalStateException("Sending a message on an idle channel");
@@ -301,6 +335,8 @@ public class MyConnection extends SimpleChannelInboundHandler<Object> {
             case STATE_AWAITING_SOCKET:
                 throw new IllegalStateException("Sending a message on a channel that isn't connected yet");
         }
+
+        throw new IllegalStateException("Unknown state");
     }
 
 

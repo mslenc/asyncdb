@@ -1,9 +1,6 @@
 package com.github.mslenc.asyncdb.mysql;
 
-import com.github.mslenc.asyncdb.DbConnection;
-import com.github.mslenc.asyncdb.DbDataSource;
-import com.github.mslenc.asyncdb.DbResultSet;
-import com.github.mslenc.asyncdb.DbConfig;
+import com.github.mslenc.asyncdb.*;
 import io.netty.util.ResourceLeakDetector;
 
 import java.util.Arrays;
@@ -246,7 +243,7 @@ public class TestHelper {
                         if (expected.getClass().isArray()) {
                             assertTrue(Arrays.deepEquals(new Object[] { expected }, new Object[] { received }));
                         } else {
-                            assertEquals(expected, received);
+                            assertEquals("Row " + r + ", column " + c + ", row was:\n" + printAsRows(resultSet.get(r)), expected, received);
                         }
                     }
                 }
@@ -258,5 +255,13 @@ public class TestHelper {
                 successPromise.completeExceptionally(t);
             }
         });
+    }
+
+    static String printAsRows(DbRow row) {
+        StringBuilder sb = new StringBuilder();
+        for (int a = 0; a < row.getColumns().size(); a++) {
+            sb.append(row.getColumns().get(a).getName()).append(": [").append(row.get(a)).append("]\n");
+        }
+        return sb.toString();
     }
 }

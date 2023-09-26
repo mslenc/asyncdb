@@ -4,9 +4,19 @@ import com.github.mslenc.asyncdb.DbConnection;
 import com.github.mslenc.asyncdb.DbDataSource;
 import com.github.mslenc.asyncdb.DbConfig;
 import com.github.mslenc.asyncdb.my.MyConnection;
+import com.github.mslenc.asyncdb.util.SslHandlerProvider;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.SslHandler;
+import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLParameters;
+import javax.net.ssl.TrustManagerFactory;
+import java.io.FileInputStream;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.security.KeyStore;
 import java.util.ArrayDeque;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -145,7 +155,7 @@ public class MyDbDataSource implements DbDataSource {
         String connName = CONN_NAME_PREFIX + ++connCounter;
 
         ConnInfo connInfo = new ConnInfo();
-        MyConnection conn = new MyConnection(config.eventLoopGroup(), serverAddress, connName, config.mySqlEncoders(), () -> onDisconnect(connInfo), config.queryTimeout());
+        MyConnection conn = new MyConnection(config.eventLoopGroup(), serverAddress, connName, config.mySqlEncoders(), () -> onDisconnect(connInfo), config.queryTimeout(), makeSslContextProvider());
         connInfo.setUserPassDb(username, password, database);
         connInfo.setConn(conn);
 
@@ -162,14 +172,50 @@ public class MyDbDataSource implements DbDataSource {
         return promise;
     }
 
+    private SslHandlerProvider makeSslContextProvider() {
+        if (config.sslMode() == DbConfig.SslMode.DISABLE)
+            return null;
+
+        return (alloc) -> {
+            SslContextBuilder builder = SslContextBuilder.forClient();
+
+            if (config.sslMode().compareTo(DbConfig.SslMode.VERIFY_CA) >= 0) {
+                if (config.rootCertFile() == null) {
+                    TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+                    KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+                    String filename = System.getProperty("java.home") + "/lib/security/cacerts";
+                    try (FileInputStream fis = new FileInputStream(filename)) {
+                        keyStore.load(fis, "changeit".toCharArray());
+                    }
+                    tmf.init(keyStore);
+                    builder.trustManager(tmf);
+                }
+            } else {
+                builder.trustManager(InsecureTrustManagerFactory.INSTANCE);
+            }
+
+            SslContext sslContext = builder.build();
+
+            SSLEngine engine = sslContext.newEngine(alloc, config.host(), config.port());
+
+            if (config.sslMode() == DbConfig.SslMode.VERIFY_FULL) {
+                SSLParameters params = engine.getSSLParameters();
+                params.setEndpointIdentificationAlgorithm("HTTPS");
+                engine.setSSLParameters(params);
+            }
+
+            return new SslHandler(engine);
+        };
+    }
+
     CompletableFuture<DbConnection> updateUserPassDb(String username, String password, String database, CompletableFuture<DbConnection> promise, ConnInfo connInfo) {
         CompletableFuture<?> future;
 
-        if (connInfo.matchesUserPassDb(username, password, database)) {
-            future = connInfo.conn.resetConnection();
-        } else {
-            future = connInfo.conn.changeUser(username, password, database);
-        }
+        // So we used to do connInfo.conn.resetConnection() when the username/pass/db all matched,
+        // but, it failed to work - the client charset would reset to latin1 (on default mysql5
+        // configuration) and non-ascii chars would be totally broken.
+        // Whoever designed this to work like it does is a big moron.
+        future = connInfo.conn.changeUser(username, password, database);
 
         future.whenComplete((result, error) -> {
             if (error != null) {

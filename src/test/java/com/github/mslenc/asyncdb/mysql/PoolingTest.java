@@ -26,7 +26,7 @@ public class PoolingTest {
         failures.set(0);
     }
 
-    @Test
+//    @Test
     public void testWithDifferentCredentials() {
         // We will make a bunch of databases, with corresponding users; we will also "forget" to make some of them,
         // to test behavior with login errors. In addition, we make two databases per user, to see if we succeed

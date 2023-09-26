@@ -11,12 +11,13 @@ public class MyConstants {
     public static final int CLIENT_MULTI_RESULTS = 0x20000;
     public static final int CLIENT_LONG_FLAG = 0x1;
     public static final int CLIENT_PLUGIN_AUTH = 0x80000;
-    public static final int CLIENT_SECURE_CONNECTION = 0x8000;
+    public static final int CLIENT_SECURE_CONNECTION = 0x8000; // deprecated
+    public static final int CLIENT_SSL = 0x800;
 
     public static final int NO_PACKET_HEADER = Integer.MIN_VALUE;
 
     public static final int PACKET_HEADER_OK = 0x00;
-    public static final int PACKET_HEADER_QUIT = 0x01;
+    public static final int PACKET_HEADER_AUTH_MORE_DATA = 0x01;
     public static final int PACKET_HEADER_INIT_DB = 0x02;
     public static final int PACKET_HEDAER_COM_QUERY = 0x03;
     public static final int PACKET_HEADER_CHANGE_USER = 0x11;
@@ -95,6 +96,7 @@ public class MyConstants {
 
     public static final String AUTH_NATIVE = "mysql_native_password";
     public static final String AUTH_OLD = "mysql_old_password";
+    public static final String AUTH_CACHING_SHA2 = "caching_sha2_password";
 
     public static int consumePacketHeader(ByteBuf packet) {
         if (packet.readableBytes() >= 1) {

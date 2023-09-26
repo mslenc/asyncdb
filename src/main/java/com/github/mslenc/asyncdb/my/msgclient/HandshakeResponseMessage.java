@@ -28,6 +28,8 @@ public class HandshakeResponseMessage extends ClientMessage {
 
     private String database;
 
+    private boolean doingSsl = false;
+
     public HandshakeResponseMessage(String username) {
         this.username = Objects.requireNonNull(username, "Missing username");
     }
@@ -35,7 +37,7 @@ public class HandshakeResponseMessage extends ClientMessage {
     @Override
     public int getFirstPacketSequenceNumber() {
         // initial handshake must start with sequence number 1, for some unknown reason...
-        return 1;
+        return doingSsl ? 2 : 1;
     }
 
     public void setDatabase(String database) {
@@ -56,6 +58,14 @@ public class HandshakeResponseMessage extends ClientMessage {
             throw new IllegalArgumentException("Invalid authData length (" + authData.length + ")");
 
         this.capabilityFlags |= MyConstants.CLIENT_PLUGIN_AUTH;
+    }
+
+    public void setClientSsl(boolean useClientSsl) {
+        if (useClientSsl) {
+            this.capabilityFlags |= MyConstants.CLIENT_SSL;
+        } else {
+            this.capabilityFlags &= ~MyConstants.CLIENT_SSL;
+        }
     }
 
     @Override
@@ -86,6 +96,11 @@ public class HandshakeResponseMessage extends ClientMessage {
         }
 
         return contents;
+    }
+
+    public SSLRequestMessage makeSSLRequest() {
+        doingSsl = true;
+        return new SSLRequestMessage(capabilityFlags);
     }
 
     @Override

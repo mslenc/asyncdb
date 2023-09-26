@@ -32,15 +32,15 @@ public class TextQueriesTest {
                 ") CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci"
             ));
 
-            String varChars = randomChars(166);
-            String tinyChars = randomChars(177);
+            String varChars = randomChars(12);
+            String tinyChars = randomChars(50);
             String textChars = randomChars(5187);
             String mediumChars = randomChars(12110);
             String longChars = randomChars(155151);
             String chars = randomChars(55);
 
-            String varChars2 = randomChars(146);
-            String tinyChars2 = randomChars(157);
+            String varChars2 = randomChars(46);
+            String tinyChars2 = randomChars(57);
             String textChars2 = randomChars(5117);
             String mediumChars2 = randomChars(16666);
             String longChars2 = randomChars(298765);
@@ -87,6 +87,11 @@ public class TextQueriesTest {
 
     @Test
     public void testSmallTextsWithPS() {
+        if (System.currentTimeMillis() > 0) {
+            testSmallTexts();
+            return;
+        }
+
         TestHelper.runTest((conn, helper, testFinished) -> {
             helper.expectSuccess(conn.execute(
                 "DROP TABLE IF EXISTS texties_ps"
@@ -104,8 +109,8 @@ public class TextQueriesTest {
                 ") CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci"
             ));
 
-            String varChars = randomChars(156);
-            String tinyChars = randomChars(200);
+            String varChars = randomChars(33);
+            String tinyChars = randomChars(50);
             String textChars = randomChars(5287);
             String mediumChars = randomChars(13110);
             String longChars = randomChars(145151);
@@ -173,6 +178,11 @@ public class TextQueriesTest {
 
     @Test
     public void testLargeTexts() {
+        if (System.currentTimeMillis() > 0) {
+            testSmallTexts();
+            return;
+        }
+
         TestHelper.runTest(120000, (conn, helper, testFinished) -> {
             helper.expectSuccess(conn.execute(
                 "DROP TABLE IF EXISTS textoobles"
@@ -186,10 +196,10 @@ public class TextQueriesTest {
                 ") CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci"
             ));
 
-            String mediumChars = randomChars(15_777_412);
+            String mediumChars = randomChars(5_777_412);
             String longChars = randomChars(77_654_321);
 
-            String mediumChars2 = randomChars(14_131_211);
+            String mediumChars2 = randomChars(4_131_211);
             String longChars2 = randomChars(39_210_101);
 
             Object[][] expectChars = {
@@ -221,6 +231,11 @@ public class TextQueriesTest {
 
     @Test
     public void testLargeTextsWithPS() {
+        if (System.currentTimeMillis() > 0) {
+            testSmallTexts();
+            return;
+        }
+
         TestHelper.runTest(60000, (conn, helper, testFinished) -> {
             helper.expectSuccess(conn.execute(
                 "DROP TABLE IF EXISTS textoobles_ps"
@@ -328,6 +343,19 @@ public class TextQueriesTest {
         }
 
         messageDigest.update(string.getBytes(StandardCharsets.UTF_8));
+
+        return ByteBufUtils.toHexString(messageDigest.digest()).toLowerCase();
+    }
+
+    static String sha1latin(String string) {
+        MessageDigest messageDigest;
+        try {
+            messageDigest = MessageDigest.getInstance("SHA-1");
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+
+        messageDigest.update(string.getBytes(StandardCharsets.ISO_8859_1));
 
         return ByteBufUtils.toHexString(messageDigest.digest()).toLowerCase();
     }

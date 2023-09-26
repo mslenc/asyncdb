@@ -3,11 +3,14 @@ package com.github.mslenc.asyncdb;
 import com.github.mslenc.asyncdb.impl.my.MyDbDataSource;
 import com.github.mslenc.asyncdb.my.encoders.MyEncoders;
 import com.github.mslenc.asyncdb.util.NettyUtils;
+import com.github.mslenc.asyncdb.util.DefaultSslContextProvider;
 import io.netty.channel.EventLoopGroup;
 
+import javax.net.ssl.SSLContext;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.*;
+import java.util.function.Supplier;
 
 import static java.util.Collections.unmodifiableList;
 import static java.util.Objects.requireNonNull;
@@ -72,7 +75,8 @@ public class DbConfig {
         SslMode sslMode,
         Path rootCertFile,
         DbTxIsolation defaultTxIsolation,
-        DbTxMode defaultTxMode
+        DbTxMode defaultTxMode,
+        Supplier<SSLContext> sslContextProvider
     ) {
         this.dbType = dbType;
         this.defaultUsername = Objects.requireNonNull(defaultUsername, "username is required");
@@ -204,6 +208,7 @@ public class DbConfig {
         return dbType;
     }
 
+
     private static Duration positiveOrDefault(Duration provided, Duration defaultValue) {
         if (provided == null)
             return defaultValue;
@@ -256,10 +261,11 @@ public class DbConfig {
         private int maxTotalConnections = Integer.MAX_VALUE;
         private List<String> initStatements = new ArrayList<>();
         private MyEncoders mySqlEncoders = MyEncoders.DEFAULT;
-        private SslMode sslMode = SslMode.DISABLE;
+        private SslMode sslMode = SslMode.PREFER;
         private Path rootCertFile;
         private DbTxIsolation defaultTxIsolation = DbTxIsolation.REPEATABLE_READ;
         private DbTxMode defaultTxMode = DbTxMode.READ_WRITE;
+        private Supplier<SSLContext> sslContextProvider = DefaultSslContextProvider.INSTANCE;
 
         private Builder(DbType dbType) {
             this.dbType = dbType;
@@ -296,7 +302,8 @@ public class DbConfig {
                 sslMode,
                 rootCertFile,
                 defaultTxIsolation,
-                defaultTxMode
+                defaultTxMode,
+                sslContextProvider
             );
         }
 
