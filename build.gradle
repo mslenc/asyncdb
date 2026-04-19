@@ -6,7 +6,7 @@ plugins {
 }
 
 group "io.github.mslenc"
-version "1.6.4"
+version "1.7.0"
 
 repositories {
     mavenCentral()
@@ -14,7 +14,7 @@ repositories {
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(8))
+        languageVersion.set(JavaLanguageVersion.of(17))
     }
     withJavadocJar()
     withSourcesJar()
@@ -25,12 +25,12 @@ dependencies {
     api 'io.netty:netty-all:4.2.10.Final'
 
     // https://mvnrepository.com/artifact/org.slf4j/slf4j-api
-    implementation "org.slf4j:slf4j-api:1.7.36"
+    implementation "org.slf4j:slf4j-api:2.0.17"
 
     testImplementation "junit:junit:4.13.2"
 
     // https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
-    testImplementation "ch.qos.logback:logback-classic:1.3.14"
+    testImplementation "ch.qos.logback:logback-classic:1.5.32"
 
     // https://mvnrepository.com/artifact/org.postgresql/postgresql
     testImplementation "org.postgresql:postgresql:42.7.2"
@@ -100,5 +100,4 @@ signing {
 test {
   minHeapSize = "8192m" // initial heap size
   maxHeapSize = "8192m" // maximum heap size
-  jvmArgs '-XX:MaxPermSize=256m' // mem argument for the test JVM
 }
