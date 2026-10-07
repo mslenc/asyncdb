@@ -60,7 +60,7 @@ public class JdbcColumns extends AbstractList<DbColumn> implements DbColumns {
 
         for (int i = 1; i <= numCols; i++) {
             String name = metaData.getColumnName(i);
-            JdbcGetter getter = getterForSqlType(metaData.getColumnType(i), metaData.isSigned(i));
+            JdbcGetter getter = getterForSqlType(metaData.getColumnType(i), metaData.getColumnTypeName(i), metaData.isSigned(i));
 
             columns[i - 1] = new JdbcColumn(name, i - 1, getter);
         }
@@ -76,7 +76,7 @@ public class JdbcColumns extends AbstractList<DbColumn> implements DbColumns {
 
         for (int i = 1; i <= numCols; i++) {
             String name = metaData.getParameterTypeName(i);
-            JdbcGetter getter = getterForSqlType(metaData.getParameterType(i), metaData.isSigned(i));
+            JdbcGetter getter = getterForSqlType(metaData.getParameterType(i), metaData.getParameterTypeName(i), metaData.isSigned(i));
 
             columns[i - 1] = new JdbcColumn(name, i - 1, getter);
         }
@@ -84,7 +84,7 @@ public class JdbcColumns extends AbstractList<DbColumn> implements DbColumns {
         return new JdbcColumns(columns);
     }
 
-    static JdbcGetter getterForSqlType(int columnType, boolean isSigned) throws SQLException {
+    static JdbcGetter getterForSqlType(int columnType, String typeName, boolean isSigned) throws SQLException {
         switch (columnType) {
             case TINYINT:
             case SMALLINT:
@@ -158,6 +158,9 @@ public class JdbcColumns extends AbstractList<DbColumn> implements DbColumns {
                 return JdbcGetterNull.instance();
 
             case OTHER:
+                if ("json".equals(typeName) || "jsonb".equals(typeName))
+                    return JdbcGetterString.instance();
+
             case JAVA_OBJECT:
             case DISTINCT:
             case STRUCT:
